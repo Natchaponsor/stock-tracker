@@ -1,36 +1,46 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Stock Tracker
 
-## Getting Started
+A weekly-cadence swing-trading journal: a small watchlist with live EMA signal state,
+open positions with real-time unrealized P&L, and a position journal — a sibling to
+a separate day-trading journal, built for a different rhythm (a handful of positions
+held for weeks, not dozens of same-day trades).
 
-First, run the development server:
+- **Almost entirely client-side.** Positions, strategies, and your watchlist are seeded
+  on first load and persisted only in `localStorage`. No login, no accounts.
+- **Two server touchpoints**, both stateless proxies that relay public market data and
+  never see or store your positions:
+  - `app/api/quote/route.ts` — current price + day change
+  - `app/api/history/route.ts` — ~2 years of daily closes, used to compute the 50/200-day
+    EMA and detect golden/death crosses client-side
+- **Dark theme** (near-black background, blue accent), fully responsive.
+
+## Data model
+
+- **Position** — a symbol with `entries`/`exits` (`Fill[]`, so scaling in or out over
+  weeks is native) and a `notes` timeline (periodic check-ins, not a one-time reflection).
+  Can be `"open"` or `"closed"`.
+- **Strategy** — a named rule set (entry rule / exit rule) a position is tagged with;
+  the Strategies page tracks win rate and average return per strategy.
+- **Signal** — computed, not stored: EMA50/EMA200 crossovers read from real daily history.
+
+## Stack
+
+Next.js (App Router) + TypeScript, Tailwind CSS v4, Recharts, Zustand (`persist`), SWR,
+Framer Motion, date-fns, Vitest.
+
+## Getting started
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev      # dev server on :3001
+npm run test      # unit tests for indicators, position metrics, and the data core
+npm run build     # production build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3001](http://localhost:3001). Data seeds itself on first load —
+use "Reset demo" in the top bar to regenerate it.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Deploy
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Requires a Node/Edge runtime for the two price-proxy routes, so it deploys to
+**Vercel**, not a static export.
