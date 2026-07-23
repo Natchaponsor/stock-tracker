@@ -25,3 +25,39 @@ export function computePositionsValue(positions: Position[], quotes: Map<string,
 
   return { positionsValue, positionsWithoutPrice };
 }
+
+export interface AllocationSlice {
+  label: string;
+  value: number;
+  pct: number; // 0..1 share of total portfolio (cash + positions)
+  isCash: boolean;
+}
+
+/** Portfolio breakdown by asset — cash plus one row per symbol (aggregated, in case of multiple positions in the same symbol). */
+export function computeAllocation(cash: number, positions: Position[], quotes: Map<string, Quote>): AllocationSlice[] {
+  const bySymbol = new Map<string, number>();
+
+  for (const position of positions) {
+    if (position.status !== "open") continue;
+    const metrics = computePositionMetrics(position, null);
+    if (metrics.openQty <= 0) continue;
+
+    const price = quotes.get(position.symbol)?.price ?? metrics.avgEntryPrice;
+    const value = price * metrics.openQty;
+    bySymbol.set(position.symbol, (bySymbol.get(position.symbol) ?? 0) + value);
+  }
+
+  const total = cash + Array.from(bySymbol.values()).reduce((a, v) => a + v, 0);
+
+  const slices: AllocationSlice[] = [
+    { label: "Cash", value: cash, pct: total > 0 ? cash / total : 0, isCash: true },
+    ...Array.from(bySymbol.entries()).map(([label, value]) => ({
+      label,
+      value,
+      pct: total > 0 ? value / total : 0,
+      isCash: false,
+    })),
+  ];
+
+  return slices.sort((a, b) => b.value - a.value);
+}

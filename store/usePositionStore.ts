@@ -4,7 +4,7 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { generateSeedPositions, generateSeedStrategies, generateSeedWatchlist } from "@/lib/seed";
 import { DEFAULT_STARTING_CASH } from "@/lib/cash";
-import type { Fill, JournalNote, Position, Strategy, WatchlistItem } from "@/lib/types";
+import type { ExportPayload, Fill, JournalNote, Position, Strategy, WatchlistItem } from "@/lib/types";
 
 interface PositionState {
   positions: Position[];
@@ -21,6 +21,7 @@ interface PositionState {
   seedIfNeeded: () => void;
   resetDemo: () => void;
   eraseAll: () => void;
+  importData: (payload: ExportPayload) => void;
   setStartingCash: (amount: number) => void;
 
   addPosition: (position: Position) => void;
@@ -75,6 +76,15 @@ export const usePositionStore = create<PositionState>()(
           strategies: [],
           watchlist: [],
           startingCash: 0,
+          initialized: true,
+        }),
+
+      importData: (payload) =>
+        set({
+          positions: payload.positions,
+          strategies: payload.strategies,
+          watchlist: payload.watchlist,
+          startingCash: payload.startingCash,
           initialized: true,
         }),
 
