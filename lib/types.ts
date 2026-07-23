@@ -82,3 +82,13 @@ export interface CrossSignal {
   date: string;
   index: number;
 }
+
+/** Full snapshot of user data, for export/backup — matches the store's persisted shape. */
+export interface ExportPayload {
+  exportedAt: string;
+  version: 1;
+  startingCash: number;
+  positions: Position[];
+  strategies: Strategy[];
+  watchlist: WatchlistItem[];
+}

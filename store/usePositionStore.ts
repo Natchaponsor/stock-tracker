@@ -3,18 +3,25 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { generateSeedPositions, generateSeedStrategies, generateSeedWatchlist } from "@/lib/seed";
+import { DEFAULT_STARTING_CASH } from "@/lib/cash";
 import type { Fill, JournalNote, Position, Strategy, WatchlistItem } from "@/lib/types";
 
 interface PositionState {
   positions: Position[];
   strategies: Strategy[];
   watchlist: WatchlistItem[];
+  startingCash: number;
   hidePnl: boolean;
   hasHydrated: boolean;
+  /** True once the store has ever been seeded or explicitly erased — guards against
+   * re-seeding demo data after the user intentionally erases everything. */
+  initialized: boolean;
 
   setHasHydrated: (v: boolean) => void;
-  seedIfEmpty: () => void;
+  seedIfNeeded: () => void;
   resetDemo: () => void;
+  eraseAll: () => void;
+  setStartingCash: (amount: number) => void;
 
   addPosition: (position: Position) => void;
   updatePosition: (id: string, patch: Partial<Position>) => void;
@@ -40,19 +47,16 @@ export const usePositionStore = create<PositionState>()(
       positions: [],
       strategies: [],
       watchlist: [],
+      startingCash: 0,
       hidePnl: false,
       hasHydrated: false,
+      initialized: false,
 
       setHasHydrated: (v) => set({ hasHydrated: v }),
 
-      seedIfEmpty: () => {
-        const { positions, strategies, watchlist } = get();
-        if (positions.length === 0 && strategies.length === 0 && watchlist.length === 0) {
-          set({
-            positions: generateSeedPositions(),
-            strategies: generateSeedStrategies(),
-            watchlist: generateSeedWatchlist(),
-          });
+      seedIfNeeded: () => {
+        if (!get().initialized) {
+          get().resetDemo();
         }
       },
 
@@ -61,7 +65,20 @@ export const usePositionStore = create<PositionState>()(
           positions: generateSeedPositions(),
           strategies: generateSeedStrategies(),
           watchlist: generateSeedWatchlist(),
+          startingCash: DEFAULT_STARTING_CASH,
+          initialized: true,
         }),
+
+      eraseAll: () =>
+        set({
+          positions: [],
+          strategies: [],
+          watchlist: [],
+          startingCash: 0,
+          initialized: true,
+        }),
+
+      setStartingCash: (amount) => set({ startingCash: amount }),
 
       addPosition: (position) => set((state) => ({ positions: [...state.positions, position] })),
 
@@ -130,11 +147,13 @@ export const usePositionStore = create<PositionState>()(
         positions: state.positions,
         strategies: state.strategies,
         watchlist: state.watchlist,
+        startingCash: state.startingCash,
         hidePnl: state.hidePnl,
+        initialized: state.initialized,
       }),
       onRehydrateStorage: () => (state) => {
         if (!state) return;
-        state.seedIfEmpty();
+        state.seedIfNeeded();
         state.setHasHydrated(true);
       },
     }

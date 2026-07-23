@@ -1,15 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { Eye, EyeOff, RotateCcw } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import { usePositionStore } from "@/store/usePositionStore";
-import { Button } from "@/components/ui/Button";
+import { DataMenu } from "./DataMenu";
 
 export function TopBar() {
   const hidePnl = usePositionStore((s) => s.hidePnl);
   const toggleHidePnl = usePositionStore((s) => s.toggleHidePnl);
-  const resetDemo = usePositionStore((s) => s.resetDemo);
-  const [confirmingReset, setConfirmingReset] = useState(false);
 
   return (
     <div className="border-b border-border bg-bg/95">
@@ -23,23 +20,7 @@ export function TopBar() {
         >
           {hidePnl ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
         </button>
-        <Button
-          variant={confirmingReset ? "danger" : "ghost"}
-          size="sm"
-          onClick={() => {
-            if (confirmingReset) {
-              resetDemo();
-              setConfirmingReset(false);
-            } else {
-              setConfirmingReset(true);
-              setTimeout(() => setConfirmingReset(false), 3000);
-            }
-          }}
-          title="Reset demo data"
-        >
-          <RotateCcw className="h-3.5 w-3.5" />
-          {confirmingReset ? "Confirm reset?" : "Reset demo"}
-        </Button>
+        <DataMenu />
       </div>
     </div>
   );

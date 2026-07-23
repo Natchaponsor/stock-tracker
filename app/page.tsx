@@ -10,11 +10,13 @@ import { WatchlistStrip } from "@/components/watchlist/WatchlistStrip";
 import { PositionCard } from "@/components/position/PositionCard";
 import { ClosedPositionsTable } from "@/components/position/ClosedPositionsTable";
 import { StrategyPerformanceCard } from "@/components/strategy/StrategyPerformanceCard";
+import { PortfolioOverview } from "@/components/portfolio/PortfolioOverview";
 
 function DashboardSkeleton() {
   return (
     <div className="space-y-6">
       <Skeleton className="h-8 w-40" />
+      <Skeleton className="h-28" />
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {Array.from({ length: 4 }).map((_, i) => (
           <Skeleton key={i} className="h-32" />
@@ -44,6 +46,8 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       <h1 className="font-serif text-2xl font-medium text-fg">Dashboard</h1>
+
+      <PortfolioOverview />
 
       <section className="space-y-3">
         <div>
