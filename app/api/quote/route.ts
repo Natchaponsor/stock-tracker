@@ -1,20 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { Quote } from "@/lib/types";
 
-const YAHOO_CHART_URL = (symbol: string) =>
-  `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=1d`;
+const FINNHUB_QUOTE_URL = (symbol: string, apiKey: string) =>
+  `https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(symbol)}&token=${apiKey}`;
 
 const REVALIDATE_SECONDS = 45;
 const MAX_SYMBOLS = 25;
 
-async function fetchQuote(symbol: string): Promise<Quote> {
+interface FinnhubQuote {
+  c: number; // current price
+  d: number | null; // change
+  dp: number | null; // percent change
+  pc: number; // previous close
+  t: number; // timestamp
+}
+
+async function fetchQuote(symbol: string, apiKey: string): Promise<Quote> {
   try {
-    const res = await fetch(YAHOO_CHART_URL(symbol), {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
-        Accept: "application/json",
-      },
+    const res = await fetch(FINNHUB_QUOTE_URL(symbol, apiKey), {
+      headers: { Accept: "application/json" },
       next: { revalidate: REVALIDATE_SECONDS },
     });
 
@@ -22,21 +26,17 @@ async function fetchQuote(symbol: string): Promise<Quote> {
       return { symbol, price: null, changePct: null, asOf: null, error: `upstream ${res.status}` };
     }
 
-    const data = await res.json();
-    const meta = data?.chart?.result?.[0]?.meta;
-    if (!meta || typeof meta.regularMarketPrice !== "number") {
+    const data: FinnhubQuote = await res.json();
+
+    // Finnhub returns 200 with all-zero fields for an unknown symbol rather than an error status.
+    if (typeof data.c !== "number" || (data.c === 0 && data.pc === 0)) {
       return { symbol, price: null, changePct: null, asOf: null, error: "no data" };
     }
 
-    const price = meta.regularMarketPrice;
-    const prevClose = meta.previousClose ?? meta.chartPreviousClose;
-    const changePct =
-      typeof prevClose === "number" && prevClose !== 0 ? ((price - prevClose) / prevClose) * 100 : null;
-
     return {
       symbol,
-      price,
-      changePct,
+      price: data.c,
+      changePct: typeof data.dp === "number" ? data.dp : null,
       asOf: new Date().toISOString(),
     };
   } catch {
@@ -59,7 +59,19 @@ export async function GET(request: NextRequest) {
     return NextResponse.json([], { headers: { "Cache-Control": "public, max-age=0" } });
   }
 
-  const quotes = await Promise.all(symbols.map(fetchQuote));
+  const apiKey = process.env.FINNHUB_API_KEY;
+  if (!apiKey) {
+    const quotes: Quote[] = symbols.map((symbol) => ({
+      symbol,
+      price: null,
+      changePct: null,
+      asOf: null,
+      error: "missing FINNHUB_API_KEY",
+    }));
+    return NextResponse.json(quotes, { headers: { "Cache-Control": "no-store" } });
+  }
+
+  const quotes = await Promise.all(symbols.map((s) => fetchQuote(s, apiKey)));
 
   return NextResponse.json(quotes, {
     headers: {

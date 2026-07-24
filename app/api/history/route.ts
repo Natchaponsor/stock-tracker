@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { DailyBar } from "@/lib/types";
 
-const YAHOO_CHART_URL = (symbol: string) =>
-  `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=2y`;
+const FINNHUB_CANDLE_URL = (symbol: string, from: number, to: number, apiKey: string) =>
+  `https://finnhub.io/api/v1/stock/candle?symbol=${encodeURIComponent(symbol)}&resolution=D&from=${from}&to=${to}&token=${apiKey}`;
 
 const REVALIDATE_SECONDS = 60 * 60; // daily bars are stable within a day
+const TWO_YEARS_SECONDS = 60 * 60 * 24 * 365 * 2;
 
 interface HistoryResponse {
   symbol: string;
@@ -12,14 +13,19 @@ interface HistoryResponse {
   error?: string;
 }
 
-async function fetchHistory(symbol: string): Promise<HistoryResponse> {
+interface FinnhubCandles {
+  s: "ok" | "no_data";
+  t?: number[];
+  c?: number[];
+}
+
+async function fetchHistory(symbol: string, apiKey: string): Promise<HistoryResponse> {
   try {
-    const res = await fetch(YAHOO_CHART_URL(symbol), {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
-        Accept: "application/json",
-      },
+    const to = Math.floor(Date.now() / 1000);
+    const from = to - TWO_YEARS_SECONDS;
+
+    const res = await fetch(FINNHUB_CANDLE_URL(symbol, from, to, apiKey), {
+      headers: { Accept: "application/json" },
       next: { revalidate: REVALIDATE_SECONDS },
     });
 
@@ -27,22 +33,16 @@ async function fetchHistory(symbol: string): Promise<HistoryResponse> {
       return { symbol, bars: [], error: `upstream ${res.status}` };
     }
 
-    const data = await res.json();
-    const result = data?.chart?.result?.[0];
-    const timestamps: number[] | undefined = result?.timestamp;
-    const closes: (number | null)[] | undefined = result?.indicators?.quote?.[0]?.close;
+    const data: FinnhubCandles = await res.json();
 
-    if (!timestamps || !closes) {
+    if (data.s !== "ok" || !Array.isArray(data.t) || !Array.isArray(data.c)) {
       return { symbol, bars: [], error: "no data" };
     }
 
-    const bars: DailyBar[] = [];
-    for (let i = 0; i < timestamps.length; i++) {
-      const close = closes[i];
-      if (typeof close !== "number") continue;
-      const date = new Date(timestamps[i] * 1000).toISOString().slice(0, 10);
-      bars.push({ date, close });
-    }
+    const bars: DailyBar[] = data.t.map((timestamp, i) => ({
+      date: new Date(timestamp * 1000).toISOString().slice(0, 10),
+      close: data.c![i],
+    }));
 
     return { symbol, bars };
   } catch {
@@ -57,7 +57,15 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ symbol: "", bars: [], error: "missing symbol" }, { status: 400 });
   }
 
-  const history = await fetchHistory(symbol);
+  const apiKey = process.env.FINNHUB_API_KEY;
+  if (!apiKey) {
+    return NextResponse.json(
+      { symbol, bars: [], error: "missing FINNHUB_API_KEY" },
+      { headers: { "Cache-Control": "no-store" } }
+    );
+  }
+
+  const history = await fetchHistory(symbol, apiKey);
 
   return NextResponse.json(history, {
     headers: {

@@ -7,8 +7,8 @@ held for weeks, not dozens of same-day trades).
 
 - **Almost entirely client-side.** Positions, strategies, and your watchlist are seeded
   on first load and persisted only in `localStorage`. No login, no accounts.
-- **Two server touchpoints**, both stateless proxies that relay public market data and
-  never see or store your positions:
+- **Two server touchpoints**, both stateless proxies to [Finnhub](https://finnhub.io) that
+  relay public market data and never see or store your positions:
   - `app/api/quote/route.ts` — current price + day change
   - `app/api/history/route.ts` — ~2 years of daily closes, used to compute the 50/200-day
     EMA and detect golden/death crosses client-side
@@ -32,15 +32,19 @@ Framer Motion, date-fns, Vitest.
 
 ```bash
 npm install
+cp .env.local.example .env.local   # then fill in FINNHUB_API_KEY — free at finnhub.io/register
 npm run dev      # dev server on :3001
 npm run test      # unit tests for indicators, position metrics, and the data core
 npm run build     # production build
 ```
 
 Open [http://localhost:3001](http://localhost:3001). Data seeds itself on first load —
-use "Reset demo" in the top bar to regenerate it.
+use "Reset demo" in the top bar to regenerate it. Without `FINNHUB_API_KEY` set, the
+watchlist/positions still work but prices and signals show "unavailable" instead of
+crashing (the two proxy routes fail soft on a missing key, same as any other upstream error).
 
 ## Deploy
 
 Requires a Node/Edge runtime for the two price-proxy routes, so it deploys to
-**Vercel**, not a static export.
+**Vercel**, not a static export. Add `FINNHUB_API_KEY` as an environment variable in the
+Vercel project settings — it's read server-side only and never reaches the client.
