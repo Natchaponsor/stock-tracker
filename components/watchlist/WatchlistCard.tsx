@@ -4,13 +4,10 @@ import { useMemo } from "react";
 import Link from "next/link";
 import { X } from "lucide-react";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { Sparkline } from "@/components/charts/Sparkline";
 import { PnlText } from "@/components/ui/PnlText";
 import { useQuotes } from "@/hooks/useQuotes";
-import { useHistory } from "@/hooks/useHistory";
 import { usePositionStore } from "@/store/usePositionStore";
 import { computePositionMetrics } from "@/lib/positionMetrics";
-import { readSignal } from "@/lib/signal";
 import { formatCurrency, glyph } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import type { WatchlistItem } from "@/lib/types";
@@ -19,7 +16,6 @@ export function WatchlistCard({ item }: { item: WatchlistItem }) {
   const { symbol } = item;
   const { quotes } = useQuotes([symbol]);
   const quote = quotes.get(symbol);
-  const { closes, trend, hasEnoughData, isLoading: historyLoading } = useHistory(symbol);
   const removeWatchlistSymbol = usePositionStore((s) => s.removeWatchlistSymbol);
   const positions = usePositionStore((s) => s.positions);
 
@@ -32,9 +28,6 @@ export function WatchlistCard({ item }: { item: WatchlistItem }) {
     if (!openPosition) return null;
     return computePositionMetrics(openPosition, quote?.price ?? null);
   }, [openPosition, quote]);
-
-  const signal = readSignal(trend, hasEnoughData);
-  const sparkData = useMemo(() => closes.slice(-30).map((v) => ({ value: v })), [closes]);
 
   const loadingQuote = !quote;
 
@@ -81,23 +74,8 @@ export function WatchlistCard({ item }: { item: WatchlistItem }) {
         </div>
       </div>
 
-      <div className="h-9">
-        {historyLoading ? (
-          <Skeleton className="h-full w-full" />
-        ) : sparkData.length > 1 ? (
-          <Sparkline data={sparkData} color={signal.tone === "bad" ? "var(--color-loss)" : "var(--color-gain)"} />
-        ) : null}
-      </div>
-
-      <span
-        className={cn(
-          "w-fit rounded-md px-2 py-1 text-[11px] font-medium",
-          signal.tone === "good" && "bg-gain/10 text-gain",
-          signal.tone === "bad" && "bg-loss/10 text-loss",
-          signal.tone === "neutral" && "bg-panel text-fg-muted"
-        )}
-      >
-        {signal.label}
+      <span className="w-fit rounded-md bg-panel px-2 py-1 text-[11px] font-medium text-fg-subtle">
+        Signal — Coming Soon!
       </span>
 
       {openPosition && positionMetrics ? (

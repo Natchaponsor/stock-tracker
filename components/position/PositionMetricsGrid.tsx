@@ -2,21 +2,15 @@
 
 import { Card } from "@/components/ui/Card";
 import { PnlText } from "@/components/ui/PnlText";
-import { readSignal } from "@/lib/signal";
 import { formatCurrency, formatPct } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import type { PositionMetrics } from "@/lib/types";
-import type { TrendState } from "@/lib/indicators";
 
 interface Props {
   metrics: PositionMetrics;
-  trend: TrendState;
-  hasEnoughData: boolean;
 }
 
-export function PositionMetricsGrid({ metrics, trend, hasEnoughData }: Props) {
-  const signal = readSignal(trend, hasEnoughData);
-
+export function PositionMetricsGrid({ metrics }: Props) {
   return (
     <Card>
       <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-6">
@@ -53,16 +47,7 @@ export function PositionMetricsGrid({ metrics, trend, hasEnoughData }: Props) {
         </div>
         <div>
           <p className="text-[10px] font-medium uppercase tracking-wide text-fg-subtle">Signal</p>
-          <p
-            className={cn(
-              "text-sm font-medium",
-              signal.tone === "good" && "text-gain",
-              signal.tone === "bad" && "text-loss",
-              signal.tone === "neutral" && "text-fg-muted"
-            )}
-          >
-            {signal.label}
-          </p>
+          <p className="text-sm font-medium text-fg-subtle">Coming Soon!</p>
         </div>
       </div>
     </Card>

@@ -6,10 +6,8 @@ import { Card } from "@/components/ui/Card";
 import { PnlText } from "@/components/ui/PnlText";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useQuotes } from "@/hooks/useQuotes";
-import { useHistory } from "@/hooks/useHistory";
 import { usePositionStore } from "@/store/usePositionStore";
 import { computePositionMetrics } from "@/lib/positionMetrics";
-import { readSignal } from "@/lib/signal";
 import { formatCurrency, formatPct } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import type { Position } from "@/lib/types";
@@ -17,7 +15,6 @@ import type { Position } from "@/lib/types";
 export function PositionCard({ position }: { position: Position }) {
   const { quotes, isLoading } = useQuotes([position.symbol]);
   const quote = quotes.get(position.symbol);
-  const { trend, hasEnoughData } = useHistory(position.symbol);
   const strategies = usePositionStore((s) => s.strategies);
   const strategy = strategies.find((s) => s.id === position.strategyId);
 
@@ -25,7 +22,6 @@ export function PositionCard({ position }: { position: Position }) {
     () => computePositionMetrics(position, quote?.price ?? null),
     [position, quote]
   );
-  const signal = readSignal(trend, hasEnoughData);
 
   return (
     <Link href={`/positions/${position.id}`}>
@@ -80,16 +76,7 @@ export function PositionCard({ position }: { position: Position }) {
           </div>
           <div>
             <p className="text-[10px] font-medium uppercase tracking-wide text-fg-subtle">Signal</p>
-            <p
-              className={cn(
-                "text-sm font-medium",
-                signal.tone === "good" && "text-gain",
-                signal.tone === "bad" && "text-loss",
-                signal.tone === "neutral" && "text-fg-muted"
-              )}
-            >
-              {signal.tone === "good" ? "Bullish" : signal.tone === "bad" ? "Bearish" : "Neutral"}
-            </p>
+            <p className="text-sm font-medium text-fg-subtle">Coming Soon!</p>
           </div>
         </div>
       </Card>

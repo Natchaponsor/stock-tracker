@@ -6,7 +6,6 @@ import { useParams, useRouter } from "next/navigation";
 import { Pencil, Trash2, CheckCircle2 } from "lucide-react";
 import { useHydrated } from "@/hooks/useHydrated";
 import { useQuotes } from "@/hooks/useQuotes";
-import { useHistory } from "@/hooks/useHistory";
 import { usePositionStore } from "@/store/usePositionStore";
 import { computePositionMetrics } from "@/lib/positionMetrics";
 import { formatCurrency } from "@/lib/format";
@@ -34,7 +33,6 @@ export default function PositionDetailPage() {
 
   const { quotes } = useQuotes(position ? [position.symbol] : []);
   const quote = position ? quotes.get(position.symbol) : undefined;
-  const { trend, hasEnoughData } = useHistory(position?.symbol ?? null);
 
   const metrics = useMemo(
     () => (position ? computePositionMetrics(position, quote?.price ?? null) : null),
@@ -110,7 +108,7 @@ export default function PositionDetailPage() {
         </div>
       </div>
 
-      <PositionMetricsGrid metrics={metrics} trend={trend} hasEnoughData={hasEnoughData} />
+      <PositionMetricsGrid metrics={metrics} />
 
       {position.thesis && (
         <Card>
@@ -119,7 +117,7 @@ export default function PositionDetailPage() {
         </Card>
       )}
 
-      <PositionChart symbol={position.symbol} entries={position.entries} />
+      <PositionChart />
 
       <FillsPanel position={position} />
 
