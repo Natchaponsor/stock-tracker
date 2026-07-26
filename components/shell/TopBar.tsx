@@ -4,6 +4,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { usePositionStore } from "@/store/usePositionStore";
 import { DataMenu } from "./DataMenu";
 import { RefreshPriceButton } from "./RefreshPriceButton";
+import { ThemeToggle } from "./ThemeToggle";
 
 export function TopBar() {
   const hidePnl = usePositionStore((s) => s.hidePnl);
@@ -22,6 +23,7 @@ export function TopBar() {
           {hidePnl ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
         </button>
         <RefreshPriceButton />
+        <ThemeToggle />
         <DataMenu />
       </div>
     </div>

@@ -14,7 +14,7 @@ not dozens of same-day trades).
 - **Manual price refresh, not background polling.** Nothing fetches on a timer —
   prices are fetched once on page load and again only when you click "Refresh
   Current Price," to keep API call volume low and predictable.
-- **Dark theme** (near-black background, blue accent), fully responsive.
+- **Light/dark theme**, toggled from the top bar and remembered across visits, fully responsive.
 
 ## What works right now
 

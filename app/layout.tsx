@@ -29,8 +29,17 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${fraunces.variable} h-full antialiased dark`}
+      className={`${inter.variable} ${fraunces.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "(function(){try{var t=localStorage.getItem('theme');document.documentElement.dataset.theme=t==='light'?'light':'dark';}catch(e){}})();",
+          }}
+        />
+      </head>
       <body className="min-h-full flex flex-col bg-bg text-fg font-sans">
         <AppShell>{children}</AppShell>
       </body>
