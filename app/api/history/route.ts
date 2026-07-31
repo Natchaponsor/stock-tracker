@@ -17,6 +17,7 @@ interface FinnhubCandles {
   s: "ok" | "no_data";
   t?: number[];
   c?: number[];
+  v?: number[];
 }
 
 async function fetchHistory(symbol: string, apiKey: string): Promise<HistoryResponse> {
@@ -42,6 +43,7 @@ async function fetchHistory(symbol: string, apiKey: string): Promise<HistoryResp
     const bars: DailyBar[] = data.t.map((timestamp, i) => ({
       date: new Date(timestamp * 1000).toISOString().slice(0, 10),
       close: data.c![i],
+      volume: data.v?.[i] ?? null,
     }));
 
     return { symbol, bars };

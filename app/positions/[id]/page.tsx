@@ -16,6 +16,7 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Card } from "@/components/ui/Card";
 import { PositionChart } from "@/components/position/PositionChart";
+import { SignalsPanel } from "@/components/position/SignalsPanel";
 import { PositionMetricsGrid } from "@/components/position/PositionMetricsGrid";
 import { FillsPanel } from "@/components/position/FillsPanel";
 import { JournalTimeline } from "@/components/position/JournalTimeline";
@@ -118,6 +119,8 @@ export default function PositionDetailPage() {
       )}
 
       <PositionChart />
+
+      <SignalsPanel symbol={position.symbol} />
 
       <FillsPanel position={position} />
 

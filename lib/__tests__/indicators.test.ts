@@ -1,11 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { ema, findCrosses, computeTrendState } from "../indicators";
+import { averageVolume, computeTrendState, ema, findCrosses, macd, rsi } from "../indicators";
 import type { DailyBar } from "../types";
 
 function makeBars(n: number): DailyBar[] {
   return Array.from({ length: n }, (_, i) => ({
     date: `2026-01-${String(i + 1).padStart(2, "0")}`,
     close: 0,
+    volume: null,
   }));
 }
 
@@ -76,5 +77,73 @@ describe("computeTrendState", () => {
     const state = computeTrendState([], []);
     expect(state.latestCross).toBeNull();
     expect(state.fastAboveSlow).toBe(false);
+  });
+});
+
+describe("rsi", () => {
+  it("returns NaN for every index before a full period of history", () => {
+    const closes = Array.from({ length: 10 }, (_, i) => 100 + i);
+    const result = rsi(closes, 14);
+    expect(result.every((v) => Number.isNaN(v))).toBe(true);
+  });
+
+  it("reads 100 for a strictly rising series (no losses at all)", () => {
+    const closes = Array.from({ length: 30 }, (_, i) => 100 + i);
+    const result = rsi(closes, 14);
+    expect(result[result.length - 1]).toBe(100);
+  });
+
+  it("reads 0 for a strictly falling series (no gains at all)", () => {
+    const closes = Array.from({ length: 30 }, (_, i) => 200 - i);
+    const result = rsi(closes, 14);
+    expect(result[result.length - 1]).toBe(0);
+  });
+
+  it("stays within 0..100 for a mixed series", () => {
+    const closes = [100, 102, 99, 105, 103, 108, 104, 110, 107, 112, 109, 115, 111, 118, 116, 120];
+    const result = rsi(closes, 14);
+    for (const v of result) {
+      if (!Number.isNaN(v)) {
+        expect(v).toBeGreaterThanOrEqual(0);
+        expect(v).toBeLessThanOrEqual(100);
+      }
+    }
+  });
+});
+
+describe("macd", () => {
+  it("has a zero histogram when the input is constant", () => {
+    const closes = new Array(60).fill(100);
+    const result = macd(closes);
+    for (const v of result.histogram) expect(v).toBeCloseTo(0);
+  });
+
+  it("goes positive once a sustained uptrend pulls the fast EMA above the slow EMA", () => {
+    const closes = Array.from({ length: 60 }, (_, i) => 100 + i);
+    const result = macd(closes, 12, 26, 9);
+    expect(result.histogram[result.histogram.length - 1]).toBeGreaterThan(0);
+  });
+});
+
+describe("averageVolume", () => {
+  it("is null before a full window of volume is available", () => {
+    const volumes = Array.from({ length: 10 }, () => 1000);
+    const result = averageVolume(volumes, 20);
+    expect(result.every((v) => v === null)).toBe(true);
+  });
+
+  it("averages a constant series to itself", () => {
+    const volumes = Array.from({ length: 25 }, () => 1000);
+    const result = averageVolume(volumes, 20);
+    expect(result[result.length - 1]).toBeCloseTo(1000);
+  });
+
+  it("is null for any window containing a missing (null) volume", () => {
+    const volumes: (number | null)[] = Array.from({ length: 30 }, (_, i) => (i === 5 ? null : 1000));
+    const result = averageVolume(volumes, 20);
+    // the window covering index 5 (indices 0..19) should be null; once the
+    // window has fully moved past index 5 (indices 6..25), it's clean again
+    expect(result[19]).toBeNull();
+    expect(result[25]).toBeCloseTo(1000);
   });
 });

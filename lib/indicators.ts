@@ -81,3 +81,53 @@ export function computeTrendState(closes: number[], bars: DailyBar[], fastPeriod
 export function describeCross(type: CrossType): string {
   return type === "golden-cross" ? "Golden Cross" : "Death Cross";
 }
+
+/**
+ * Wilder's RSI. The first `period` closes seed the average gain/loss (simple
+ * average); every close after that rolls forward with Wilder's smoothing
+ * rather than a plain moving average, matching the standard definition.
+ * Indices before a full `period` of history are NaN — not enough data yet.
+ */
+export function rsi(closes: number[], period = 14): number[] {
+  const out: number[] = new Array(closes.length).fill(NaN);
+  if (closes.length <= period) return out;
+
+  let gainSum = 0;
+  let lossSum = 0;
+  for (let i = 1; i <= period; i++) {
+    const change = closes[i] - closes[i - 1];
+    if (change >= 0) gainSum += change;
+    else lossSum -= change;
+  }
+
+  let avgGain = gainSum / period;
+  let avgLoss = lossSum / period;
+  out[period] = avgLoss === 0 ? 100 : 100 - 100 / (1 + avgGain / avgLoss);
+
+  for (let i = period + 1; i < closes.length; i++) {
+    const change = closes[i] - closes[i - 1];
+    const gain = change > 0 ? change : 0;
+    const loss = change < 0 ? -change : 0;
+    avgGain = (avgGain * (period - 1) + gain) / period;
+    avgLoss = (avgLoss * (period - 1) + loss) / period;
+    out[i] = avgLoss === 0 ? 100 : 100 - 100 / (1 + avgGain / avgLoss);
+  }
+
+  return out;
+}
+
+/**
+ * Simple moving average of daily volume. A `null` anywhere in a window (a bar
+ * whose provider didn't report volume) makes that window's average `null`
+ * rather than silently averaging over a gap.
+ */
+export function averageVolume(volumes: (number | null)[], period = 20): (number | null)[] {
+  const out: (number | null)[] = new Array(volumes.length).fill(null);
+  for (let i = period - 1; i < volumes.length; i++) {
+    const window = volumes.slice(i - period + 1, i + 1);
+    if (window.some((v) => v === null)) continue;
+    const sum = (window as number[]).reduce((a, b) => a + b, 0);
+    out[i] = sum / period;
+  }
+  return out;
+}

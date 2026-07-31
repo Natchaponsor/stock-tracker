@@ -73,6 +73,16 @@ export interface Quote {
 export interface DailyBar {
   date: string; // YYYY-MM-DD
   close: number;
+  volume: number | null;
+}
+
+/** Fundamental data — a different category from live quotes/candles, so it comes
+ * from its own endpoint and (likely) its own provider. */
+export interface Fundamentals {
+  symbol: string;
+  peRatio: number | null;
+  asOf: string | null;
+  error?: string;
 }
 
 export type CrossType = "golden-cross" | "death-cross";

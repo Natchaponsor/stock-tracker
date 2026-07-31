@@ -37,20 +37,29 @@ not dozens of same-day trades).
 
 ## Coming Soon
 
-- **Price charts & EMA signals.** Finnhub's free tier covers live quotes but not
-  historical daily bars (`/stock/candle` requires a paid plan) — so the 50/200-day
-  EMA, golden/death-cross signals, and the price-history chart on each position are
-  paused with a placeholder until a free/low-friction historical-data source is
-  wired in (candidate: Twelve Data's free tier, which does include daily time
-  series). The underlying math (`lib/indicators.ts`, EMA/MACD/cross-detection, unit
-  tested) and the `/api/history` route are already built and just waiting on a
-  working data source — see `app/quote-lab` on the `test/quote-fetch-lab` branch for
-  the manual-fetch harness used to evaluate providers without burning through rate limits.
+- **Signals — Trend (EMA), RSI, MACD, Volume, and P/E.** Every position page has a
+  Signals panel wired to real, unit-tested logic (`lib/indicators.ts`, `lib/signal.ts`)
+  that currently has no data to read, so each row shows "Coming Soon!" until a
+  provider is connected:
+  - **Trend (50/200 EMA cross), RSI (14), MACD (12/26/9), Volume** all come from
+    the *same* historical daily-bar fetch (`/api/history`) — one API call per
+    symbol lights up all four. Finnhub's free tier covers live quotes but not
+    historical candles (`/stock/candle` needs a paid plan), so this is blocked on
+    picking a historical-data provider (candidate: Twelve Data's free tier, which
+    does include daily time series). See `app/quote-lab` on the
+    `test/quote-fetch-lab` branch for the manual-fetch harness used to evaluate
+    providers without burning through rate limits.
+  - **P/E ratio** is fundamental/company data, not a price quote or candle — a
+    different data category, so it needs its own endpoint (`/api/fundamentals`,
+    already scaffolded) and likely its own provider, since not every quote/candle
+    API also carries fundamentals on a free tier.
 
 ## Potential future features
 
-- A working historical-data provider → revive price charts, EMA signals, and the
-  MAE/MFE-style "how much heat did I take" view the day-trading journal has.
+- A working historical-data provider → revive price charts, the Trend/RSI/MACD/Volume
+  signals, and the MAE/MFE-style "how much heat did I take" view the day-trading
+  journal has.
+- A fundamentals provider → light up the P/E ratio signal.
 - Multiple accounts/portfolios, if one cash balance stops being enough.
 - Alerts (e.g. "notify me if a watchlist symbol crosses its 200-day") once a
   provider with real history is in place.
