@@ -37,6 +37,7 @@ not dozens of same-day trades).
 
 ## Coming Soon
 
+- **Analysis tab (Claude Skill).** In progress of building the stock analysis tool.
 - **Signals — Trend (EMA), RSI, MACD, Volume, and P/E.** Every position page has a
   Signals panel wired to real, unit-tested logic (`lib/indicators.ts`, `lib/signal.ts`)
   that currently has no data to read, so each row shows "Coming Soon!" until a

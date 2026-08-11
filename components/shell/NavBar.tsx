@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 const NAV_ITEMS = [
   { href: "/", label: "Dashboard" },
   { href: "/strategies", label: "Strategies" },
+  { href: "/analysis", label: "Analysis" },
 ];
 
 export function NavBar() {
