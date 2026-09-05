@@ -55,7 +55,9 @@ export function AnalysisRunner() {
 
       <div className="space-y-4">
         <FormField label="Action">
-          <Segmented options={ANALYSIS_ACTIONS} value={action} onChange={setAction} size="sm" />
+          <div className="-mx-1 overflow-x-auto px-1">
+            <Segmented options={ANALYSIS_ACTIONS} value={action} onChange={setAction} size="sm" className="w-max" />
+          </div>
         </FormField>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
