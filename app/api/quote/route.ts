@@ -33,11 +33,15 @@ async function fetchQuote(symbol: string, apiKey: string): Promise<Quote> {
       return { symbol, price: null, changePct: null, asOf: null, error: "no data" };
     }
 
+    // Use Finnhub's own trade timestamp, not our fetch time — on the free tier this
+    // quote doesn't update outside regular US market hours, so `t` can be well behind
+    // "now" (e.g. last Friday's close over a weekend). Reporting our own fetch time
+    // here would hide that and make a stale price look live.
     return {
       symbol,
       price: data.c,
       changePct: typeof data.dp === "number" ? data.dp : null,
-      asOf: new Date().toISOString(),
+      asOf: data.t ? new Date(data.t * 1000).toISOString() : new Date().toISOString(),
     };
   } catch {
     return { symbol, price: null, changePct: null, asOf: null, error: "fetch failed" };

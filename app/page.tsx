@@ -11,6 +11,7 @@ import { PositionCard } from "@/components/position/PositionCard";
 import { ClosedPositionsTable } from "@/components/position/ClosedPositionsTable";
 import { StrategyPerformanceCard } from "@/components/strategy/StrategyPerformanceCard";
 import { PortfolioOverview } from "@/components/portfolio/PortfolioOverview";
+import { PortfolioPnlPanel } from "@/components/portfolio/PortfolioPnlPanel";
 import { AllocationChart } from "@/components/portfolio/AllocationChart";
 
 function DashboardSkeleton() {
@@ -49,6 +50,8 @@ export default function DashboardPage() {
       <h1 className="font-serif text-2xl font-medium text-fg">Dashboard</h1>
 
       <PortfolioOverview />
+
+      <PortfolioPnlPanel />
 
       <AllocationChart />
 

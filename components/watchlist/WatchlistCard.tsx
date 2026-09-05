@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
+import { formatDistanceToNow } from "date-fns";
 import { X } from "lucide-react";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { PnlText } from "@/components/ui/PnlText";
@@ -61,6 +62,11 @@ export function WatchlistCard({ item }: { item: WatchlistItem }) {
               >
                 {quote.changePct !== null ? `${glyph(quote.changePct)} ${Math.abs(quote.changePct).toFixed(2)}%` : "—"}
               </div>
+              {quote.asOf && (
+                <div className="text-[10px] text-fg-subtle" title={new Date(quote.asOf).toLocaleString()}>
+                  as of {formatDistanceToNow(new Date(quote.asOf), { addSuffix: true })}
+                </div>
+              )}
             </div>
           )}
           <button

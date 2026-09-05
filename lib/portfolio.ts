@@ -26,6 +26,31 @@ export function computePositionsValue(positions: Position[], quotes: Map<string,
   return { positionsValue, positionsWithoutPrice };
 }
 
+export interface PnlSummary {
+  totalRealized: number; // realized P&L across every position, open or closed
+  totalUnrealized: number; // unrealized P&L across open positions with a live quote
+  positionsWithoutPrice: number; // count of open positions (with shares left) missing a live quote
+}
+
+/** Portfolio-wide realized vs. unrealized P&L, aggregated across every position. */
+export function computePnlSummary(positions: Position[], quotes: Map<string, Quote>): PnlSummary {
+  let totalRealized = 0;
+  let totalUnrealized = 0;
+  let positionsWithoutPrice = 0;
+
+  for (const position of positions) {
+    const price = quotes.get(position.symbol)?.price ?? null;
+    const metrics = computePositionMetrics(position, price);
+    totalRealized += metrics.realizedPnl;
+    if (metrics.openQty > 0) {
+      if (metrics.unrealizedPnl === null) positionsWithoutPrice += 1;
+      else totalUnrealized += metrics.unrealizedPnl;
+    }
+  }
+
+  return { totalRealized, totalUnrealized, positionsWithoutPrice };
+}
+
 export interface AllocationSlice {
   label: string;
   value: number;

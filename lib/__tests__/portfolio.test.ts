@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computePositionsValue, computeAllocation } from "../portfolio";
+import { computePositionsValue, computeAllocation, computePnlSummary } from "../portfolio";
 import type { Position, Quote } from "../types";
 
 function makePosition(overrides: Partial<Position> = {}): Position {
@@ -98,5 +98,42 @@ describe("computeAllocation", () => {
     const slices = computeAllocation(1000, [closed], new Map());
     expect(slices).toHaveLength(1);
     expect(slices[0].label).toBe("Cash");
+  });
+});
+
+describe("computePnlSummary", () => {
+  it("sums unrealized P&L across open positions with a live quote", () => {
+    const quotes = new Map([["AAPL", makeQuote("AAPL", 150)]]);
+    const result = computePnlSummary([makePosition()], quotes);
+    expect(result.totalUnrealized).toBe(500); // (150-100)*10
+    expect(result.totalRealized).toBe(0);
+    expect(result.positionsWithoutPrice).toBe(0);
+  });
+
+  it("sums realized P&L from closed positions and excludes them from unrealized", () => {
+    const closed = makePosition({
+      status: "closed",
+      exits: [{ id: "x1", date: "2026-02-01T00:00:00.000Z", price: 120, qty: 10 }],
+    });
+    const result = computePnlSummary([closed], new Map());
+    expect(result.totalRealized).toBe(200); // (120-100)*10
+    expect(result.totalUnrealized).toBe(0);
+  });
+
+  it("counts a partially-sold open position's realized gain and remaining unrealized separately", () => {
+    const scaled = makePosition({
+      entries: [{ id: "e1", date: "2026-01-01T00:00:00.000Z", price: 100, qty: 10 }],
+      exits: [{ id: "x1", date: "2026-01-15T00:00:00.000Z", price: 110, qty: 4 }],
+    });
+    const quotes = new Map([["AAPL", makeQuote("AAPL", 130)]]);
+    const result = computePnlSummary([scaled], quotes);
+    expect(result.totalRealized).toBe(40); // (110-100)*4
+    expect(result.totalUnrealized).toBe(180); // (130-100)*6
+  });
+
+  it("flags open positions missing a live quote instead of counting them as zero", () => {
+    const result = computePnlSummary([makePosition()], new Map());
+    expect(result.positionsWithoutPrice).toBe(1);
+    expect(result.totalUnrealized).toBe(0);
   });
 });

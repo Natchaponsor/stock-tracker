@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
+import { formatDistanceToNow } from "date-fns";
 import { Card } from "@/components/ui/Card";
 import { PnlText } from "@/components/ui/PnlText";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -50,6 +51,11 @@ export function PositionCard({ position }: { position: Position }) {
             ) : (
               <p className="text-sm font-semibold tabular-nums text-fg">
                 {quote?.price !== null && quote?.price !== undefined ? formatCurrency(quote.price) : "—"}
+              </p>
+            )}
+            {quote?.asOf && (
+              <p className="text-[11px] text-fg-subtle" title={new Date(quote.asOf).toLocaleString()}>
+                as of {formatDistanceToNow(new Date(quote.asOf), { addSuffix: true })}
               </p>
             )}
           </div>
