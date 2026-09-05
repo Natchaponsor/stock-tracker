@@ -6,67 +6,31 @@ import { Card, CardHeader, CardTitle, CardSubtitle } from "@/components/ui/Card"
 import { Button } from "@/components/ui/Button";
 import { FormField, inputClass, textareaClass } from "./FormField";
 import { usePositionStore } from "@/store/usePositionStore";
-import { parseDateInputAsLocal, todayDateInputValue } from "@/lib/date";
 import type { Position } from "@/lib/types";
 
 interface PositionFormProps {
-  existingPosition?: Position;
+  existingPosition: Position;
 }
 
 export function PositionForm({ existingPosition }: PositionFormProps) {
   const router = useRouter();
   const strategies = usePositionStore((s) => s.strategies);
-  const addPosition = usePositionStore((s) => s.addPosition);
   const updatePosition = usePositionStore((s) => s.updatePosition);
 
-  const [symbol, setSymbol] = useState(existingPosition?.symbol ?? "");
-  const [strategyId, setStrategyId] = useState(existingPosition?.strategyId ?? strategies[0]?.id ?? "");
-  const [thesis, setThesis] = useState(existingPosition?.thesis ?? "");
-  const [stop, setStop] = useState(existingPosition?.stop?.toString() ?? "");
-  const [target, setTarget] = useState(existingPosition?.target?.toString() ?? "");
-
-  // only used when creating a brand new position
-  const [entryPrice, setEntryPrice] = useState("");
-  const [entryQty, setEntryQty] = useState("");
-  const [entryDate, setEntryDate] = useState(todayDateInputValue());
+  const [strategyId, setStrategyId] = useState(existingPosition.strategyId ?? "");
+  const [thesis, setThesis] = useState(existingPosition.thesis);
+  const [stop, setStop] = useState(existingPosition.stop?.toString() ?? "");
+  const [target, setTarget] = useState(existingPosition.target?.toString() ?? "");
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const trimmedSymbol = symbol.trim().toUpperCase();
-    if (!trimmedSymbol) return;
-
-    const patch = {
-      symbol: trimmedSymbol,
+    updatePosition(existingPosition.id, {
       strategyId: strategyId || null,
       thesis,
       stop: stop ? parseFloat(stop) : null,
       target: target ? parseFloat(target) : null,
-    };
-
-    if (existingPosition) {
-      updatePosition(existingPosition.id, patch);
-      router.push(`/positions/${existingPosition.id}`);
-      return;
-    }
-
-    const price = parseFloat(entryPrice);
-    const qty = parseFloat(entryQty);
-    if (!Number.isFinite(price) || !Number.isFinite(qty) || qty <= 0) return;
-
-    const id = `pos-${Date.now()}`;
-    const now = new Date().toISOString();
-    addPosition({
-      id,
-      status: "open",
-      entries: [{ id: `fill-${Date.now()}`, date: parseDateInputAsLocal(entryDate).toISOString(), price, qty }],
-      exits: [],
-      notes: [],
-      isSeed: false,
-      createdAt: now,
-      updatedAt: now,
-      ...patch,
     });
-    router.push(`/positions/${id}`);
+    router.push(`/positions/${existingPosition.id}`);
   }
 
   return (
@@ -74,19 +38,13 @@ export function PositionForm({ existingPosition }: PositionFormProps) {
       <Card>
         <CardHeader>
           <div>
-            <CardTitle>{existingPosition ? "Position details" : "New position"}</CardTitle>
-            <CardSubtitle>{existingPosition ? "Symbol, strategy, and plan" : "Symbol, strategy, and your first fill"}</CardSubtitle>
+            <CardTitle>Position details</CardTitle>
+            <CardSubtitle>Symbol, strategy, and plan</CardSubtitle>
           </div>
         </CardHeader>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
           <FormField label="Symbol">
-            <input
-              value={symbol}
-              onChange={(e) => setSymbol(e.target.value.toUpperCase())}
-              className={inputClass}
-              placeholder="AAPL"
-              disabled={Boolean(existingPosition)}
-            />
+            <input value={existingPosition.symbol} className={inputClass} disabled />
           </FormField>
           <FormField label="Strategy">
             <select value={strategyId} onChange={(e) => setStrategyId(e.target.value)} className={inputClass}>
@@ -112,30 +70,8 @@ export function PositionForm({ existingPosition }: PositionFormProps) {
         </div>
       </Card>
 
-      {!existingPosition && (
-        <Card>
-          <CardHeader>
-            <div>
-              <CardTitle>First fill</CardTitle>
-              <CardSubtitle>Scale in further later from the position page</CardSubtitle>
-            </div>
-          </CardHeader>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-            <FormField label="Entry price">
-              <input type="number" step="0.01" value={entryPrice} onChange={(e) => setEntryPrice(e.target.value)} className={inputClass} />
-            </FormField>
-            <FormField label="Quantity">
-              <input type="number" step="1" value={entryQty} onChange={(e) => setEntryQty(e.target.value)} className={inputClass} />
-            </FormField>
-            <FormField label="Date">
-              <input type="date" value={entryDate} onChange={(e) => setEntryDate(e.target.value)} className={inputClass} />
-            </FormField>
-          </div>
-        </Card>
-      )}
-
       <Button type="submit" variant="primary">
-        {existingPosition ? "Save changes" : "Log position"}
+        Save changes
       </Button>
     </form>
   );

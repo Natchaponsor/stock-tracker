@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { TrendingUp, Plus } from "lucide-react";
+import { TrendingUp } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { Button } from "@/components/ui/Button";
+import { LogPositionMenu } from "@/components/shell/LogPositionMenu";
 
 const NAV_ITEMS = [
   { href: "/", label: "Dashboard" },
@@ -42,12 +42,7 @@ export function NavBar() {
         </nav>
 
         <div className="ml-auto flex items-center gap-2 shrink-0">
-          <Link href="/positions/new">
-            <Button variant="primary" size="sm">
-              <Plus className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Log Position</span>
-            </Button>
-          </Link>
+          <LogPositionMenu />
         </div>
       </div>
     </header>
