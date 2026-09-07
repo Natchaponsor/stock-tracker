@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { FormField, inputClass } from "./FormField";
 import { usePositionStore } from "@/store/usePositionStore";
 import { computePositionMetrics } from "@/lib/positionMetrics";
+import { allocateFifoSell } from "@/lib/portfolio";
 import { parseDateInputAsLocal, todayDateInputValue } from "@/lib/date";
 
 export function SellForm() {
@@ -15,23 +16,33 @@ export function SellForm() {
   const addFill = usePositionStore((s) => s.addFill);
   const closePosition = usePositionStore((s) => s.closePosition);
 
-  const openPositions = useMemo(
-    () =>
-      positions
-        .filter((p) => p.status === "open")
-        .map((p) => ({ position: p, openQty: computePositionMetrics(p, null).openQty }))
-        .filter((p) => p.openQty > 0)
-        .sort((a, b) => a.position.symbol.localeCompare(b.position.symbol)),
-    [positions]
-  );
+  // Grouped by symbol, not by individual position — the user picks what to sell,
+  // not which lot; a sell is allocated across open lots oldest-first (FIFO).
+  const bySymbol = useMemo(() => {
+    const groups = new Map<string, typeof positions>();
+    for (const p of positions) {
+      if (p.status !== "open") continue;
+      if (computePositionMetrics(p, null).openQty <= 0) continue;
+      const list = groups.get(p.symbol) ?? [];
+      list.push(p);
+      groups.set(p.symbol, list);
+    }
+    return Array.from(groups.entries())
+      .map(([symbol, lots]) => ({
+        symbol,
+        lots,
+        openQty: lots.reduce((a, p) => a + computePositionMetrics(p, null).openQty, 0),
+      }))
+      .sort((a, b) => a.symbol.localeCompare(b.symbol));
+  }, [positions]);
 
-  const [positionId, setPositionId] = useState(openPositions[0]?.position.id ?? "");
+  const [symbol, setSymbol] = useState(bySymbol[0]?.symbol ?? "");
   const [price, setPrice] = useState("");
   const [qty, setQty] = useState("");
   const [date, setDate] = useState(todayDateInputValue());
   const [error, setError] = useState<string | null>(null);
 
-  const selected = openPositions.find((p) => p.position.id === positionId);
+  const selected = bySymbol.find((g) => g.symbol === symbol);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -41,22 +52,28 @@ export function SellForm() {
     const p = parseFloat(price);
     const q = parseFloat(qty);
     if (!Number.isFinite(p) || !Number.isFinite(q) || q <= 0) return;
-    if (q > selected.openQty) {
-      setError(`You only hold ${selected.openQty} shares of ${selected.position.symbol}.`);
+
+    const allocations = allocateFifoSell(selected.lots, q);
+    if (!allocations) {
+      setError(`You only hold ${selected.openQty} shares of ${selected.symbol}.`);
       return;
     }
 
-    addFill(selected.position.id, "exit", {
-      id: `fill-${Date.now()}`,
-      date: parseDateInputAsLocal(date).toISOString(),
-      price: p,
-      qty: q,
+    const fillDate = parseDateInputAsLocal(date).toISOString();
+    allocations.forEach((alloc, i) => {
+      addFill(alloc.positionId, "exit", {
+        id: `fill-${Date.now()}-${i}`,
+        date: fillDate,
+        price: p,
+        qty: alloc.qty,
+      });
+      if (alloc.willFullyClose) closePosition(alloc.positionId);
     });
-    if (q === selected.openQty) closePosition(selected.position.id);
-    router.push(`/positions/${selected.position.id}`);
+
+    router.push(`/positions/${allocations[allocations.length - 1].positionId}`);
   }
 
-  if (openPositions.length === 0) {
+  if (bySymbol.length === 0) {
     return (
       <Card>
         <CardHeader>
@@ -75,15 +92,17 @@ export function SellForm() {
         <CardHeader>
           <div>
             <CardTitle>Sell shares</CardTitle>
-            <CardSubtitle>Sell all or part of a holding you currently have open</CardSubtitle>
+            <CardSubtitle>
+              Sell all or part of a holding you currently have open — oldest shares sell first (FIFO)
+            </CardSubtitle>
           </div>
         </CardHeader>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
           <FormField label="Symbol">
-            <select value={positionId} onChange={(e) => setPositionId(e.target.value)} className={inputClass}>
-              {openPositions.map(({ position, openQty }) => (
-                <option key={position.id} value={position.id}>
-                  {position.symbol} — {openQty} sh open
+            <select value={symbol} onChange={(e) => setSymbol(e.target.value)} className={inputClass}>
+              {bySymbol.map((g) => (
+                <option key={g.symbol} value={g.symbol}>
+                  {g.symbol} — {g.openQty} sh open
                 </option>
               ))}
             </select>

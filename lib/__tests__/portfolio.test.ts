@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { computePositionsValue, computeAllocation, computePnlSummary } from "../portfolio";
+import {
+  computePositionsValue,
+  computeAllocation,
+  computePnlSummary,
+  computeSymbolPnlBreakdown,
+  allocateFifoSell,
+} from "../portfolio";
 import type { Position, Quote } from "../types";
 
 function makePosition(overrides: Partial<Position> = {}): Position {
@@ -135,5 +141,108 @@ describe("computePnlSummary", () => {
     const result = computePnlSummary([makePosition()], new Map());
     expect(result.positionsWithoutPrice).toBe(1);
     expect(result.totalUnrealized).toBe(0);
+  });
+});
+
+describe("computeSymbolPnlBreakdown", () => {
+  it("combines realized and unrealized P&L per symbol", () => {
+    const aapl = makePosition({ id: "a", symbol: "AAPL" });
+    const msft = makePosition({
+      id: "b",
+      symbol: "MSFT",
+      entries: [{ id: "e2", date: "2026-01-01T00:00:00.000Z", price: 200, qty: 5 }],
+    });
+    const quotes = new Map([
+      ["AAPL", makeQuote("AAPL", 150)],
+      ["MSFT", makeQuote("MSFT", 190)],
+    ]);
+    const result = computeSymbolPnlBreakdown([aapl, msft], quotes);
+    const aaplRow = result.find((r) => r.symbol === "AAPL");
+    const msftRow = result.find((r) => r.symbol === "MSFT");
+    expect(aaplRow?.unrealizedPnl).toBe(500); // (150-100)*10
+    expect(msftRow?.unrealizedPnl).toBe(-50); // (190-200)*5
+  });
+
+  it("aggregates a closed lot and a fresh open lot of the same symbol into one row", () => {
+    const closed = makePosition({
+      id: "a",
+      status: "closed",
+      exits: [{ id: "x1", date: "2026-02-01T00:00:00.000Z", price: 120, qty: 10 }],
+    });
+    const reopened = makePosition({
+      id: "b",
+      entries: [{ id: "e2", date: "2026-03-01T00:00:00.000Z", price: 140, qty: 5 }],
+    });
+    const quotes = new Map([["AAPL", makeQuote("AAPL", 150)]]);
+    const result = computeSymbolPnlBreakdown([closed, reopened], quotes);
+    expect(result).toHaveLength(1);
+    expect(result[0].realizedPnl).toBe(200); // (120-100)*10 from the closed lot
+    expect(result[0].unrealizedPnl).toBe(50); // (150-140)*5 from the still-open lot
+  });
+
+  it("reports unrealized as null when open shares exist but there's no quote yet", () => {
+    const result = computeSymbolPnlBreakdown([makePosition()], new Map());
+    expect(result[0].unrealizedPnl).toBeNull();
+  });
+
+  it("sorts by combined P&L magnitude, largest first", () => {
+    const small = makePosition({ id: "a", symbol: "MSFT", entries: [{ id: "e1", date: "2026-01-01T00:00:00.000Z", price: 10, qty: 1 }] });
+    const big = makePosition({ id: "b", symbol: "AAPL", entries: [{ id: "e2", date: "2026-01-01T00:00:00.000Z", price: 100, qty: 10 }] });
+    const quotes = new Map([
+      ["MSFT", makeQuote("MSFT", 11)],
+      ["AAPL", makeQuote("AAPL", 150)],
+    ]);
+    const result = computeSymbolPnlBreakdown([small, big], quotes);
+    expect(result[0].symbol).toBe("AAPL");
+  });
+});
+
+describe("allocateFifoSell", () => {
+  it("takes shares from a single lot when it covers the whole sell", () => {
+    const lot = makePosition();
+    const allocations = allocateFifoSell([lot], 4);
+    expect(allocations).toEqual([{ positionId: "p1", qty: 4, willFullyClose: false }]);
+  });
+
+  it("fully closes a lot when the sell exactly matches its open quantity", () => {
+    const lot = makePosition();
+    const allocations = allocateFifoSell([lot], 10);
+    expect(allocations).toEqual([{ positionId: "p1", qty: 10, willFullyClose: true }]);
+  });
+
+  it("depletes the oldest lot first, then spills into the next-oldest", () => {
+    const older = makePosition({
+      id: "old",
+      entries: [{ id: "e1", date: "2026-01-01T00:00:00.000Z", price: 100, qty: 5 }],
+    });
+    const newer = makePosition({
+      id: "new",
+      entries: [{ id: "e2", date: "2026-03-01T00:00:00.000Z", price: 120, qty: 10 }],
+    });
+    // pass newer before older to prove sort order comes from entry date, not array order
+    const allocations = allocateFifoSell([newer, older], 8);
+    expect(allocations).toEqual([
+      { positionId: "old", qty: 5, willFullyClose: true },
+      { positionId: "new", qty: 3, willFullyClose: false },
+    ]);
+  });
+
+  it("returns null when the requested quantity exceeds every open lot combined", () => {
+    const lot = makePosition();
+    expect(allocateFifoSell([lot], 11)).toBeNull();
+  });
+
+  it("returns null for a zero or negative quantity", () => {
+    const lot = makePosition();
+    expect(allocateFifoSell([lot], 0)).toBeNull();
+    expect(allocateFifoSell([lot], -5)).toBeNull();
+  });
+
+  it("ignores lots that are already fully closed", () => {
+    const closed = makePosition({
+      status: "closed",
+      exits: [{ id: "x1", date: "2026-02-01T00:00:00.000Z", price: 120, qty: 10 }],
+    });
+    expect(allocateFifoSell([closed], 1)).toBeNull();
   });
 });

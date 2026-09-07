@@ -66,6 +66,11 @@ not dozens of same-day trades).
   provider with real history is in place.
 - CSV export of positions (mirroring the day-trading journal's trade-log export),
   in addition to the existing full-JSON export.
+- **Multiple brokerages/accounts per symbol.** Selling currently assumes every share
+  of a symbol is one fungible pool and applies FIFO automatically across whatever
+  open lots exist for it — there's no way yet to tag a lot by broker/account or
+  choose which one a sell comes from. Not supported today; would need fills to carry
+  an account tag and the Sell flow to let you pick one instead of always FIFO-ing.
 
 ## Data model
 

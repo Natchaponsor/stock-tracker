@@ -51,6 +51,90 @@ export function computePnlSummary(positions: Position[], quotes: Map<string, Quo
   return { totalRealized, totalUnrealized, positionsWithoutPrice };
 }
 
+export interface SymbolPnl {
+  symbol: string;
+  realizedPnl: number; // summed across every position in this symbol, open or closed
+  unrealizedPnl: number | null; // null only when there are open shares but no live quote yet
+  openQty: number;
+}
+
+/** Realized vs. unrealized P&L broken down per symbol, for expanding the portfolio-wide total. */
+export function computeSymbolPnlBreakdown(positions: Position[], quotes: Map<string, Quote>): SymbolPnl[] {
+  const bySymbol = new Map<string, Position[]>();
+  for (const position of positions) {
+    const list = bySymbol.get(position.symbol) ?? [];
+    list.push(position);
+    bySymbol.set(position.symbol, list);
+  }
+
+  const result: SymbolPnl[] = [];
+  for (const [symbol, symbolPositions] of bySymbol) {
+    const price = quotes.get(symbol)?.price ?? null;
+    let realizedPnl = 0;
+    let unrealizedPnl = 0;
+    let openQty = 0;
+    let hasOpenShares = false;
+
+    for (const position of symbolPositions) {
+      const metrics = computePositionMetrics(position, price);
+      realizedPnl += metrics.realizedPnl;
+      openQty += metrics.openQty;
+      if (metrics.openQty > 0) {
+        hasOpenShares = true;
+        if (metrics.unrealizedPnl !== null) unrealizedPnl += metrics.unrealizedPnl;
+      }
+    }
+
+    result.push({
+      symbol,
+      realizedPnl,
+      unrealizedPnl: hasOpenShares && price === null ? null : unrealizedPnl,
+      openQty,
+    });
+  }
+
+  return result.sort(
+    (a, b) => Math.abs(b.realizedPnl) + Math.abs(b.unrealizedPnl ?? 0) - (Math.abs(a.realizedPnl) + Math.abs(a.unrealizedPnl ?? 0))
+  );
+}
+
+export interface FifoAllocation {
+  positionId: string;
+  qty: number;
+  willFullyClose: boolean;
+}
+
+/**
+ * Decides how many shares to take from each open lot (position) of the same symbol to
+ * satisfy a sell, oldest lot first (FIFO) — so the user picks a symbol and a quantity,
+ * not which specific position/lot to sell from. Returns null if there aren't enough
+ * open shares across every lot combined to cover the requested quantity.
+ */
+export function allocateFifoSell(openLotsOfSymbol: Position[], qtyToSell: number): FifoAllocation[] | null {
+  if (qtyToSell <= 0) return null;
+
+  const firstEntryTime = (p: Position) =>
+    p.entries.length > 0 ? Math.min(...p.entries.map((f) => new Date(f.date).getTime())) : Infinity;
+
+  const lots = openLotsOfSymbol
+    .map((position) => ({ position, openQty: computePositionMetrics(position, null).openQty }))
+    .filter((lot) => lot.openQty > 0)
+    .sort((a, b) => firstEntryTime(a.position) - firstEntryTime(b.position));
+
+  const totalAvailable = lots.reduce((a, lot) => a + lot.openQty, 0);
+  if (qtyToSell > totalAvailable) return null;
+
+  const allocations: FifoAllocation[] = [];
+  let remaining = qtyToSell;
+  for (const lot of lots) {
+    if (remaining <= 0) break;
+    const take = Math.min(lot.openQty, remaining);
+    allocations.push({ positionId: lot.position.id, qty: take, willFullyClose: take === lot.openQty });
+    remaining -= take;
+  }
+  return allocations;
+}
+
 export interface AllocationSlice {
   label: string;
   value: number;
