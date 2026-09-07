@@ -9,7 +9,7 @@ export interface StrategyStats {
 }
 
 export function computeStrategyStats(strategyId: string, positions: Position[]): StrategyStats {
-  const forStrategy = positions.filter((p) => p.strategyId === strategyId);
+  const forStrategy = positions.filter((p) => p.strategyIds.includes(strategyId));
   const closed = forStrategy.filter((p) => p.status === "closed");
 
   if (closed.length === 0) {

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Card, CardHeader, CardTitle, CardSubtitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { FormField, inputClass, textareaClass } from "./FormField";
+import { StrategyTagPicker } from "./StrategyTagPicker";
 import { usePositionStore } from "@/store/usePositionStore";
 import type { Position } from "@/lib/types";
 
@@ -17,7 +18,8 @@ export function PositionForm({ existingPosition }: PositionFormProps) {
   const strategies = usePositionStore((s) => s.strategies);
   const updatePosition = usePositionStore((s) => s.updatePosition);
 
-  const [strategyId, setStrategyId] = useState(existingPosition.strategyId ?? "");
+  const [strategyIds, setStrategyIds] = useState<string[]>(existingPosition.strategyIds);
+  const [customTags, setCustomTags] = useState<string[]>(existingPosition.customTags);
   const [thesis, setThesis] = useState(existingPosition.thesis);
   const [stop, setStop] = useState(existingPosition.stop?.toString() ?? "");
   const [target, setTarget] = useState(existingPosition.target?.toString() ?? "");
@@ -25,7 +27,8 @@ export function PositionForm({ existingPosition }: PositionFormProps) {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     updatePosition(existingPosition.id, {
-      strategyId: strategyId || null,
+      strategyIds,
+      customTags,
       thesis,
       stop: stop ? parseFloat(stop) : null,
       target: target ? parseFloat(target) : null,
@@ -46,16 +49,6 @@ export function PositionForm({ existingPosition }: PositionFormProps) {
           <FormField label="Symbol">
             <input value={existingPosition.symbol} className={inputClass} disabled />
           </FormField>
-          <FormField label="Strategy">
-            <select value={strategyId} onChange={(e) => setStrategyId(e.target.value)} className={inputClass}>
-              <option value="">None</option>
-              {strategies.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
-          </FormField>
           <FormField label="Stop (optional)">
             <input type="number" step="0.01" value={stop} onChange={(e) => setStop(e.target.value)} className={inputClass} />
           </FormField>
@@ -63,7 +56,16 @@ export function PositionForm({ existingPosition }: PositionFormProps) {
             <input type="number" step="0.01" value={target} onChange={(e) => setTarget(e.target.value)} className={inputClass} />
           </FormField>
         </div>
-        <div className="mt-4">
+        <div className="mt-4 space-y-4">
+          <FormField label="Strategy Notes">
+            <StrategyTagPicker
+              strategies={strategies}
+              strategyIds={strategyIds}
+              customTags={customTags}
+              onChangeStrategyIds={setStrategyIds}
+              onChangeCustomTags={setCustomTags}
+            />
+          </FormField>
           <FormField label="Thesis">
             <textarea value={thesis} onChange={(e) => setThesis(e.target.value)} className={textareaClass} rows={3} />
           </FormField>

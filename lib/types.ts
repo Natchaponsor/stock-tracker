@@ -29,7 +29,13 @@ export interface Position {
   id: string;
   symbol: string;
   status: PositionStatus;
-  strategyId: string | null;
+  /** Zero or more Strategy records this position is tagged with — "Strategy Notes"
+   * supports multiple selections, not just one. */
+  strategyIds: string[];
+  /** Free-text tags alongside (or instead of) a formal Strategy — the "Other" option
+   * in Strategy Notes. See lib/migratePosition.ts for how these promote to a real
+   * Strategy later. */
+  customTags: string[];
   thesis: string;
   stop: number | null;
   target: number | null;

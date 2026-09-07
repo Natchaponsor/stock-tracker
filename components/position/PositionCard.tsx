@@ -17,7 +17,10 @@ export function PositionCard({ position }: { position: Position }) {
   const { quotes, isLoading } = useQuotes([position.symbol]);
   const quote = quotes.get(position.symbol);
   const strategies = usePositionStore((s) => s.strategies);
-  const strategy = strategies.find((s) => s.id === position.strategyId);
+  const tags = [
+    ...position.strategyIds.map((id) => strategies.find((s) => s.id === id)?.name).filter((n): n is string => Boolean(n)),
+    ...position.customTags,
+  ];
 
   const metrics = useMemo(
     () => computePositionMetrics(position, quote?.price ?? null),
@@ -30,11 +33,11 @@ export function PositionCard({ position }: { position: Position }) {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex items-center gap-2.5">
             <span className="font-serif text-lg font-medium text-fg">{position.symbol}</span>
-            {strategy && (
-              <span className="rounded-full border border-border px-2.5 py-0.5 text-[11px] text-fg-subtle">
-                {strategy.name}
+            {tags.map((tag) => (
+              <span key={tag} className="rounded-full border border-border px-2.5 py-0.5 text-[11px] text-fg-subtle">
+                {tag}
               </span>
-            )}
+            ))}
           </div>
         </div>
 

@@ -8,7 +8,6 @@ import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { WatchlistStrip } from "@/components/watchlist/WatchlistStrip";
 import { PositionCard } from "@/components/position/PositionCard";
-import { ClosedPositionsTable } from "@/components/position/ClosedPositionsTable";
 import { StrategyPerformanceCard } from "@/components/strategy/StrategyPerformanceCard";
 import { PortfolioOverview } from "@/components/portfolio/PortfolioOverview";
 import { PortfolioPnlPanel } from "@/components/portfolio/PortfolioPnlPanel";
@@ -35,13 +34,6 @@ export default function DashboardPage() {
   const positions = usePositionStore((s) => s.positions);
 
   const openPositions = useMemo(() => positions.filter((p) => p.status === "open"), [positions]);
-  const closedPositions = useMemo(
-    () =>
-      [...positions.filter((p) => p.status === "closed")].sort(
-        (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-      ),
-    [positions]
-  );
 
   if (!hydrated) return <DashboardSkeleton />;
 
@@ -65,12 +57,12 @@ export default function DashboardPage() {
 
       <section className="space-y-3">
         <div>
-          <h2 className="font-serif text-lg font-medium text-fg">Open positions</h2>
+          <h2 className="font-serif text-lg font-medium text-fg">Outstanding Shares</h2>
           <p className="text-sm text-fg-muted">{openPositions.length} open</p>
         </div>
         {openPositions.length === 0 ? (
           <Card>
-            <EmptyState title="No open positions" description="Log a position to start tracking it here." />
+            <EmptyState title="No outstanding shares" description="Buy shares to start tracking them here." />
           </Card>
         ) : (
           <div className="space-y-3">
@@ -80,8 +72,6 @@ export default function DashboardPage() {
           </div>
         )}
       </section>
-
-      <ClosedPositionsTable positions={closedPositions} />
 
       <StrategyPerformanceCard />
     </div>

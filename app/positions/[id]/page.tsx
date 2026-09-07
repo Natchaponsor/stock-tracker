@@ -63,7 +63,10 @@ export default function PositionDetailPage() {
     );
   }
 
-  const strategy = strategies.find((s) => s.id === position.strategyId);
+  const tags = [
+    ...position.strategyIds.map((id) => strategies.find((s) => s.id === id)?.name).filter((n): n is string => Boolean(n)),
+    ...position.customTags,
+  ];
 
   return (
     <div className="space-y-6">
@@ -73,7 +76,11 @@ export default function PositionDetailPage() {
           <Badge tone={position.status === "open" ? "gain" : "neutral"} className="uppercase">
             {position.status}
           </Badge>
-          {strategy && <Badge tone="accent">{strategy.name}</Badge>}
+          {tags.map((tag) => (
+            <Badge key={tag} tone="accent">
+              {tag}
+            </Badge>
+          ))}
           {metrics.totalPnl !== null && (
             <PnlText value={metrics.totalPnl} formatted={formatCurrency(metrics.totalPnl, { signed: true })} className="text-lg" />
           )}

@@ -79,7 +79,7 @@ export function SellForm() {
         <CardHeader>
           <div>
             <CardTitle>Sell shares</CardTitle>
-            <CardSubtitle>You don&apos;t hold any open positions to sell right now.</CardSubtitle>
+            <CardSubtitle>You don&apos;t hold any outstanding shares to sell right now.</CardSubtitle>
           </div>
         </CardHeader>
       </Card>

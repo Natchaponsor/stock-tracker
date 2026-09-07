@@ -1,4 +1,5 @@
 import type { ExportPayload, Position, Strategy, WatchlistItem } from "./types";
+import { migratePositionShape } from "./migratePosition";
 
 export function buildExportPayload(
   startingCash: number,
@@ -72,7 +73,8 @@ export function validateImportPayload(json: unknown): ImportResult {
       exportedAt: typeof p.exportedAt === "string" ? p.exportedAt : new Date().toISOString(),
       version: 1,
       startingCash: p.startingCash,
-      positions: p.positions,
+      // Normalizes pre-multi-strategy exports (a bare `strategyId`) into strategyIds/customTags.
+      positions: p.positions.map((pos) => migratePositionShape(pos as unknown as Record<string, unknown>)),
       strategies: p.strategies,
       watchlist: p.watchlist,
     },

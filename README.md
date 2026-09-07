@@ -1,6 +1,6 @@
 # Stock Tracker
 
-A weekly-cadence swing-trading journal — a small watchlist, open positions with
+A weekly-cadence swing-trading journal — a small watchlist, outstanding shares with
 real-time unrealized P&L, and a position journal. Built as a sibling to a separate
 day-trading journal, for a different rhythm (a handful of positions held for weeks,
 not dozens of same-day trades).
@@ -20,10 +20,13 @@ not dozens of same-day trades).
 
 - **Dashboard** — cash balance (editable), mark-to-market positions value, total
   portfolio value; a horizontal bar chart of portfolio allocation (cash + each
-  symbol); a watchlist strip; open positions; closed positions; per-strategy
+  symbol); portfolio P&L (realized vs. unrealized, expandable per stock); a
+  watchlist strip; Outstanding Shares (currently-held positions); per-strategy
   win-rate/avg-return.
-- **Positions** — log a position with an initial fill, scale in/out with more fills
-  at any time, close it, edit its thesis/strategy/stop/target, delete it.
+- **Positions** — Buy shares (a new symbol, or adding to one you already hold) and
+  Sell shares (FIFO across whatever open lots exist for that symbol, auto-closing
+  a lot it fully depletes); scale in/out any time from a position's own page; edit
+  its Strategy Notes/thesis/stop/target; delete it.
 - **Journal** — periodic check-in notes on a position (not just a one-time closing
   reflection), each snapshotting the price at the time.
 - **Strategies** — define named rule sets (entry rule / exit rule) and see how each
@@ -77,8 +80,11 @@ not dozens of same-day trades).
 - **Position** — a symbol with `entries`/`exits` (`Fill[]`, so scaling in or out over
   weeks is native) and a `notes` timeline (periodic check-ins, not a one-time reflection).
   Can be `"open"` or `"closed"`.
-- **Strategy** — a named rule set (entry rule / exit rule) a position is tagged with;
-  the Strategies page tracks win rate and average return per strategy.
+- **Strategy Notes** — a position's `strategyIds` (zero or more named Strategy
+  records) plus `customTags` (free-text notes with no formal rule set yet). Both
+  render as the same tag pill in Outstanding Shares and on the position page.
+- **Strategy** — a named rule set (entry rule / exit rule) a position can be tagged
+  with; the Strategies page tracks win rate and average return per strategy.
 - **Cash** — a starting balance you set, netted automatically against every fill
   across every position; shown as its own slice in the portfolio allocation chart.
 

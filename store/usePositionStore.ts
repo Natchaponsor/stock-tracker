@@ -4,6 +4,7 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { generateSeedPositions, generateSeedStrategies, generateSeedWatchlist } from "@/lib/seed";
 import { DEFAULT_STARTING_CASH } from "@/lib/cash";
+import { migratePositionShape } from "@/lib/migratePosition";
 import type { ExportPayload, Fill, JournalNote, Position, Strategy, WatchlistItem } from "@/lib/types";
 
 interface PositionState {
@@ -152,6 +153,7 @@ export const usePositionStore = create<PositionState>()(
     }),
     {
       name: "stock-tracker-store",
+      version: 1, // v1: Position.strategyId (single) -> strategyIds[] + customTags[]
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         positions: state.positions,
@@ -161,6 +163,13 @@ export const usePositionStore = create<PositionState>()(
         hidePnl: state.hidePnl,
         initialized: state.initialized,
       }),
+      migrate: (persisted) => {
+        const state = persisted as { positions?: unknown[] };
+        if (Array.isArray(state.positions)) {
+          state.positions = state.positions.map((p) => migratePositionShape(p as Record<string, unknown>));
+        }
+        return persisted;
+      },
       onRehydrateStorage: () => (state) => {
         if (!state) return;
         state.seedIfNeeded();

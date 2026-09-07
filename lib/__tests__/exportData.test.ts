@@ -7,7 +7,8 @@ function makePosition(): Position {
     id: "p1",
     symbol: "AAPL",
     status: "open",
-    strategyId: null,
+    strategyIds: [],
+    customTags: [],
     thesis: "",
     stop: null,
     target: null,
@@ -61,5 +62,34 @@ describe("validateImportPayload", () => {
       watchlist: "oops",
     });
     expect(result.ok).toBe(false);
+  });
+
+  it("migrates a pre-multi-strategy export (bare strategyId) into strategyIds/customTags", () => {
+    const legacyPosition = {
+      id: "p1",
+      symbol: "AAPL",
+      status: "open",
+      strategyId: "strat-1",
+      thesis: "",
+      stop: null,
+      target: null,
+      entries: [{ id: "e1", date: "2026-01-01T00:00:00.000Z", price: 100, qty: 10 }],
+      exits: [],
+      notes: [],
+      isSeed: false,
+      createdAt: "2026-01-01T00:00:00.000Z",
+      updatedAt: "2026-01-01T00:00:00.000Z",
+    };
+    const result = validateImportPayload({
+      startingCash: 100,
+      positions: [legacyPosition],
+      strategies: [],
+      watchlist: [],
+    });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.payload.positions[0].strategyIds).toEqual(["strat-1"]);
+      expect(result.payload.positions[0].customTags).toEqual([]);
+    }
   });
 });

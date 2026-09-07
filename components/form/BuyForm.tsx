@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Card, CardHeader, CardTitle, CardSubtitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { FormField, inputClass, textareaClass } from "./FormField";
+import { StrategyTagPicker } from "./StrategyTagPicker";
 import { usePositionStore } from "@/store/usePositionStore";
 import { parseDateInputAsLocal, todayDateInputValue } from "@/lib/date";
 
@@ -16,7 +17,8 @@ export function BuyForm() {
   const addFill = usePositionStore((s) => s.addFill);
 
   const [symbol, setSymbol] = useState("");
-  const [strategyId, setStrategyId] = useState(strategies[0]?.id ?? "");
+  const [strategyIds, setStrategyIds] = useState<string[]>([]);
+  const [customTags, setCustomTags] = useState<string[]>([]);
   const [thesis, setThesis] = useState("");
   const [stop, setStop] = useState("");
   const [target, setTarget] = useState("");
@@ -53,7 +55,8 @@ export function BuyForm() {
       id,
       symbol: trimmedSymbol,
       status: "open",
-      strategyId: strategyId || null,
+      strategyIds,
+      customTags,
       thesis,
       stop: stop ? parseFloat(stop) : null,
       target: target ? parseFloat(target) : null,
@@ -91,16 +94,6 @@ export function BuyForm() {
           </FormField>
           {!existingOpen && (
             <>
-              <FormField label="Strategy">
-                <select value={strategyId} onChange={(e) => setStrategyId(e.target.value)} className={inputClass}>
-                  <option value="">None</option>
-                  {strategies.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name}
-                    </option>
-                  ))}
-                </select>
-              </FormField>
               <FormField label="Stop (optional)">
                 <input type="number" step="0.01" value={stop} onChange={(e) => setStop(e.target.value)} className={inputClass} />
               </FormField>
@@ -111,7 +104,16 @@ export function BuyForm() {
           )}
         </div>
         {!existingOpen && (
-          <div className="mt-4">
+          <div className="mt-4 space-y-4">
+            <FormField label="Strategy Notes">
+              <StrategyTagPicker
+                strategies={strategies}
+                strategyIds={strategyIds}
+                customTags={customTags}
+                onChangeStrategyIds={setStrategyIds}
+                onChangeCustomTags={setCustomTags}
+              />
+            </FormField>
             <FormField label="Thesis">
               <textarea value={thesis} onChange={(e) => setThesis(e.target.value)} className={textareaClass} rows={3} />
             </FormField>
