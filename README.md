@@ -36,11 +36,15 @@ not dozens of same-day trades).
   Erase all data — every option behind its own confirmation dialog. Erasing stays
   erased across reloads; it won't silently reseed the demo dataset.
 - **Live prices** — current price + day change per symbol via Finnhub, fetched
-  on load and on manual refresh only.
+  on load and on manual refresh only, labeled with how stale the quote actually is
+  (Finnhub's free tier doesn't update outside regular US market hours).
+- **Analysis tab** — pick an action (Technical/Fundamental/Stock Performance, Market
+  Performance, Sector Rotation), a stock, and a market, and it builds a ready-to-run
+  `/stock-analysis` prompt and copies it to your clipboard — an MVP prompt generator
+  for the `stock-analysis` Claude Skill, not a live in-app integration yet.
 
 ## Coming Soon
 
-- **Analysis tab (Claude Skill).** In progress of building the stock analysis tool.
 - **Signals — Trend (EMA), RSI, MACD, Volume, and P/E.** Every position page has a
   Signals panel wired to real, unit-tested logic (`lib/indicators.ts`, `lib/signal.ts`)
   that currently has no data to read, so each row shows "Coming Soon!" until a
