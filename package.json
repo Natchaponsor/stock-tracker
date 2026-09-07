@@ -1,6 +1,8 @@
 {
   "name": "stock-tracker",
   "version": "0.1.0",
+  "description": "A client-side swing-trading journal: outstanding shares with live P&L, FIFO buy/sell, and a position journal — all stored locally in your browser.",
+  "license": "MIT",
   "private": true,
   "scripts": {
     "dev": "next dev -p 3001",

@@ -113,3 +113,7 @@ quote proxy fails soft on a missing key, same as any other upstream error).
 Requires a Node/Edge runtime for the price-proxy route, so it deploys to
 **Vercel**, not a static export. Add `FINNHUB_API_KEY` as an environment variable in
 the Vercel project settings — it's read server-side only and never reaches the client.
+
+## License
+
+[MIT](LICENSE)

@@ -18,7 +18,7 @@ const fraunces = Fraunces({
 
 export const metadata: Metadata = {
   title: "Stock Tracker",
-  description: "A weekly swing-trading journal: watchlist signals, outstanding shares, and a position journal.",
+  description: "A client-side swing-trading journal: outstanding shares with live P&L, FIFO buy/sell, and a position journal — all stored locally in your browser.",
 };
 
 export default function RootLayout({

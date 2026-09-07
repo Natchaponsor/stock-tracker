@@ -52,7 +52,7 @@ export function Footer() {
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-fg-subtle">
-          <p>© {new Date().getFullYear()} Top Sortrakul · AGPL-3.0 · Built with Claude Code</p>
+          <p>© {new Date().getFullYear()} Top Sortrakul · MIT · Built with Claude Code</p>
           <a
             href={`${REPO_URL}/issues/new`}
             target="_blank"
