@@ -40,7 +40,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="min-h-full flex flex-col bg-bg text-fg font-sans">
+      <body className="min-h-full flex flex-col bg-bg text-fg font-sans" suppressHydrationWarning>
         <AppShell>{children}</AppShell>
       </body>
     </html>
