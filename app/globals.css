@@ -1,47 +1,77 @@
 @import "tailwindcss";
 
+/*
+ * The Deck Log — a navigator's watch log. Dark is the chart table at night
+ * (deep navy ground, graphite log plane, signal-blue lamp); light is the same
+ * sheet on a day watch (cool paper grey, never cream). The accent is navy on
+ * the day sheet and a brightened navy-family blue at night, where true navy
+ * would vanish against the ground. It is reserved for
+ * controls that change state and for the now-marker; it is never decoration.
+ * Gain and loss carry starboard green and port red, always paired with a
+ * glyph and a sign so colour is never the only cue.
+ */
 @theme {
-  --color-bg: #080808;
-  --color-card: #131417;
-  --color-panel: #1b1c20;
-  --color-border: #4f5155;
-  --color-fg: #dee9f2;
-  --color-fg-muted: #adadad;
-  --color-fg-subtle: #8f8f8f;
-  --color-accent: #399cfd;
-  --color-accent-strong: #0b68fb;
-  --color-gain: #7fb88a;
-  --color-loss: #e08170;
-  --color-ema-fast: #b8850c;
-  --color-ema-slow: #0b68fb;
+  --color-bg: #070c12;
+  --color-card: #0c141c;
+  --color-panel: #131d27;
+  --color-border: #25313d;
+  --color-rule: #1b2631;
+  --color-rule-strong: #3b4c5e;
+  --color-fg: #e5ecf3;
+  --color-fg-muted: #9fb0c0;
+  --color-fg-subtle: #7b8da0;
+  --color-accent: #5b8ae0;
+  --color-accent-strong: #82a8f0;
+  --color-on-accent: #0a1017;
+  --color-gain: #4fb07a;
+  --color-loss: #e2705a;
+  --color-ema-fast: #f0a92e;
+  --color-ema-slow: #6aa9e0;
+  /* Plot ink — the blue pencil of a plot sheet. Data ink, never a control. */
+  --color-plot: #6aa9e0;
+  --color-plot-quiet: #506b82;
 
-  --font-serif: var(--font-fraunces), Georgia, serif;
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --font-stamp: var(--font-archivo-narrow), var(--font-archivo), ui-sans-serif, sans-serif;
+  --font-mono: var(--font-azeret), ui-monospace, SFMono-Regular, monospace;
+  /* Retained so routes outside this redesign keep resolving `font-serif`;
+     it now points at the log's stamped display face. */
+  --font-serif: var(--font-archivo-narrow), var(--font-archivo), ui-sans-serif, sans-serif;
+
+  /* The registration axis: the label column every band locks to. */
+  --axis: 11.5rem;
 }
 
 :root[data-theme="light"] {
-  --color-bg: #f7f8fa;
+  --color-bg: #eef1f4;
   --color-card: #ffffff;
-  --color-panel: #eef0f3;
-  --color-border: #d7dbe0;
-  --color-fg: #14181d;
-  --color-fg-muted: #5b5f66;
-  --color-fg-subtle: #83878e;
-  --color-accent: #0b68fb;
-  --color-accent-strong: #0a52c7;
-  --color-gain: #1f7a45;
-  --color-loss: #c1402c;
-  --color-ema-fast: #9a6510;
-  --color-ema-slow: #0b57d0;
+  --color-panel: #e3e8ed;
+  --color-border: #c7cfd7;
+  --color-rule: #d6dde3;
+  --color-rule-strong: #93a0ad;
+  --color-fg: #101720;
+  --color-fg-muted: #4a5561;
+  --color-fg-subtle: #5a6672;
+  --color-accent: #1c3664;
+  --color-accent-strong: #122548;
+  --color-on-accent: #f3f6fb;
+  --color-gain: #16714a;
+  --color-loss: #b03a24;
+  --color-ema-fast: #8a5500;
+  --color-ema-slow: #1b5fa8;
+  --color-plot: #1b5fa8;
+  --color-plot-quiet: #6b7c8c;
 }
 
 @layer base {
   * {
-    border-color: var(--color-border);
+    border-color: var(--color-rule);
   }
 
   html {
     color-scheme: dark;
+    scrollbar-color: var(--color-rule-strong) var(--color-bg);
+    scrollbar-width: thin;
   }
 
   html[data-theme="light"] {
@@ -54,29 +84,112 @@
     font-feature-settings: "tnum" 1, "lnum" 1;
   }
 
+  /* Browser surfaces belong to the design system too. */
   ::selection {
     background: var(--color-accent);
-    color: var(--color-bg);
+    color: var(--color-on-accent);
+  }
+
+  ::-webkit-scrollbar {
+    width: 11px;
+    height: 11px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--color-bg);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-rule-strong);
+    border: 3px solid var(--color-bg);
+    border-radius: 0;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-fg-subtle);
+  }
+
+  input,
+  textarea {
+    caret-color: var(--color-accent);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  a {
+    text-underline-offset: 0.2em;
+    text-decoration-thickness: 1px;
   }
 }
 
-@layer utilities {
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
+@layer components {
+  /*
+   * A stamped heading: the log's printed band label. This IS the heading —
+   * it never sits above another one as an eyebrow.
+   */
+  .stamp {
+    font-family: var(--font-stamp);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-weight: 600;
+    font-size: 0.6875rem;
+    line-height: 1.2;
   }
-  .no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+
+  .stamp-lg {
+    font-family: var(--font-stamp);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 600;
+    font-size: 0.8125rem;
+    line-height: 1.2;
+  }
+
+  /* Fix stamps, timestamps and figures read as measurement, not as costume. */
+  .fix-stamp {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums lining-nums;
+    letter-spacing: 0.02em;
+  }
+
+  .figure {
+    font-variant-numeric: tabular-nums lining-nums;
+    letter-spacing: -0.02em;
+  }
+
+  /* The one authored moment: a fix is stamped, never eased into place. */
+  @keyframes fix-stamp-in {
+    0% {
+      opacity: 0.25;
+      transform: translateY(-1px);
+    }
+    60% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fix-stamp {
+    animation: fix-stamp-in 140ms steps(3, end) both;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .animate-fix-stamp {
+    animation: none;
+  }
+
   *,
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
   }
 }

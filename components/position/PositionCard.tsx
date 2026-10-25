@@ -3,7 +3,6 @@
 import { useMemo } from "react";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
-import { Card } from "@/components/ui/Card";
 import { PnlText } from "@/components/ui/PnlText";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useQuotes } from "@/hooks/useQuotes";
@@ -13,6 +12,7 @@ import { formatCurrency, formatPct } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import type { Position } from "@/lib/types";
 
+/** One held position, as an entry in the log's main ruled table. */
 export function PositionCard({ position }: { position: Position }) {
   const { quotes, isLoading } = useQuotes([position.symbol]);
   const quote = quotes.get(position.symbol);
@@ -28,67 +28,75 @@ export function PositionCard({ position }: { position: Position }) {
   );
 
   return (
-    <Link href={`/positions/${position.id}`}>
-      <Card className="hover:border-fg-subtle/50 transition-colors duration-150">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="flex items-center gap-2.5">
-            <span className="font-serif text-lg font-medium text-fg">{position.symbol}</span>
-            {tags.map((tag) => (
-              <span key={tag} className="rounded-full border border-border px-2.5 py-0.5 text-[11px] text-fg-subtle">
-                {tag}
-              </span>
-            ))}
-          </div>
+    <Link
+      href={`/positions/${position.id}`}
+      className="group block border-b border-rule py-4 transition-colors last:border-b-0 hover:bg-panel"
+    >
+      <div className="grid grid-cols-2 items-baseline gap-x-4 gap-y-3 sm:grid-cols-[minmax(0,1fr)_7.5rem_8.5rem_8.5rem_5rem]">
+        <div className="col-span-2 min-w-0 sm:col-span-1">
+          <span className="stamp-lg text-fg transition-colors group-hover:text-accent">{position.symbol}</span>
+          {tags.length > 0 && (
+            <span className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1">
+              {tags.map((tag) => (
+                <span key={tag} className="stamp text-fg-subtle">
+                  {tag}
+                </span>
+              ))}
+            </span>
+          )}
         </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-5">
-          <div>
-            <p className="text-[10px] font-medium uppercase tracking-wide text-fg-subtle">Avg entry</p>
-            <p className="text-sm font-semibold tabular-nums text-fg">{formatCurrency(metrics.avgEntryPrice)}</p>
-            <p className="text-[11px] text-fg-subtle">{metrics.openQty} sh</p>
-          </div>
-          <div>
-            <p className="text-[10px] font-medium uppercase tracking-wide text-fg-subtle">Current</p>
-            {isLoading && !quote ? (
-              <Skeleton className="h-5 w-16" />
-            ) : (
-              <p className="text-sm font-semibold tabular-nums text-fg">
-                {quote?.price !== null && quote?.price !== undefined ? formatCurrency(quote.price) : "—"}
-              </p>
-            )}
-            {quote?.asOf && (
-              <p className="text-[11px] text-fg-subtle" title={new Date(quote.asOf).toLocaleString()}>
-                as of {formatDistanceToNow(new Date(quote.asOf), { addSuffix: true })}
-              </p>
-            )}
-          </div>
-          <div>
-            <p className="text-[10px] font-medium uppercase tracking-wide text-fg-subtle">Unrealized</p>
-            {metrics.unrealizedPnl !== null ? (
-              <>
-                <PnlText
-                  value={metrics.unrealizedPnl}
-                  formatted={formatCurrency(metrics.unrealizedPnl, { signed: true })}
-                  className="text-base font-serif"
-                />
-                <p className={cn("text-[11px] tabular-nums", metrics.returnPct !== null && metrics.returnPct >= 0 ? "text-gain" : "text-loss")}>
-                  {metrics.returnPct !== null ? formatPct(metrics.returnPct, { signed: true }) : "—"}
-                </p>
-              </>
-            ) : (
-              <p className="text-sm text-fg-subtle">—</p>
-            )}
-          </div>
-          <div>
-            <p className="text-[10px] font-medium uppercase tracking-wide text-fg-subtle">Held</p>
-            <p className="text-sm font-semibold text-fg">{metrics.daysHeld} days</p>
-          </div>
-          <div>
-            <p className="text-[10px] font-medium uppercase tracking-wide text-fg-subtle">Signal</p>
-            <p className="text-sm font-medium text-fg-subtle">Coming Soon!</p>
-          </div>
+        <div>
+          <p className="stamp text-fg-subtle sm:hidden">Avg entry</p>
+          <p className="figure text-sm font-medium text-fg">{formatCurrency(metrics.avgEntryPrice)}</p>
+          <p className="fix-stamp text-[11px] text-fg-subtle">{metrics.openQty} sh</p>
         </div>
-      </Card>
+
+        <div>
+          <p className="stamp text-fg-subtle sm:hidden">Last fix</p>
+          {isLoading && !quote ? (
+            <Skeleton className="h-5 w-16" />
+          ) : (
+            <p key={quote?.asOf ?? "no-fix"} className="figure animate-fix-stamp text-sm font-medium text-fg">
+              {quote?.price !== null && quote?.price !== undefined ? formatCurrency(quote.price) : "—"}
+            </p>
+          )}
+          {quote?.asOf && (
+            <p className="fix-stamp text-[11px] text-fg-subtle" title={new Date(quote.asOf).toLocaleString()}>
+              {formatDistanceToNow(new Date(quote.asOf), { addSuffix: true })}
+            </p>
+          )}
+        </div>
+
+        <div>
+          <p className="stamp text-fg-subtle sm:hidden">Unrealized</p>
+          {metrics.unrealizedPnl !== null ? (
+            <>
+              <PnlText
+                key={quote?.asOf ?? "no-fix"}
+                value={metrics.unrealizedPnl}
+                formatted={formatCurrency(metrics.unrealizedPnl, { signed: true })}
+                className="figure animate-fix-stamp text-base"
+              />
+              <p
+                className={cn(
+                  "figure text-[11px]",
+                  metrics.returnPct !== null && metrics.returnPct >= 0 ? "text-gain" : "text-loss"
+                )}
+              >
+                {metrics.returnPct !== null ? formatPct(metrics.returnPct, { signed: true }) : "—"}
+              </p>
+            </>
+          ) : (
+            <p className="figure text-sm text-fg-subtle">—</p>
+          )}
+        </div>
+
+        <div>
+          <p className="stamp text-fg-subtle sm:hidden">Held</p>
+          <p className="figure text-sm text-fg-muted">{metrics.daysHeld}d</p>
+        </div>
+      </div>
     </Link>
   );
 }

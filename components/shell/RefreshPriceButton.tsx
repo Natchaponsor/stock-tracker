@@ -5,7 +5,11 @@ import { useSWRConfig } from "swr";
 import { RefreshCw } from "lucide-react";
 import { cn } from "@/lib/cn";
 
-export function RefreshPriceButton() {
+/**
+ * Taking a fix: the only thing in the app that ever triggers a quote fetch.
+ * Nothing refreshes on a timer, and the label says so.
+ */
+export function RefreshPriceButton({ onAccent = false }: { onAccent?: boolean }) {
   const { mutate } = useSWRConfig();
   const [refreshing, setRefreshing] = useState(false);
 
@@ -13,8 +17,8 @@ export function RefreshPriceButton() {
     if (refreshing) return;
     setRefreshing(true);
     try {
-      // Revalidates every active /api/quote SWR key at once (watchlist cards, position
-      // cards, portfolio overview, allocation chart may each hold a different symbol
+      // Revalidates every active /api/quote SWR key at once (watchlist rows, position
+      // rows, the running balance, allocation may each hold a different symbol
       // subset) — this is the only thing that ever triggers a quote fetch now.
       await mutate((key) => typeof key === "string" && key.startsWith("/api/quote"));
     } finally {
@@ -28,10 +32,17 @@ export function RefreshPriceButton() {
       onClick={handleRefresh}
       disabled={refreshing}
       title="Fetch current prices now — nothing refreshes automatically in the background"
-      className="flex h-8 items-center gap-1.5 rounded-lg border border-border bg-panel px-2.5 text-sm font-medium text-fg-muted hover:text-fg transition-colors disabled:opacity-60"
+      className={cn(
+        "stamp flex h-7 items-center gap-1.5 border px-2.5 transition-colors disabled:opacity-60",
+        // On the accent band the global accent focus ring would be invisible,
+        // so the ring switches to the band's own ink.
+        onAccent
+          ? "border-on-accent/30 text-on-accent hover:border-on-accent focus-visible:outline-on-accent"
+          : "border-rule-strong text-fg-muted hover:text-fg"
+      )}
     >
-      <RefreshCw className={cn("h-3.5 w-3.5", refreshing && "animate-spin")} />
-      {refreshing ? "Refreshing…" : "Refresh Current Price"}
+      <RefreshCw className={cn("h-3 w-3", refreshing && "animate-spin")} />
+      {refreshing ? "Taking fix…" : "Take fix"}
     </button>
   );
 }

@@ -6,6 +6,7 @@ import { formatDistanceToNow } from "date-fns";
 import { X } from "lucide-react";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { PnlText } from "@/components/ui/PnlText";
+import { LogRow } from "@/components/log/Band";
 import { useQuotes } from "@/hooks/useQuotes";
 import { usePositionStore } from "@/store/usePositionStore";
 import { computePositionMetrics } from "@/lib/positionMetrics";
@@ -13,6 +14,7 @@ import { formatCurrency, glyph } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import type { WatchlistItem } from "@/lib/types";
 
+/** One watched symbol, as a ruled entry on the sheet. */
 export function WatchlistCard({ item }: { item: WatchlistItem }) {
   const { symbol } = item;
   const { quotes } = useQuotes([symbol]);
@@ -33,75 +35,85 @@ export function WatchlistCard({ item }: { item: WatchlistItem }) {
   const loadingQuote = !quote;
 
   return (
-    <div className="flex flex-col gap-2.5 rounded-2xl border border-border bg-card p-4">
-      <div className="flex items-start justify-between">
+    <LogRow interactive>
+      <div className="grid grid-cols-[1fr_auto] items-baseline gap-x-4 gap-y-1.5 sm:grid-cols-[8rem_7rem_6.5rem_1fr_1.5rem]">
         {openPosition ? (
-          <Link href={`/positions/${openPosition.id}`} className="min-w-0">
-            <div className="font-serif text-base font-medium text-fg">{symbol}</div>
+          <Link
+            href={`/positions/${openPosition.id}`}
+            className="stamp-lg text-fg transition-colors hover:text-accent"
+          >
+            {symbol}
+            <span className="stamp ml-2 text-fg-subtle">held</span>
           </Link>
         ) : (
-          <div className="font-serif text-base font-medium text-fg">{symbol}</div>
+          <span className="stamp-lg text-fg">{symbol}</span>
         )}
-        <div className="flex items-start gap-1.5">
-          {loadingQuote ? (
-            <Skeleton className="h-6 w-16" />
-          ) : (
-            <div className="text-right">
-              <div className="text-sm font-semibold tabular-nums text-fg">
-                {quote.price !== null ? `$${quote.price.toFixed(2)}` : "—"}
-              </div>
-              <div
-                className={cn(
-                  "text-[11px] tabular-nums",
-                  quote.changePct !== null && quote.changePct > 0
-                    ? "text-gain"
-                    : quote.changePct !== null && quote.changePct < 0
-                      ? "text-loss"
-                      : "text-fg-muted"
-                )}
-              >
-                {quote.changePct !== null ? `${glyph(quote.changePct)} ${Math.abs(quote.changePct).toFixed(2)}%` : "—"}
-              </div>
-              {quote.asOf && (
-                <div className="text-[10px] text-fg-subtle" title={new Date(quote.asOf).toLocaleString()}>
-                  as of {formatDistanceToNow(new Date(quote.asOf), { addSuffix: true })}
-                </div>
-              )}
-            </div>
-          )}
-          <button
-            type="button"
-            onClick={() => removeWatchlistSymbol(symbol)}
-            className="rounded p-0.5 text-fg-subtle hover:text-loss transition-colors"
-            title={`Remove ${symbol} from watchlist`}
+
+        {loadingQuote ? (
+          <Skeleton className="h-5 w-16 justify-self-end sm:justify-self-auto" />
+        ) : (
+          <span
+            key={`price-${quote.asOf ?? "no-fix"}`}
+            className="figure animate-fix-stamp justify-self-end text-sm font-medium text-fg sm:justify-self-auto"
           >
-            <X className="h-3.5 w-3.5" />
-          </button>
-        </div>
-      </div>
+            {quote.price !== null ? formatCurrency(quote.price) : "—"}
+          </span>
+        )}
 
-      <span className="w-fit rounded-md bg-panel px-2 py-1 text-[11px] font-medium text-fg-subtle">
-        Signal — Coming Soon!
-      </span>
+        {!loadingQuote && (
+          <span
+            key={`change-${quote.asOf ?? "no-fix"}`}
+            className={cn(
+              "figure animate-fix-stamp text-sm",
+              quote.changePct !== null && quote.changePct > 0
+                ? "text-gain"
+                : quote.changePct !== null && quote.changePct < 0
+                  ? "text-loss"
+                  : "text-fg-muted"
+            )}
+          >
+            {quote.changePct !== null ? (
+              <>
+                <span aria-hidden="true">{glyph(quote.changePct)} </span>
+                {quote.changePct > 0 ? "+" : quote.changePct < 0 ? "−" : ""}
+                {Math.abs(quote.changePct).toFixed(2)}%
+              </>
+            ) : (
+              "—"
+            )}
+          </span>
+        )}
 
-      {openPosition && positionMetrics ? (
-        <div className="flex items-center justify-between border-t border-border pt-2 text-xs">
-          <span className="text-fg-subtle">Position</span>
-          {positionMetrics.unrealizedPnl !== null ? (
-            <PnlText
-              value={positionMetrics.unrealizedPnl}
-              formatted={formatCurrency(positionMetrics.unrealizedPnl, { signed: true })}
-            />
+        <span className="fix-stamp col-span-2 text-[11px] text-fg-subtle sm:col-span-1">
+          {quote?.asOf ? (
+            <span title={new Date(quote.asOf).toLocaleString()}>
+              fix {formatDistanceToNow(new Date(quote.asOf), { addSuffix: true })}
+            </span>
           ) : (
-            <span className="text-fg-subtle">—</span>
+            <span>watching since {new Date(item.addedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
           )}
-        </div>
-      ) : (
-        <div className="flex items-center justify-between border-t border-border pt-2 text-xs text-fg-subtle">
-          <span>Watching</span>
-          <span>since {new Date(item.addedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
-        </div>
-      )}
-    </div>
+          {positionMetrics?.unrealizedPnl != null && (
+            <>
+              {" · "}
+              <PnlText
+                value={positionMetrics.unrealizedPnl}
+                formatted={formatCurrency(positionMetrics.unrealizedPnl, { signed: true })}
+                className="text-[11px]"
+              />
+            </>
+          )}
+        </span>
+
+        <button
+          type="button"
+          onClick={() => removeWatchlistSymbol(symbol)}
+          className="col-start-2 row-start-1 flex h-6 w-6 items-center justify-center justify-self-end text-fg-subtle transition-colors hover:text-loss sm:col-start-auto sm:row-start-auto"
+          title={`Remove ${symbol} from watchlist`}
+        >
+          <X className="h-3.5 w-3.5" />
+          <span className="sr-only">Remove {symbol} from watchlist</span>
+        </button>
+      </div>
+    </LogRow>
   );
 }

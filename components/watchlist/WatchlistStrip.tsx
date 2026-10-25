@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Plus } from "lucide-react";
 import { usePositionStore } from "@/store/usePositionStore";
 import { WatchlistCard } from "./WatchlistCard";
-import { EmptyState } from "@/components/ui/EmptyState";
+import { EmptyEntry } from "@/components/log/Band";
 import { MAX_WATCHLIST_SYMBOLS } from "@/lib/constants";
 
 export function WatchlistStrip() {
@@ -21,30 +21,34 @@ export function WatchlistStrip() {
   }
 
   return (
-    <div className="space-y-3">
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-        {watchlist.map((item) => (
-          <WatchlistCard key={item.symbol} item={item} />
-        ))}
-      </div>
-
-      {watchlist.length === 0 && (
-        <EmptyState title="Nothing on your watchlist yet" description="Add a symbol to start tracking its signal state." />
+    <div>
+      {watchlist.length === 0 ? (
+        <EmptyEntry
+          title="Nothing on watch"
+          description="Add a symbol to keep it on the sheet without holding any of it."
+        />
+      ) : (
+        <div>
+          {watchlist.map((item) => (
+            <WatchlistCard key={item.symbol} item={item} />
+          ))}
+        </div>
       )}
 
       {watchlist.length < MAX_WATCHLIST_SYMBOLS && (
-        <form onSubmit={handleAdd} className="flex items-center gap-2">
+        <form onSubmit={handleAdd} className="mt-4 flex items-center gap-2">
           <input
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             placeholder="Add symbol (e.g. MSFT)"
-            className="h-9 w-48 rounded-lg border border-border bg-panel px-3 text-sm text-fg placeholder:text-fg-subtle focus:outline-none focus:ring-2 focus:ring-accent"
+            aria-label="Add a symbol to the watchlist"
+            className="h-8 w-44 border border-rule-strong bg-panel px-2.5 text-sm text-fg placeholder:text-fg-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
           />
           <button
             type="submit"
-            className="flex h-9 items-center gap-1.5 rounded-lg border border-border bg-panel px-3 text-sm font-medium text-fg-muted hover:text-fg transition-colors"
+            className="stamp flex h-8 items-center gap-1.5 border border-rule-strong px-2.5 text-fg-muted transition-colors hover:text-fg"
           >
-            <Plus className="h-3.5 w-3.5" />
+            <Plus className="h-3 w-3" />
             Add
           </button>
         </form>

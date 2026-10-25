@@ -14,9 +14,9 @@ function PnlTooltip({ active, payload }: Partial<TooltipContentProps<number, str
   if (!active || !payload?.length) return null;
   const datum = payload[0].payload as PnlDatum;
   return (
-    <div className="rounded-lg border border-border bg-panel px-3 py-2 text-xs shadow-lg">
-      <p className="font-medium text-fg">{datum.label}</p>
-      <p className="tabular-nums text-fg-muted">{formatCurrency(datum.value, { signed: true })}</p>
+    <div className="border border-rule-strong bg-card px-3 py-2 shadow-[0_8px_24px_-8px_rgba(0,0,0,0.5)]">
+      <p className="stamp text-fg">{datum.label}</p>
+      <p className="fix-stamp mt-1 text-xs text-fg-muted">{formatCurrency(datum.value, { signed: true })}</p>
     </div>
   );
 }
@@ -36,27 +36,29 @@ export function PnlComparisonChart({ realized, unrealized }: { realized: number;
     <div style={{ height: 108 }}>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} layout="vertical" margin={{ top: 4, right: 24, bottom: 0, left: 8 }}>
-          <CartesianGrid stroke="var(--color-border)" strokeDasharray="3 5" horizontal={false} />
-          <ReferenceLine x={0} stroke="var(--color-fg-subtle)" />
+          <CartesianGrid stroke="var(--color-rule)" horizontal={false} />
+          <ReferenceLine x={0} stroke="var(--color-rule-strong)" />
           <XAxis
             type="number"
             tickFormatter={(v) => formatCurrency(v)}
             stroke="var(--color-fg-subtle)"
             fontSize={11}
-            tickLine={false}
-            axisLine={false}
+            tickLine={{ stroke: "var(--color-rule-strong)" }}
+            axisLine={{ stroke: "var(--color-rule-strong)" }}
+            fontFamily="var(--font-mono)"
           />
           <YAxis
             type="category"
             dataKey="label"
-            stroke="var(--color-fg-subtle)"
-            fontSize={12}
+            stroke="var(--color-fg-muted)"
+            fontSize={11}
             tickLine={false}
-            axisLine={false}
+            axisLine={{ stroke: "var(--color-rule-strong)" }}
             width={72}
+            fontFamily="var(--font-stamp)"
           />
           <Tooltip content={<PnlTooltip />} cursor={{ fill: "var(--color-panel)" }} />
-          <Bar dataKey="value" radius={4} isAnimationActive={false}>
+          <Bar dataKey="value" radius={0} maxBarSize={18} isAnimationActive={false}>
             {data.map((d) => (
               <Cell
                 key={d.label}

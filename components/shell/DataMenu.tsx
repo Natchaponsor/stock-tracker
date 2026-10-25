@@ -111,7 +111,8 @@ export function DataMenu() {
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="flex h-8 items-center gap-1 rounded-lg border border-border bg-panel px-2.5 text-sm font-medium text-fg-muted hover:text-fg transition-colors"
+        aria-haspopup="menu"
+        className="stamp flex h-8 items-center gap-1 border border-rule-strong px-2.5 text-fg-muted transition-colors hover:text-fg"
       >
         Data
         <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", open && "rotate-180")} />
@@ -120,14 +121,19 @@ export function DataMenu() {
       <input ref={fileInputRef} type="file" accept="application/json" className="hidden" onChange={handleFileSelected} />
 
       {open && (
-        <div className="absolute right-0 z-30 mt-1.5 w-52 overflow-hidden rounded-lg border border-border bg-panel py-1 shadow-lg">
+        <div
+          role="menu"
+          className="absolute right-0 z-30 mt-1.5 w-60 border border-rule-strong bg-card shadow-[0_8px_24px_-8px_rgba(0,0,0,0.5)]"
+        >
+          <p className="stamp border-b border-rule px-3 py-2 text-fg-subtle">Your data · this browser only</p>
           <button
             type="button"
             onClick={() => {
               setPending("export");
               setOpen(false);
             }}
-            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-fg hover:bg-card"
+            role="menuitem"
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-fg hover:bg-panel"
           >
             <Download className="h-3.5 w-3.5 text-fg-subtle" />
             Export data
@@ -138,7 +144,8 @@ export function DataMenu() {
               setOpen(false);
               fileInputRef.current?.click();
             }}
-            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-fg hover:bg-card"
+            role="menuitem"
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-fg hover:bg-panel"
           >
             <Upload className="h-3.5 w-3.5 text-fg-subtle" />
             Import data
@@ -149,7 +156,8 @@ export function DataMenu() {
               setPending("reset");
               setOpen(false);
             }}
-            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-fg hover:bg-card"
+            role="menuitem"
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-fg hover:bg-panel"
           >
             <RotateCcw className="h-3.5 w-3.5 text-fg-subtle" />
             Reset to demo data
@@ -160,7 +168,8 @@ export function DataMenu() {
               setPending("erase");
               setOpen(false);
             }}
-            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-loss hover:bg-card"
+            role="menuitem"
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-loss hover:bg-panel"
           >
             <Trash2 className="h-3.5 w-3.5" />
             Erase all data

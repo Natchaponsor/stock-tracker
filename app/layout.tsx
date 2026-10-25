@@ -1,19 +1,27 @@
 import type { Metadata } from "next";
-import { Inter, Fraunces } from "next/font/google";
+import { Archivo, Archivo_Narrow, Azeret_Mono } from "next/font/google";
 import "./globals.css";
 import { AppShell } from "@/components/shell/AppShell";
 
-const inter = Inter({
-  variable: "--font-inter",
+/* The log's three voices: a squarish grotesk for the sheet, a condensed cut
+   for stamped band headings, and a mono reserved for fix stamps and times. */
+const archivo = Archivo({
+  variable: "--font-archivo",
   subsets: ["latin"],
   display: "swap",
 });
 
-const fraunces = Fraunces({
-  variable: "--font-fraunces",
+const archivoNarrow = Archivo_Narrow({
+  variable: "--font-archivo-narrow",
   subsets: ["latin"],
   display: "swap",
-  axes: ["opsz"],
+});
+
+const azeretMono = Azeret_Mono({
+  variable: "--font-azeret",
+  subsets: ["latin"],
+  display: "swap",
+  weight: ["400", "500"],
 });
 
 export const metadata: Metadata = {
@@ -29,7 +37,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${fraunces.variable} h-full antialiased`}
+      className={`${archivo.variable} ${archivoNarrow.variable} ${azeretMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>

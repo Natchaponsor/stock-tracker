@@ -42,6 +42,12 @@ not dozens of same-day trades).
   Performance, Sector Rotation), a stock, and a market, and it builds a ready-to-run
   `/stock-analysis` prompt and copies it to your clipboard — an MVP prompt generator
   for the `stock-analysis` Claude Skill, not a live in-app integration yet.
+- **Disclosures tab** — a curated log of officials' OGE 278-T/278e filings (trades,
+  whole-report totals, annual holdings) read from `data/disclosures.json`, with
+  reporting bands shown as bands and a band flagging any symbol you hold or watch.
+  The `disclosure-collector` Claude Code agent (`.claude/agents/`) keeps it current;
+  `npm run disclosures:signals [-- --book export.json]` derives
+  `data/disclosure-signals.json`, the per-symbol packets a decision agent reads.
 
 ## Coming Soon
 

@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { TrendingUp } from "lucide-react";
 
 const REPO_URL = "https://github.com/Natchaponsor/stock-tracker";
 const LINKEDIN_URL = "https://www.linkedin.com/in/natchapon-sortrakul/";
@@ -20,16 +19,30 @@ function LinkedinIcon({ className }: { className?: string }) {
   );
 }
 
+/** The sheet's closing entry. */
 export function Footer() {
   return (
-    <footer className="border-t border-border bg-bg">
-      <div className="mx-auto w-full max-w-[1200px] space-y-3 px-4 py-5 sm:px-6">
-        <div className="flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 font-serif text-lg font-medium text-fg">
-            <TrendingUp className="h-5 w-5 text-accent" strokeWidth={2} />
-            Stock Tracker
-          </Link>
-          <div className="flex items-center gap-3">
+    <footer className="border-t-2 border-rule-strong">
+      <div className="mx-auto grid w-full max-w-[1200px] gap-x-6 gap-y-4 px-4 py-6 sm:px-6 lg:grid-cols-[var(--axis)_1fr]">
+        <Link href="/" className="flex items-center gap-2 text-fg lg:pr-6">
+          <span aria-hidden="true" className="h-4 w-[3px] bg-fg" />
+          <span className="stamp-lg">Stock Tracker</span>
+        </Link>
+
+        <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 lg:border-l lg:border-rule lg:pl-6">
+          <p className="fix-stamp text-[11px] text-fg-subtle">
+            © {new Date().getFullYear()} Top Sortrakul · MIT · Built with Claude Code
+          </p>
+
+          <div className="flex items-center gap-4">
+            <a
+              href={`${REPO_URL}/issues/new`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="stamp border-b border-rule-strong pb-0.5 text-fg-muted transition-colors hover:border-accent hover:text-fg"
+            >
+              Feedback
+            </a>
             <a
               href={LINKEDIN_URL}
               target="_blank"
@@ -37,7 +50,8 @@ export function Footer() {
               title="Connect on LinkedIn"
               className="text-fg-subtle transition-colors hover:text-fg"
             >
-              <LinkedinIcon className="h-5 w-5" />
+              <LinkedinIcon className="h-[18px] w-[18px]" />
+              <span className="sr-only">LinkedIn</span>
             </a>
             <a
               href={REPO_URL}
@@ -46,21 +60,10 @@ export function Footer() {
               title="View source on GitHub"
               className="text-fg-subtle transition-colors hover:text-fg"
             >
-              <GithubIcon className="h-5 w-5" />
+              <GithubIcon className="h-[18px] w-[18px]" />
+              <span className="sr-only">GitHub</span>
             </a>
           </div>
-        </div>
-
-        <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-fg-subtle">
-          <p>© {new Date().getFullYear()} Top Sortrakul · MIT · Built with Claude Code</p>
-          <a
-            href={`${REPO_URL}/issues/new`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1 text-fg-muted transition-colors hover:border-fg-subtle hover:text-fg"
-          >
-            Feedback <span aria-hidden="true">→</span>
-          </a>
         </div>
       </div>
     </footer>

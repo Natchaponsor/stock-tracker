@@ -34,10 +34,11 @@ export function ThemeToggle() {
       type="button"
       onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
       aria-pressed={theme === "light"}
-      title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-      className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-panel text-fg-muted hover:text-fg transition-colors"
+      title={theme === "dark" ? "Switch to day watch" : "Switch to night watch"}
+      className="flex h-8 w-8 items-center justify-center border border-rule-strong text-fg-muted transition-colors hover:text-fg"
     >
       {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+      <span className="sr-only">{theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}</span>
     </button>
   );
 }
