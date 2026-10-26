@@ -1,16 +1,13 @@
 "use client";
 
-import { useMemo } from "react";
 import { useHydrated } from "@/hooks/useHydrated";
-import { usePositionStore } from "@/store/usePositionStore";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { Band, EmptyEntry } from "@/components/log/Band";
+import { Band } from "@/components/log/Band";
+import { RecordedLog } from "@/components/log/RecordedLog";
 import { WatchlistStrip } from "@/components/watchlist/WatchlistStrip";
-import { PositionCard } from "@/components/position/PositionCard";
 import { StrategyPerformanceCard } from "@/components/strategy/StrategyPerformanceCard";
 import { PortfolioOverview } from "@/components/portfolio/PortfolioOverview";
 import { PortfolioPnlPanel } from "@/components/portfolio/PortfolioPnlPanel";
-import { AllocationChart } from "@/components/portfolio/AllocationChart";
 
 /** Mirrors the ruled-band shape the sheet loads into, so nothing jumps. */
 function BandSkeleton({ rows = 2, lead = false }: { rows?: number; lead?: boolean }) {
@@ -52,9 +49,6 @@ function DashboardSkeleton() {
 
 export default function DashboardPage() {
   const hydrated = useHydrated();
-  const positions = usePositionStore((s) => s.positions);
-
-  const openPositions = useMemo(() => positions.filter((p) => p.status === "open"), [positions]);
 
   if (!hydrated) return <DashboardSkeleton />;
 
@@ -66,36 +60,11 @@ export default function DashboardPage() {
 
       <PortfolioPnlPanel />
 
-      <AllocationChart />
-
       <Band title="Watchlist" meta="Tracked, not held">
         <WatchlistStrip />
       </Band>
 
-      <Band
-        title="Outstanding Shares"
-        meta={`${openPositions.length} open`}
-      >
-        {openPositions.length === 0 ? (
-          <EmptyEntry
-            title="No outstanding shares"
-            description="Log a buy and it takes its place on the sheet here, with its thesis and check-in notes."
-          />
-        ) : (
-          <div>
-            <div className="stamp hidden border-b border-rule pb-2 text-fg-subtle sm:grid sm:grid-cols-[minmax(0,1fr)_7.5rem_8.5rem_8.5rem_5rem]">
-              <span>Stock</span>
-              <span>Avg entry</span>
-              <span>Last fix</span>
-              <span>Unrealized</span>
-              <span>Held</span>
-            </div>
-            {openPositions.map((p) => (
-              <PositionCard key={p.id} position={p} />
-            ))}
-          </div>
-        )}
-      </Band>
+      <RecordedLog />
 
       <StrategyPerformanceCard />
     </div>

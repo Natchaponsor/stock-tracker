@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid } from "recharts";
 import type { TooltipContentProps } from "recharts";
-import { Band, EmptyEntry } from "@/components/log/Band";
+import { EmptyEntry } from "@/components/log/Band";
 import { usePositionStore } from "@/store/usePositionStore";
 import { useQuotes } from "@/hooks/useQuotes";
 import { computeCashSummary } from "@/lib/cash";
@@ -23,7 +23,10 @@ function AllocationTooltip({ active, payload }: Partial<TooltipContentProps<numb
   );
 }
 
-/** Allocation drawn as the sheet's scale bar: ruled ticks, squared ends, no pills. */
+/**
+ * Allocation drawn as the sheet's scale bar: ruled ticks, squared ends, no pills.
+ * Content only — it sits inside the "On the books" entry rather than being a band.
+ */
 export function AllocationChart() {
   const startingCash = usePositionStore((s) => s.startingCash);
   const positions = usePositionStore((s) => s.positions);
@@ -41,7 +44,7 @@ export function AllocationChart() {
   const chartHeight = Math.max(120, allocation.length * 42);
 
   return (
-    <Band title="Allocation" meta="Cash + open positions">
+    <>
       {!hasAnything ? (
         <EmptyEntry
           title="Nothing to allocate"
@@ -85,6 +88,6 @@ export function AllocationChart() {
           </ResponsiveContainer>
         </div>
       )}
-    </Band>
+    </>
   );
 }

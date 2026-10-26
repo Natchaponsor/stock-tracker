@@ -9,6 +9,7 @@ import { computeCashSummary } from "@/lib/cash";
 import { computePositionsValue } from "@/lib/portfolio";
 import { formatCurrency } from "@/lib/format";
 import { latestFixToken } from "@/components/log/fix";
+import { AllocationChart } from "@/components/portfolio/AllocationChart";
 
 /**
  * The running balance: the log's opening entry. The total is the largest ink
@@ -122,10 +123,21 @@ export function PortfolioOverview() {
           <dt className="stamp w-24 shrink-0 text-fg-subtle">Day change</dt>
           <dd className="figure text-sm text-fg-subtle">Not recorded</dd>
           <span className="fix-stamp ml-auto text-[11px] text-fg-subtle">
-            Per-symbol only, on each entry below
+            Per-symbol only, in the watchlist below
           </span>
         </div>
       </dl>
+
+      {/* Where the money sits belongs with the balance it divides, not a band of its own. */}
+      <div className="mt-6 border-t border-rule pt-3">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-4">
+          <h3 className="stamp text-fg-subtle">Allocation</h3>
+          <span className="fix-stamp text-[11px] text-fg-subtle">Cash + open positions</span>
+        </div>
+        <div className="pt-3">
+          <AllocationChart />
+        </div>
+      </div>
     </BandRaw>
   );
 }

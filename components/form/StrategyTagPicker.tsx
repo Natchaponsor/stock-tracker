@@ -17,7 +17,7 @@ interface StrategyTagPickerProps {
 /**
  * "Strategy Notes" — multi-select of named Strategy records, plus free-text tags for
  * notes that aren't a formal strategy yet. Both render as removable pills, and both
- * end up on the position as tags shown in Outstanding Shares.
+ * end up on the position as tags, shown on each buy in the Recorded log and on the position page.
  */
 export function StrategyTagPicker({
   strategies,

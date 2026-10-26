@@ -18,11 +18,11 @@ not dozens of same-day trades).
 
 ## What works right now
 
-- **Dashboard** — cash balance (editable), mark-to-market positions value, total
-  portfolio value; a horizontal bar chart of portfolio allocation (cash + each
-  symbol); portfolio P&L (realized vs. unrealized, expandable per stock); a
-  watchlist strip; Outstanding Shares (currently-held positions); per-strategy
-  win-rate/avg-return.
+- **Dashboard** — "On the books": total, cash (editable), mark-to-market positions
+  value and the allocation scale bar (cash + each symbol); portfolio P&L (realized
+  vs. unrealized, expandable per stock); a watchlist strip; a **Recorded log** of
+  every buy and sell, newest first — entry price, date and unrealized P&L on buys;
+  selling price, date and realized P&L on sells; per-strategy win-rate/avg-return.
 - **Positions** — Buy shares (a new symbol, or adding to one you already hold) and
   Sell shares (FIFO across whatever open lots exist for that symbol, auto-closing
   a lot it fully depletes); scale in/out any time from a position's own page; edit
@@ -92,7 +92,7 @@ not dozens of same-day trades).
   Can be `"open"` or `"closed"`.
 - **Strategy Notes** — a position's `strategyIds` (zero or more named Strategy
   records) plus `customTags` (free-text notes with no formal rule set yet). Both
-  render as the same tag pill in Outstanding Shares and on the position page.
+  render as tags on each buy in the Recorded log and on the position page.
 - **Strategy** — a named rule set (entry rule / exit rule) a position can be tagged
   with; the Strategies page tracks win rate and average return per strategy.
 - **Cash** — a starting balance you set, netted automatically against every fill
