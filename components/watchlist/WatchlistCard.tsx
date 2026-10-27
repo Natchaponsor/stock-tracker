@@ -1,12 +1,11 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 import { X } from "lucide-react";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { PnlText } from "@/components/ui/PnlText";
-import { LogRow } from "@/components/log/Band";
 import { useQuotes } from "@/hooks/useQuotes";
 import { usePositionStore } from "@/store/usePositionStore";
 import { computePositionMetrics } from "@/lib/positionMetrics";
@@ -14,8 +13,12 @@ import { formatCurrency, glyph } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import type { WatchlistItem } from "@/lib/types";
 
-/** One watched symbol, as a ruled entry on the sheet. */
-export function WatchlistCard({ item }: { item: WatchlistItem }) {
+/**
+ * One watched symbol, as an entry on the sheet. The row divider lives on the
+ * wrapper in WatchlistStrip (each row sits in its own draggable item), so this
+ * renders the row body only. `handle` is the drag grip, drawn left of the row.
+ */
+export function WatchlistCard({ item, handle }: { item: WatchlistItem; handle?: ReactNode }) {
   const { symbol } = item;
   const { quotes } = useQuotes([symbol]);
   const quote = quotes.get(symbol);
@@ -35,8 +38,9 @@ export function WatchlistCard({ item }: { item: WatchlistItem }) {
   const loadingQuote = !quote;
 
   return (
-    <LogRow interactive>
-      <div className="grid grid-cols-[1fr_auto] items-baseline gap-x-4 gap-y-1.5 sm:grid-cols-[8rem_7rem_6.5rem_1fr_1.5rem]">
+    <div className="flex items-center gap-2 py-3 transition-colors duration-100 hover:bg-panel">
+      {handle}
+      <div className="grid min-w-0 flex-1 grid-cols-[1fr_auto] items-baseline gap-x-4 gap-y-1.5 sm:grid-cols-[8rem_7rem_6.5rem_1fr_1.5rem]">
         {openPosition ? (
           <Link
             href={`/positions/${openPosition.id}`}
@@ -114,6 +118,6 @@ export function WatchlistCard({ item }: { item: WatchlistItem }) {
           <span className="sr-only">Remove {symbol} from watchlist</span>
         </button>
       </div>
-    </LogRow>
+    </div>
   );
 }

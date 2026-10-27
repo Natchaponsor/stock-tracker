@@ -18,9 +18,11 @@ not dozens of same-day trades).
 
 ## What works right now
 
-- **Dashboard** — "On the books": total, cash (editable), mark-to-market positions
-  value and the allocation scale bar (cash + each symbol); portfolio P&L (realized
-  vs. unrealized, expandable per stock); a watchlist strip; a **Recorded log** of
+- **Dashboard** — "Portfolio summary": the total, with cash (editable),
+  mark-to-market positions value and change from starting capital beside it, plus
+  the allocation scale bar (cash + each symbol); portfolio P&L (realized vs.
+  unrealized, per-stock breakdown open by default); a watchlist you can reorder by
+  dragging its grip (or ↑/↓ on the grip); a **Recorded log** of
   every buy and sell, newest first — entry price, date and unrealized P&L on buys;
   selling price, date and realized P&L on sells; per-strategy win-rate/avg-return.
 - **Positions** — Buy shares (a new symbol, or adding to one you already hold) and
@@ -39,7 +41,8 @@ not dozens of same-day trades).
   on load and on manual refresh only, labeled with how stale the quote actually is
   (Finnhub's free tier doesn't update outside regular US market hours).
 - **Analysis tab** — pick an action (Technical/Fundamental/Stock Performance, Market
-  Performance, Sector Rotation), a stock, and a market, and it builds a ready-to-run
+  Performance, Sector Rotation), a stock, and a market (Korea, Thailand, Japan, or US:
+  NYSE, NASDAQ, NYSE American, S&P 500), and it builds a ready-to-run
   `/stock-analysis` prompt and copies it to your clipboard — an MVP prompt generator
   for the `stock-analysis` Claude Skill, not a live in-app integration yet.
 - **Disclosures tab** — a curated log of officials' OGE 278-T/278e filings (trades,

@@ -14,7 +14,8 @@ import { latestFixToken } from "@/components/log/fix";
 
 export function PortfolioPnlPanel() {
   const positions = usePositionStore((s) => s.positions);
-  const [expanded, setExpanded] = useState(false);
+  // Open by default: the per-stock split is the reading most people come here for.
+  const [expanded, setExpanded] = useState(true);
 
   const openSymbols = useMemo(
     () => Array.from(new Set(positions.filter((p) => p.status === "open").map((p) => p.symbol))),

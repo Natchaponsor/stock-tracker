@@ -65,7 +65,7 @@ export function AnalysisRunner() {
             <input
               value={stock}
               onChange={(e) => setStock(e.target.value.toUpperCase())}
-              placeholder="e.g. 005930, 7203, PTT"
+              placeholder="e.g. AAPL, 005930, 7203, PTT"
               disabled={!needsStock}
               className={inputClass + " disabled:opacity-50"}
             />

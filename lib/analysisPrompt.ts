@@ -12,6 +12,10 @@ export const ANALYSIS_MARKETS = [
   "Korea (KOSPI)",
   "Thailand (SET)",
   "Japan (Nikkei)",
+  "US (NYSE)",
+  "US (NASDAQ)",
+  "US (NYSE American)",
+  "US (S&P 500)",
 ] as const;
 
 export type AnalysisMarket = (typeof ANALYSIS_MARKETS)[number];

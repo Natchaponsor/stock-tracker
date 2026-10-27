@@ -25,7 +25,7 @@ function AllocationTooltip({ active, payload }: Partial<TooltipContentProps<numb
 
 /**
  * Allocation drawn as the sheet's scale bar: ruled ticks, squared ends, no pills.
- * Content only — it sits inside the "On the books" entry rather than being a band.
+ * Content only — it sits inside the "Portfolio summary" entry rather than being a band.
  */
 export function AllocationChart() {
   const startingCash = usePositionStore((s) => s.startingCash);

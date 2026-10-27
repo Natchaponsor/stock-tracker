@@ -5,6 +5,7 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import { generateSeedPositions, generateSeedStrategies, generateSeedWatchlist } from "@/lib/seed";
 import { DEFAULT_STARTING_CASH } from "@/lib/cash";
 import { migratePositionShape } from "@/lib/migratePosition";
+import { orderByKeys } from "@/lib/reorder";
 import type { ExportPayload, Fill, JournalNote, Position, Strategy, WatchlistItem } from "@/lib/types";
 
 interface PositionState {
@@ -39,6 +40,8 @@ interface PositionState {
 
   addWatchlistSymbol: (symbol: string, note?: string) => void;
   removeWatchlistSymbol: (symbol: string) => void;
+  /** Persists a new watchlist order, given as the symbols in display order. */
+  reorderWatchlist: (symbols: string[]) => void;
 
   toggleHidePnl: () => void;
 }
@@ -148,6 +151,9 @@ export const usePositionStore = create<PositionState>()(
 
       removeWatchlistSymbol: (symbol) =>
         set((state) => ({ watchlist: state.watchlist.filter((w) => w.symbol !== symbol) })),
+
+      reorderWatchlist: (symbols) =>
+        set((state) => ({ watchlist: orderByKeys(state.watchlist, symbols, (w) => w.symbol) })),
 
       toggleHidePnl: () => set({ hidePnl: !get().hidePnl }),
     }),

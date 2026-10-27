@@ -15,6 +15,15 @@ describe("actionNeedsStock", () => {
 });
 
 describe("buildAnalysisPrompt", () => {
+  it("covers the US markets for both stock-level and market-wide actions", () => {
+    expect(buildAnalysisPrompt({ action: "Technical Analysis", market: "US (NASDAQ)", stock: " AAPL " })).toContain(
+      "AAPL in the US (NASDAQ) market"
+    );
+    expect(buildAnalysisPrompt({ action: "Sector Rotation", market: "US (S&P 500)", stock: "" })).toContain(
+      "for the US (S&P 500) market"
+    );
+  });
+
   it("includes the stock and market for a technical analysis", () => {
     const prompt = buildAnalysisPrompt({ action: "Technical Analysis", market: "Korea (KOSPI)", stock: "005930" });
     expect(prompt).toContain("/stock-analysis");
