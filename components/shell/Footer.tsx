@@ -19,28 +19,23 @@ function LinkedinIcon({ className }: { className?: string }) {
   );
 }
 
-/** The sheet's closing entry. */
+/** The page's closing line: name, credits, and where to send feedback. */
 export function Footer() {
   return (
-    <footer className="border-t-2 border-rule-strong">
-      <div className="mx-auto grid w-full max-w-[1200px] gap-x-6 gap-y-4 px-4 py-6 sm:px-6 lg:grid-cols-[var(--axis)_1fr]">
-        <Link href="/" className="flex items-center gap-2 text-fg lg:pr-6">
-          <span aria-hidden="true" className="h-4 w-[3px] bg-fg" />
-          <span className="stamp-lg">Stock Tracker</span>
+    <footer className="border-t border-ns-line">
+      <div className="mx-auto grid w-full max-w-[1200px] gap-x-6 gap-y-4 px-4 py-6 sm:px-6 md:grid-cols-[auto_1fr] md:items-center">
+        <Link href="/" className="flex items-center gap-2 text-ns-ink">
+          <span aria-hidden="true" className="oc-silk h-5 w-5 rounded-[6px]" />
+          <span className="ns-label">Stock Tracker</span>
         </Link>
 
-        <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 lg:border-l lg:border-rule lg:pl-6">
-          <p className="fix-stamp text-[11px] text-fg-subtle">
+        <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
+          <p className="ns-caption text-ns-ink-subtle">
             © {new Date().getFullYear()} Top Sortrakul · MIT · Built with Claude Code
           </p>
 
           <div className="flex items-center gap-4">
-            <a
-              href={`${REPO_URL}/issues/new`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="stamp border-b border-rule-strong pb-0.5 text-fg-muted transition-colors hover:border-accent hover:text-fg"
-            >
+            <a href={`${REPO_URL}/issues/new`} target="_blank" rel="noopener noreferrer" className="oc-link">
               Feedback
             </a>
             <a
@@ -48,7 +43,7 @@ export function Footer() {
               target="_blank"
               rel="noopener noreferrer"
               title="Connect on LinkedIn"
-              className="text-fg-subtle transition-colors hover:text-fg"
+              className="text-ns-ink-subtle transition-colors hover:text-ns-ink"
             >
               <LinkedinIcon className="h-[18px] w-[18px]" />
               <span className="sr-only">LinkedIn</span>
@@ -58,7 +53,7 @@ export function Footer() {
               target="_blank"
               rel="noopener noreferrer"
               title="View source on GitHub"
-              className="text-fg-subtle transition-colors hover:text-fg"
+              className="text-ns-ink-subtle transition-colors hover:text-ns-ink"
             >
               <GithubIcon className="h-[18px] w-[18px]" />
               <span className="sr-only">GitHub</span>

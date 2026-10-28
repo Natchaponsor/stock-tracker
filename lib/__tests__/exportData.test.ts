@@ -92,4 +92,30 @@ describe("validateImportPayload", () => {
       expect(result.payload.positions[0].customTags).toEqual([]);
     }
   });
+
+  it("round-trips custom sectors", () => {
+    const sectors = [{ id: "s1", name: "AI chips", swatch: "cat-fun" as const, symbols: ["NVDA", "AMD"] }];
+    const exported = buildExportPayload(100, [], [], [], sectors);
+    const result = validateImportPayload(JSON.parse(JSON.stringify(exported)));
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.payload.customSectors).toEqual(sectors);
+  });
+
+  it("imports a version 1 file with no custom sectors as an empty list", () => {
+    const result = validateImportPayload({ version: 1, startingCash: 100, positions: [], strategies: [], watchlist: [] });
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.payload.customSectors).toEqual([]);
+  });
+
+  it("rejects a custom sector with an unknown colour", () => {
+    const result = validateImportPayload({
+      startingCash: 100,
+      positions: [],
+      strategies: [],
+      watchlist: [],
+      customSectors: [{ id: "s1", name: "X", swatch: "#ff0000", symbols: [] }],
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error).toMatch(/customSectors/);
+  });
 });

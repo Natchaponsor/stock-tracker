@@ -1,16 +1,9 @@
 import type { HTMLAttributes } from "react";
 import { cn } from "@/lib/cn";
 
+/** A Navy Stream card: white on the gray page, large radius, barely-there shadow. */
 export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
-  return (
-    <div
-      className={cn(
-        "rounded-2xl border border-border bg-card p-5 sm:p-6 shadow-[0_1px_0_0_rgba(255,255,255,0.03)_inset]",
-        className
-      )}
-      {...props}
-    />
-  );
+  return <div className={cn("rounded-ns-lg bg-ns-card p-4 shadow-ns-card sm:p-5", className)} {...props} />;
 }
 
 export function CardHeader({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
@@ -18,14 +11,9 @@ export function CardHeader({ className, ...props }: HTMLAttributes<HTMLDivElemen
 }
 
 export function CardTitle({ className, ...props }: HTMLAttributes<HTMLHeadingElement>) {
-  return (
-    <h3
-      className={cn("font-serif text-lg font-medium tracking-tight text-fg", className)}
-      {...props}
-    />
-  );
+  return <h3 className={cn("ns-heading text-ns-ink", className)} {...props} />;
 }
 
 export function CardSubtitle({ className, ...props }: HTMLAttributes<HTMLParagraphElement>) {
-  return <p className={cn("text-sm text-fg-muted", className)} {...props} />;
+  return <p className={cn("ns-label font-normal text-ns-ink-muted", className)} {...props} />;
 }

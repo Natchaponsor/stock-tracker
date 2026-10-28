@@ -1,19 +1,22 @@
-import type { ExportPayload, Position, Strategy, WatchlistItem } from "./types";
+import type { CustomSector, ExportPayload, Position, Strategy, WatchlistItem } from "./types";
+import { SECTOR_SWATCHES } from "./sectors";
 import { migratePositionShape } from "./migratePosition";
 
 export function buildExportPayload(
   startingCash: number,
   positions: Position[],
   strategies: Strategy[],
-  watchlist: WatchlistItem[]
+  watchlist: WatchlistItem[],
+  customSectors: CustomSector[] = []
 ): ExportPayload {
   return {
     exportedAt: new Date().toISOString(),
-    version: 1,
+    version: 2,
     startingCash,
     positions,
     strategies,
     watchlist,
+    customSectors,
   };
 }
 
@@ -46,6 +49,18 @@ function isWatchlistItem(v: unknown): v is WatchlistItem {
   return typeof w.symbol === "string" && typeof w.addedAt === "string";
 }
 
+function isCustomSector(v: unknown): v is CustomSector {
+  if (typeof v !== "object" || v === null) return false;
+  const c = v as Record<string, unknown>;
+  return (
+    typeof c.id === "string" &&
+    typeof c.name === "string" &&
+    (SECTOR_SWATCHES as readonly unknown[]).includes(c.swatch) &&
+    Array.isArray(c.symbols) &&
+    c.symbols.every((s) => typeof s === "string")
+  );
+}
+
 /** Validates a parsed JSON blob against the export shape before it ever touches the store. */
 export function validateImportPayload(json: unknown): ImportResult {
   if (typeof json !== "object" || json === null) {
@@ -67,16 +82,22 @@ export function validateImportPayload(json: unknown): ImportResult {
     return { ok: false, error: "Missing or invalid \"watchlist\" field." };
   }
 
+  // Version 1 exports predate custom sectors, so the field is optional.
+  if (p.customSectors !== undefined && (!Array.isArray(p.customSectors) || !p.customSectors.every(isCustomSector))) {
+    return { ok: false, error: "Invalid \"customSectors\" field." };
+  }
+
   return {
     ok: true,
     payload: {
       exportedAt: typeof p.exportedAt === "string" ? p.exportedAt : new Date().toISOString(),
-      version: 1,
+      version: 2,
       startingCash: p.startingCash,
       // Normalizes pre-multi-strategy exports (a bare `strategyId`) into strategyIds/customTags.
       positions: p.positions.map((pos) => migratePositionShape(pos as unknown as Record<string, unknown>)),
       strategies: p.strategies,
       watchlist: p.watchlist,
+      customSectors: (p.customSectors as CustomSector[] | undefined) ?? [],
     },
   };
 }

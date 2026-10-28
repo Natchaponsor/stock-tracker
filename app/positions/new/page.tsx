@@ -13,7 +13,7 @@ function NewPositionContent() {
 
   return (
     <div className="space-y-6">
-      <h1 className="font-serif text-2xl font-medium text-fg">{mode === "sell" ? "Sell Shares" : "Buy Shares"}</h1>
+      <h1 className="ns-title text-ns-ink">{mode === "sell" ? "Sell Shares" : "Buy Shares"}</h1>
       {hydrated ? mode === "sell" ? <SellForm /> : <BuyForm /> : <Skeleton className="h-96" />}
     </div>
   );

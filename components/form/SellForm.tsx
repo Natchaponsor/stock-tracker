@@ -117,7 +117,7 @@ export function SellForm() {
             <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={inputClass} />
           </FormField>
         </div>
-        {error && <p className="mt-3 text-sm text-loss">{error}</p>}
+        {error && <p className="mt-3 text-sm text-ns-danger">{error}</p>}
       </Card>
 
       <Button type="submit" variant="primary">

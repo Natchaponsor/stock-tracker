@@ -11,7 +11,7 @@ interface PnlTextProps {
 
 export function PnlText({ value, formatted, className, showGlyph = true }: PnlTextProps) {
   const hidePnl = usePositionStore((s) => s.hidePnl);
-  const tone = value > 0 ? "text-gain" : value < 0 ? "text-loss" : "text-fg-muted";
+  const tone = value > 0 ? "text-ns-success" : value < 0 ? "text-ns-danger" : "text-ns-ink-muted";
 
   return (
     <span className={cn("tabular-nums font-medium", tone, className)}>

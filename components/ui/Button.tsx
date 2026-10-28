@@ -9,24 +9,26 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   size?: Size;
 }
 
+/* Navy Stream buttons: pill-shaped, primary is the blue fade with its glow. */
 const variantClasses: Record<Variant, string> = {
-  primary: "bg-accent text-bg hover:bg-accent-strong",
-  secondary: "bg-panel text-fg border border-border hover:border-fg-subtle",
-  ghost: "bg-transparent text-fg-muted hover:text-fg hover:bg-panel",
-  danger: "bg-transparent text-loss border border-loss/40 hover:bg-loss/10",
+  primary:
+    "bg-linear-to-r from-ns-ocean-400 to-ns-primary text-ns-on-primary shadow-ns-primary active:bg-ns-ocean-700 active:bg-none",
+  secondary: "bg-ns-primary-soft text-ns-primary-text hover:bg-ns-ocean-100",
+  ghost: "bg-transparent text-ns-ink-muted hover:text-ns-ink hover:bg-ns-sunken",
+  danger: "bg-ns-danger-soft text-ns-danger hover:brightness-95",
 };
 
 const sizeClasses: Record<Size, string> = {
-  sm: "h-8 px-3 text-sm gap-1.5",
-  md: "h-10 px-4 text-sm gap-2",
+  sm: "h-9 px-3.5 text-[13px] gap-1.5",
+  md: "h-11 px-5 text-[15px] gap-2",
 };
 
 export function Button({ className, variant = "secondary", size = "md", ...props }: ButtonProps) {
   return (
     <button
       className={cn(
-        "inline-flex items-center justify-center rounded-lg font-medium transition-colors duration-150",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
+        "inline-flex cursor-pointer items-center justify-center rounded-full font-semibold transition-colors duration-150",
+        "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ns-primary",
         "disabled:opacity-50 disabled:pointer-events-none",
         variantClasses[variant],
         sizeClasses[size],

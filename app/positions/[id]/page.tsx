@@ -72,7 +72,7 @@ export default function PositionDetailPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex items-center gap-3">
-          <h1 className="font-serif text-2xl font-medium text-fg">{position.symbol}</h1>
+          <h1 className="ns-title text-ns-ink">{position.symbol}</h1>
           <Badge tone={position.status === "open" ? "gain" : "neutral"} className="uppercase">
             {position.status}
           </Badge>
@@ -123,8 +123,8 @@ export default function PositionDetailPage() {
 
       {position.thesis && (
         <Card>
-          <p className="mb-1 text-xs font-medium uppercase tracking-wide text-fg-subtle">Thesis</p>
-          <p className="text-sm leading-relaxed text-fg-muted">{position.thesis}</p>
+          <p className="mb-1 ns-label text-ns-ink-subtle">Thesis</p>
+          <p className="text-sm leading-relaxed text-ns-ink-muted">{position.thesis}</p>
         </Card>
       )}
 

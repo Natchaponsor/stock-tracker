@@ -9,7 +9,7 @@ export default function StrategiesPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="font-serif text-2xl font-medium text-fg">Strategies</h1>
+      <h1 className="ns-title text-ns-ink">Strategies</h1>
       {hydrated ? <StrategyManager /> : <Skeleton className="h-64" />}
     </div>
   );

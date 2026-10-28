@@ -63,7 +63,7 @@ function StrategyRow({ strategy }: { strategy: Strategy }) {
   }
 
   return (
-    <div className="rounded-xl border border-border bg-panel p-4">
+    <div className="rounded-ns-md border border-ns-line bg-ns-sunken p-4">
       {editing ? (
         <div className="space-y-3">
           <StrategyFormFields draft={draft} onChange={(patch) => setDraft((d) => ({ ...d, ...patch }))} />
@@ -79,9 +79,9 @@ function StrategyRow({ strategy }: { strategy: Strategy }) {
       ) : (
         <>
           <div className="flex items-start justify-between gap-2">
-            <p className="font-serif text-sm font-medium text-fg">{strategy.name}</p>
+            <p className="text-sm font-medium text-ns-ink">{strategy.name}</p>
             <div className="flex items-center gap-1">
-              <button onClick={() => setEditing(true)} className="rounded p-1 text-fg-subtle hover:text-fg" title="Edit">
+              <button onClick={() => setEditing(true)} className="rounded p-1 text-ns-ink-subtle hover:text-ns-ink" title="Edit">
                 <Pencil className="h-3.5 w-3.5" />
               </button>
               <button
@@ -92,27 +92,27 @@ function StrategyRow({ strategy }: { strategy: Strategy }) {
                   }
                   if (confirm(`Delete "${strategy.name}"?`)) deleteStrategy(strategy.id);
                 }}
-                className="rounded p-1 text-fg-subtle hover:text-loss"
+                className="rounded p-1 text-ns-ink-subtle hover:text-ns-danger"
                 title="Delete"
               >
                 <Trash2 className="h-3.5 w-3.5" />
               </button>
             </div>
           </div>
-          <p className="mt-1.5 text-xs text-fg-muted"><span className="text-fg-subtle">Entry: </span>{strategy.entryRule}</p>
-          <p className="mt-1 text-xs text-fg-muted"><span className="text-fg-subtle">Exit: </span>{strategy.exitRule}</p>
+          <p className="mt-1.5 text-xs text-ns-ink-muted"><span className="text-ns-ink-subtle">Entry: </span>{strategy.entryRule}</p>
+          <p className="mt-1 text-xs text-ns-ink-muted"><span className="text-ns-ink-subtle">Exit: </span>{strategy.exitRule}</p>
           <div className="mt-3 flex gap-5">
             <div>
-              <p className="text-[10px] uppercase tracking-wide text-fg-subtle">Positions</p>
-              <p className="text-sm font-semibold text-fg">{stats.totalCount}</p>
+              <p className="ns-caption text-ns-ink-subtle">Positions</p>
+              <p className="text-sm font-semibold text-ns-ink">{stats.totalCount}</p>
             </div>
             <div>
-              <p className="text-[10px] uppercase tracking-wide text-fg-subtle">Win rate</p>
-              <p className="text-sm font-semibold text-fg">{stats.winRate !== null ? `${Math.round(stats.winRate * 100)}%` : "—"}</p>
+              <p className="ns-caption text-ns-ink-subtle">Win rate</p>
+              <p className="text-sm font-semibold text-ns-ink">{stats.winRate !== null ? `${Math.round(stats.winRate * 100)}%` : "—"}</p>
             </div>
             <div>
-              <p className="text-[10px] uppercase tracking-wide text-fg-subtle">Avg return</p>
-              <p className={cn("text-sm font-semibold", stats.avgReturnPct === null ? "text-fg-subtle" : stats.avgReturnPct >= 0 ? "text-gain" : "text-loss")}>
+              <p className="ns-caption text-ns-ink-subtle">Avg return</p>
+              <p className={cn("text-sm font-semibold", stats.avgReturnPct === null ? "text-ns-ink-subtle" : stats.avgReturnPct >= 0 ? "text-ns-success" : "text-ns-danger")}>
                 {stats.avgReturnPct !== null ? formatPct(stats.avgReturnPct, { signed: true }) : "—"}
               </p>
             </div>
@@ -157,10 +157,10 @@ export function StrategyManager() {
       </CardHeader>
 
       {adding && (
-        <div className="mb-4 rounded-xl border border-accent/30 bg-panel p-4">
+        <div className="mb-4 rounded-ns-md border border-ns-ocean-100 bg-ns-sunken p-4">
           <div className="mb-2 flex items-center justify-between">
-            <p className="text-xs font-medium uppercase tracking-wide text-fg-subtle">New strategy</p>
-            <button onClick={() => setAdding(false)} className="text-fg-subtle hover:text-fg">
+            <p className="ns-label text-ns-ink-subtle">New strategy</p>
+            <button onClick={() => setAdding(false)} className="text-ns-ink-subtle hover:text-ns-ink">
               <X className="h-3.5 w-3.5" />
             </button>
           </div>

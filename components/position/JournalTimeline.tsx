@@ -4,6 +4,7 @@ import { useState } from "react";
 import { format } from "date-fns";
 import { Card, CardHeader, CardTitle, CardSubtitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { fieldClass } from "@/components/form/FormField";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { usePositionStore } from "@/store/usePositionStore";
 import { useQuotes } from "@/hooks/useQuotes";
@@ -44,7 +45,7 @@ export function JournalTimeline({ position }: { position: Position }) {
           onChange={(e) => setDraft(e.target.value)}
           placeholder="Still above both EMAs, thesis intact…"
           rows={2}
-          className="flex-1 rounded-lg border border-border bg-panel px-3 py-2 text-sm text-fg placeholder:text-fg-subtle focus:outline-none focus:ring-2 focus:ring-accent"
+          className={`flex-1 px-3 py-2 ${fieldClass}`}
         />
         <Button type="submit" variant="secondary" size="sm" className="sm:mt-0">
           Add note
@@ -54,16 +55,16 @@ export function JournalTimeline({ position }: { position: Position }) {
       {notes.length === 0 ? (
         <EmptyState title="No check-ins yet" />
       ) : (
-        <ul className="divide-y divide-border">
+        <ul className="divide-y divide-ns-line">
           {notes.map((note) => (
             <li key={note.id} className="grid grid-cols-[84px_1fr] gap-3 py-2.5 text-sm first:pt-0">
-              <span className="pt-0.5 text-xs tabular-nums text-fg-subtle">
+              <span className="pt-0.5 text-xs tabular-nums text-ns-ink-subtle">
                 {format(new Date(note.date), "MMM d")}
               </span>
               <div>
-                <p className="leading-relaxed text-fg-muted">{note.text}</p>
+                <p className="leading-relaxed text-ns-ink-muted">{note.text}</p>
                 {note.priceAtNote !== null && (
-                  <p className="mt-0.5 text-xs tabular-nums text-fg-subtle">${note.priceAtNote.toFixed(2)}</p>
+                  <p className="mt-0.5 text-xs tabular-nums text-ns-ink-subtle">${note.priceAtNote.toFixed(2)}</p>
                 )}
               </div>
             </li>

@@ -99,12 +99,25 @@ export interface CrossSignal {
   index: number;
 }
 
+/** A Navy Stream category colour a user-made sector can wear (a `--cat-*` token). */
+export type SectorSwatch = "cat-transport" | "cat-food" | "cat-health" | "cat-shopping" | "cat-bills" | "cat-fun";
+
+/** A sector the user named themselves, holding the symbols they assigned to it. */
+export interface CustomSector {
+  id: string;
+  name: string;
+  swatch: SectorSwatch;
+  symbols: string[];
+}
+
 /** Full snapshot of user data, for export/backup — matches the store's persisted shape. */
 export interface ExportPayload {
   exportedAt: string;
-  version: 1;
+  /** v2 added customSectors; v1 files still import, with no custom sectors. */
+  version: 2;
   startingCash: number;
   positions: Position[];
   strategies: Strategy[];
   watchlist: WatchlistItem[];
+  customSectors: CustomSector[];
 }
