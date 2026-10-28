@@ -13,7 +13,7 @@ not dozens of same-day trades).
   never sees or stores your positions.
 - **Manual price refresh, not background polling.** Nothing fetches on a timer —
   prices are fetched once on page load and again only when you click "Refresh
-  Current Price," to keep API call volume low and predictable.
+  prices," to keep API call volume low and predictable.
 - **Light/dark theme**, toggled from the top bar and remembered across visits, fully responsive.
 
 ## What works right now

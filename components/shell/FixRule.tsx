@@ -1,61 +1,21 @@
 "use client";
 
-import { useMemo, useSyncExternalStore } from "react";
+import { useMemo } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useQuotes } from "@/hooks/useQuotes";
 import { usePositionStore } from "@/store/usePositionStore";
 import { RefreshPriceButton } from "./RefreshPriceButton";
 import { cn } from "@/lib/cn";
+import { formatAgo, formatAsOf } from "@/lib/priceTime";
+import { useNow } from "@/components/log/clock";
 
 const NO_EXTRA_SYMBOLS: string[] = [];
 
 /**
- * How old the fix is, read the way a watch log reads it. Presentation only —
- * a quote that is eleven days stale says so in days, not in 268 hours.
- */
-function formatAge(ms: number): string {
-  const minutes = Math.max(0, Math.floor(ms / 60_000));
-  if (minutes < 1) return "just now";
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 48) return `${hours}h ${minutes % 60}m ago`;
-  const days = Math.floor(hours / 24);
-  return `${days}d ${hours % 24}h ago`;
-}
-
-/**
- * A shared ticking clock, so the fix's age keeps counting while the page sits
- * open. An external store rather than state-in-an-effect: the server snapshot
- * of 0 means "not mounted yet", which keeps the age off the server render and
- * out of a hydration mismatch.
- */
-let clockValue = 0;
-let clockTimer: ReturnType<typeof setInterval> | null = null;
-const clockListeners = new Set<() => void>();
-
-function subscribeClock(onChange: () => void) {
-  clockListeners.add(onChange);
-  clockValue = Date.now();
-  if (clockTimer === null) {
-    clockTimer = setInterval(() => {
-      clockValue = Date.now();
-      clockListeners.forEach((listener) => listener());
-    }, 30_000);
-  }
-  return () => {
-    clockListeners.delete(onChange);
-    if (clockListeners.size === 0 && clockTimer !== null) {
-      clearInterval(clockTimer);
-      clockTimer = null;
-    }
-  };
-}
-
-const getClock = () => clockValue;
-const getServerClock = () => 0;
-
-/**
- * The fix rule: how old the numbers are, stated before the numbers themselves.
+ * The price-age bar ("fix rule" internally): how old the prices are, stated
+ * before the prices themselves, in plain words — "Prices as of 10:17 AM · 1 min
+ * ago". The time is the market price's own timestamp, not when the app last
+ * fetched, so a weekend refresh still honestly reads "as of Fri 4:00 PM".
  *
  * The lamp only burns when there is an actual fix to report — with nothing
  * logged, or with the upstream quote unavailable, the band goes quiet rather
@@ -76,35 +36,30 @@ export function FixRule() {
     return newest;
   }, [quotes]);
 
-  // 0 until mounted, so the age never renders on the server.
-  const tick = useSyncExternalStore(subscribeClock, getClock, getServerClock);
-  const now = tick === 0 ? null : tick;
+  // null until mounted, so the age never renders on the server.
+  const now = useNow();
 
   const tracked = quotes.size;
   const hasFix = latest !== null;
   const lamp = hasFix;
 
   let reading: string;
+  // Phones get a shorter line ("As of …") so the time and age still fit
+  // beside the buttons; the full "Prices as of …" needs the wider bar.
+  let shortReading: string | null = null;
   if (hasFix) {
-    const taken = new Date(latest);
-    const sameDay = now !== null && new Date(now).toDateString() === taken.toDateString();
-    const clock = taken.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false });
-    // A clock time alone would imply today; an older fix names its date.
-    const stamp = sameDay
-      ? clock
-      : `${taken.toLocaleDateString("en-US", { month: "short", day: "numeric" })} ${clock}`;
-    const age = now === null ? null : formatAge(now - latest);
-    // Age leads: on a narrow viewport the timestamp truncates away, and how
-    // stale the number is matters more than exactly when it was taken.
-    reading = age === null ? `Last fix ${stamp}` : `Fix ${age} · ${stamp}`;
+    const asOf = formatAsOf(new Date(latest), now === null ? null : new Date(now));
+    const age = now === null ? "" : ` · ${formatAgo(now - latest)}`;
+    reading = `Prices as of ${asOf}${age}`;
+    shortReading = `As of ${asOf}${age}`;
   } else if (hasError) {
-    reading = "No fix — prices unavailable";
+    reading = "Prices unavailable";
   } else if (isLoading && tracked === 0) {
-    reading = "Taking first fix…";
+    reading = "Loading prices…";
   } else if (tracked === 0) {
-    reading = "Nothing logged to fix";
+    reading = "No stocks to price yet";
   } else {
-    reading = "Awaiting first fix";
+    reading = "Waiting for prices";
   }
 
   return (
@@ -121,7 +76,7 @@ export function FixRule() {
         {lamp && now !== null ? (
           <span
             aria-hidden="true"
-            className="relative block h-3 w-10 shrink-0 sm:w-20"
+            className="relative hidden h-3 shrink-0 sm:block sm:w-20"
           >
             <span className="absolute inset-x-0 top-1/2 border-t border-current opacity-40" />
             <span
@@ -138,7 +93,14 @@ export function FixRule() {
           className={cn("fix-stamp animate-fix-stamp truncate text-[11px] uppercase tracking-[0.12em]", lamp && "font-medium")}
           title={hasFix ? new Date(latest).toLocaleString() : undefined}
         >
-          {reading}
+          {shortReading === null ? (
+            reading
+          ) : (
+            <>
+              <span className="sm:hidden">{shortReading}</span>
+              <span className="hidden sm:inline">{reading}</span>
+            </>
+          )}
         </p>
 
         <div className="ml-auto flex shrink-0 items-center gap-1.5">

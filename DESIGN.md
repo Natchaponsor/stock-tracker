@@ -154,7 +154,7 @@ This is a navigator's watch log, not a trading terminal. The page is a ruled she
 
 The world has two states of the same sheet. Dark is the default — the chart table at night: a deep navy-black ground (`#070c12`), a graphite-blue log plane, cool slate rules. Light is the same sheet on a day watch — cool paper grey (`#eef1f4`), deliberately not cream and not white. Neither is a derived theme; every token carries a first-class value in both.
 
-The surface's honesty is the aesthetic. A price is a *fix* taken at a stated time, and the navy fix rule sits directly under the masthead stating the age of the numbers before any number appears. Nothing refreshes on a timer; the reader takes a fix and the figures re-stamp with a mechanical snap. Where a figure isn't known, the sheet says so in words ("pending quote", "sold out") instead of implying zero.
+The surface's honesty is the aesthetic. A price is a *fix* taken at a stated time, and the navy fix rule sits directly under the masthead stating the age of the numbers before any number appears. Nothing refreshes on a timer; the reader presses Refresh prices and the figures re-stamp with a mechanical snap. "Fix" is the system's internal name for a set of prices taken at a moment; the interface itself says it in plain words ("Prices as of …"). Where a figure isn't known, the sheet says so in words ("pending quote", "sold out") instead of implying zero.
 
 **Key Characteristics:**
 - Ruled horizontal bands on one continuous registration axis; never cards
@@ -258,7 +258,7 @@ Icons are SVG (lucide-react), sized 12–18px. The ▲ / ▼ / • characters ar
 ### Buttons
 - **Shape:** square (0 radius), fixed height — 2rem in the masthead, 1.75rem in the fix rule.
 - **Accent:** navy fill with lamp ink, stamped label, `0.625rem` horizontal padding. Used for the one primary action per region: Log Position, Save.
-- **Outline:** transparent with a 1px `rule-strong` border and half-ink label; hover raises the label to full ink. Theme toggle, Data menu, Take Fix off the lamp.
+- **Outline:** transparent with a 1px `rule-strong` border and half-ink label; hover raises the label to full ink. Theme toggle, Data menu, Refresh prices off the lamp.
 - **On-accent:** the same outline button re-inked for the accent band — `on-accent/30` border, `on-accent` label, border goes solid on hover, focus ring switches to `on-accent`.
 - **Hover / Focus:** colour-only transitions (`transition-colors`, 100–150ms). No lift, no scale, no shadow. Focus is the global 2px accent outline at 2px offset.
 - **Ghost:** bare text in half or quarter ink, hover to full ink. Inline affordances — the cash pencil, Cancel, the P&L expander (which starts open).
@@ -281,13 +281,13 @@ The unit of content inside a band: `border-bottom` hairline, `0.75rem` vertical 
 An empty band is left-aligned and ruled, with a stamped title in half ink and one line of quarter-ink prose. It is never centred, never illustrated, never framed — an empty sheet is an honest first run, not an error.
 
 ### The Fix Rule (signature)
-A full-bleed 2.5rem band directly under the masthead, carrying the age of the data before any figure on the page. When a real fix exists the lamp burns: accent ground, lamp ink, `accent-strong` bottom border, reading `FIX <age> · <stamp>` in uppercase mono, with the privacy toggle and Take Fix anchored right. With nothing logged or the quote upstream unavailable the band goes quiet — `panel` ground, half ink — rather than implying currency it doesn't have. The **now-marker** is a 3px bar on a hairline scale spanning seven days: hard left on a fresh fix, travelling right as the fix ages, walking back to the start when a fix is taken.
+A full-bleed 2.5rem band directly under the masthead, carrying the age of the data before any figure on the page. When a real fix exists the lamp burns: accent ground, lamp ink, `accent-strong` bottom border, reading `PRICES AS OF <time> · <age>` in uppercase mono (for example `PRICES AS OF 10:17 AM · 1 MIN AGO`, or `PRICES AS OF FRI 4:00 PM · 2 DAYS AGO`), with the privacy toggle and Refresh prices anchored right. The time is the market price's own timestamp, not the moment the app fetched, so a weekend refresh still honestly reads as Friday's close; it shows the time alone for today, the weekday within the past week, and the date beyond that. With nothing logged or the quote upstream unavailable the band goes quiet — `panel` ground, half ink, reading "Prices unavailable", "Loading prices…", "No stocks to price yet" or "Waiting for prices" — rather than implying currency it doesn't have. Watchlist rows repeat the same phrasing per symbol ("as of 10:17 AM"). The **now-marker** is a 3px bar on a hairline scale spanning seven days: hard left on a fresh fix, travelling right as the fix ages, walking back to the start when a fix is taken.
 
 ### The Fix Stamp (signature motion)
 Every price-derived figure is keyed on a shared fix token (`latestFixToken`). When a new fix lands the key changes and the figure replays `animate-fix-stamp` — `fix-stamp-in` over 140ms on `steps(3, end)`, a 1px settle with an opacity snap. It is a stamp, not a tween. Under `prefers-reduced-motion: reduce` the animation is removed outright and the value simply swaps.
 
 ### Named Rules
-**The Manual Fix Rule.** Nothing in this app fetches on a timer. Prices change only when the reader takes a fix, and the surface states the age of the data before it states the data. `/api/quote` is the only runtime network request.
+**The Manual Fix Rule.** Nothing in this app fetches on a timer. Prices change only when the reader presses Refresh prices, and the surface states the age of the data before it states the data. `/api/quote` is the only runtime network request.
 
 **The Accent Ground Focus Rule.** On an accent ground the global accent focus ring is invisible, so the ring and the control's border switch to `on-accent`. Any new control placed on the accent inherits this switch.
 
@@ -304,6 +304,7 @@ Every price-derived figure is keyed on a shared fix token (`latestFixToken`). Wh
 - **Do** key price-derived figures on the fix token so they re-stamp with `animate-fix-stamp` when a fix lands.
 - **Do** switch focus rings and control borders to `on-accent` on accent grounds.
 - **Do** state what the sheet does not know, in words, where a figure would otherwise go.
+- **Do** describe price age in plain words ("Prices as of …", "Refresh prices"); keep "fix" as an internal name only, never as interface copy.
 - **Do** hold the 390px floor: collapse the axis, stack the columns, and grow per-cell stamped labels.
 - **Do** load type through `next/font` only, from the three families already in the layout.
 

@@ -32,6 +32,7 @@ export function RefreshPriceButton({ onAccent = false }: { onAccent?: boolean })
       onClick={handleRefresh}
       disabled={refreshing}
       title="Fetch current prices now — nothing refreshes automatically in the background"
+      aria-label={refreshing ? "Refreshing prices" : "Refresh prices"}
       className={cn(
         "stamp flex h-7 items-center gap-1.5 border px-2.5 transition-colors disabled:opacity-60",
         // On the accent band the global accent focus ring would be invisible,
@@ -42,7 +43,8 @@ export function RefreshPriceButton({ onAccent = false }: { onAccent?: boolean })
       )}
     >
       <RefreshCw className={cn("h-3 w-3", refreshing && "animate-spin")} />
-      {refreshing ? "Taking fix…" : "Take fix"}
+      {/* Icon-only on phones so the price line beside it keeps its time and age. */}
+      <span className="hidden sm:inline">{refreshing ? "Refreshing…" : "Refresh prices"}</span>
     </button>
   );
 }

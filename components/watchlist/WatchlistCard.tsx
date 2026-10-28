@@ -2,7 +2,6 @@
 
 import { useMemo, type ReactNode } from "react";
 import Link from "next/link";
-import { formatDistanceToNow } from "date-fns";
 import { X } from "lucide-react";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { PnlText } from "@/components/ui/PnlText";
@@ -11,6 +10,8 @@ import { usePositionStore } from "@/store/usePositionStore";
 import { computePositionMetrics } from "@/lib/positionMetrics";
 import { formatCurrency, glyph } from "@/lib/format";
 import { cn } from "@/lib/cn";
+import { formatAsOf } from "@/lib/priceTime";
+import { useNow } from "@/components/log/clock";
 import type { WatchlistItem } from "@/lib/types";
 
 /**
@@ -23,6 +24,7 @@ export function WatchlistCard({ item, handle }: { item: WatchlistItem; handle?: 
   const { quotes } = useQuotes([symbol]);
   const quote = quotes.get(symbol);
   const removeWatchlistSymbol = usePositionStore((s) => s.removeWatchlistSymbol);
+  const now = useNow();
   const positions = usePositionStore((s) => s.positions);
 
   const openPosition = useMemo(
@@ -91,7 +93,7 @@ export function WatchlistCard({ item, handle }: { item: WatchlistItem; handle?: 
         <span className="fix-stamp col-span-2 text-[11px] text-fg-subtle sm:col-span-1">
           {quote?.asOf ? (
             <span title={new Date(quote.asOf).toLocaleString()}>
-              fix {formatDistanceToNow(new Date(quote.asOf), { addSuffix: true })}
+              as of {formatAsOf(new Date(quote.asOf), now === null ? null : new Date(now))}
             </span>
           ) : (
             <span>watching since {new Date(item.addedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
