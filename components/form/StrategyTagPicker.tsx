@@ -47,13 +47,13 @@ export function StrategyTagPicker({
             return (
               <span
                 key={id}
-                className="flex items-center gap-1 rounded-full border border-accent/30 bg-accent/10 px-2.5 py-0.5 text-[11px] text-accent"
+                className="flex items-center gap-1 rounded-full border border-ns-ocean-100 bg-ns-primary-soft px-2.5 py-0.5 text-[11px] text-ns-primary-text"
               >
                 {strategy.name}
                 <button
                   type="button"
                   onClick={() => onChangeStrategyIds(strategyIds.filter((i) => i !== id))}
-                  className="hover:text-fg"
+                  className="hover:text-ns-ink"
                   title={`Remove ${strategy.name}`}
                 >
                   <X className="h-3 w-3" />
@@ -64,13 +64,13 @@ export function StrategyTagPicker({
           {customTags.map((tag) => (
             <span
               key={tag}
-              className="flex items-center gap-1 rounded-full border border-border bg-panel px-2.5 py-0.5 text-[11px] text-fg-subtle"
+              className="flex items-center gap-1 rounded-full border border-ns-line bg-ns-sunken px-2.5 py-0.5 text-[11px] text-ns-ink-subtle"
             >
               {tag}
               <button
                 type="button"
                 onClick={() => onChangeCustomTags(customTags.filter((t) => t !== tag))}
-                className="hover:text-fg"
+                className="hover:text-ns-ink"
                 title={`Remove ${tag}`}
               >
                 <X className="h-3 w-3" />

@@ -30,6 +30,8 @@ export interface PnlSummary {
   totalRealized: number; // realized P&L across every position, open or closed
   totalUnrealized: number; // unrealized P&L across open positions with a live quote
   positionsWithoutPrice: number; // count of open positions (with shares left) missing a live quote
+  realizedCost: number; // what the sold shares cost at average entry; the base for a realized %
+  unrealizedCost: number; // cost of open shares that have a live quote; the base for an unrealized %
 }
 
 /** Portfolio-wide realized vs. unrealized P&L, aggregated across every position. */
@@ -37,18 +39,24 @@ export function computePnlSummary(positions: Position[], quotes: Map<string, Quo
   let totalRealized = 0;
   let totalUnrealized = 0;
   let positionsWithoutPrice = 0;
+  let realizedCost = 0;
+  let unrealizedCost = 0;
 
   for (const position of positions) {
     const price = quotes.get(position.symbol)?.price ?? null;
     const metrics = computePositionMetrics(position, price);
     totalRealized += metrics.realizedPnl;
+    realizedCost += metrics.avgEntryPrice * metrics.totalQtyExited;
     if (metrics.openQty > 0) {
       if (metrics.unrealizedPnl === null) positionsWithoutPrice += 1;
-      else totalUnrealized += metrics.unrealizedPnl;
+      else {
+        totalUnrealized += metrics.unrealizedPnl;
+        unrealizedCost += metrics.costBasis;
+      }
     }
   }
 
-  return { totalRealized, totalUnrealized, positionsWithoutPrice };
+  return { totalRealized, totalUnrealized, positionsWithoutPrice, realizedCost, unrealizedCost };
 }
 
 export interface SymbolPnl {
@@ -56,6 +64,9 @@ export interface SymbolPnl {
   realizedPnl: number; // summed across every position in this symbol, open or closed
   unrealizedPnl: number | null; // null only when there are open shares but no live quote yet
   openQty: number;
+  realizedCost: number; // cost of the sold shares at average entry, for a realized %
+  unrealizedCost: number; // cost of the open shares, for an unrealized %
+  marketValue: number; // open shares at the live price (average entry until a quote arrives)
 }
 
 /** Realized vs. unrealized P&L broken down per symbol, for expanding the portfolio-wide total. */
@@ -74,13 +85,19 @@ export function computeSymbolPnlBreakdown(positions: Position[], quotes: Map<str
     let unrealizedPnl = 0;
     let openQty = 0;
     let hasOpenShares = false;
+    let realizedCost = 0;
+    let unrealizedCost = 0;
+    let marketValue = 0;
 
     for (const position of symbolPositions) {
       const metrics = computePositionMetrics(position, price);
       realizedPnl += metrics.realizedPnl;
+      realizedCost += metrics.avgEntryPrice * metrics.totalQtyExited;
       openQty += metrics.openQty;
       if (metrics.openQty > 0) {
         hasOpenShares = true;
+        unrealizedCost += metrics.costBasis;
+        marketValue += (price ?? metrics.avgEntryPrice) * metrics.openQty;
         if (metrics.unrealizedPnl !== null) unrealizedPnl += metrics.unrealizedPnl;
       }
     }
@@ -90,6 +107,9 @@ export function computeSymbolPnlBreakdown(positions: Position[], quotes: Map<str
       realizedPnl,
       unrealizedPnl: hasOpenShares && price === null ? null : unrealizedPnl,
       openQty,
+      realizedCost,
+      unrealizedCost,
+      marketValue,
     });
   }
 

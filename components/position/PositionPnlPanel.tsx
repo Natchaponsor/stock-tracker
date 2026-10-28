@@ -20,15 +20,15 @@ export function PositionPnlPanel({ metrics, quote }: { metrics: PositionMetrics;
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-[auto_1fr] sm:items-center">
         <div className="flex flex-wrap items-end gap-8">
           <div>
-            <p className="text-[10px] font-medium uppercase tracking-wide text-fg-subtle">Realized</p>
+            <p className="ns-caption text-ns-ink-subtle">Realized</p>
             <PnlText
               value={metrics.realizedPnl}
               formatted={formatCurrency(metrics.realizedPnl, { signed: true })}
-              className="font-serif text-3xl"
+              className="text-3xl"
             />
           </div>
           <div>
-            <p className="text-[10px] font-medium uppercase tracking-wide text-fg-subtle">Unrealized</p>
+            <p className="ns-caption text-ns-ink-subtle">Unrealized</p>
             {metrics.unrealizedPnl !== null ? (
               <PnlText
                 value={metrics.unrealizedPnl}
@@ -36,10 +36,10 @@ export function PositionPnlPanel({ metrics, quote }: { metrics: PositionMetrics;
                 className="text-base opacity-80"
               />
             ) : (
-              <p className="text-sm text-fg-subtle">—</p>
+              <p className="text-sm text-ns-ink-subtle">—</p>
             )}
             {quote?.price != null && (
-              <p className="text-[11px] text-fg-subtle">
+              <p className="text-[11px] text-ns-ink-subtle">
                 {formatCurrency(quote.price)} current
                 {quote.asOf && ` · as of ${formatDistanceToNow(new Date(quote.asOf), { addSuffix: true })}`}
               </p>

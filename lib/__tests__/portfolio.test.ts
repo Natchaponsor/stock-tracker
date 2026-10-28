@@ -138,6 +138,16 @@ describe("computePnlSummary", () => {
     expect(result.totalUnrealized).toBe(180); // (130-100)*6
   });
 
+  it("reports the cost bases behind the realized and unrealized percentages", () => {
+    const scaled = makePosition({
+      exits: [{ id: "x1", date: "2026-01-15T00:00:00.000Z", price: 110, qty: 4 }],
+    });
+    const quotes = new Map([["AAPL", makeQuote("AAPL", 130)]]);
+    const result = computePnlSummary([scaled], quotes);
+    expect(result.realizedCost).toBe(400); // 4 sold shares at 100 → +10%
+    expect(result.unrealizedCost).toBe(600); // 6 open shares at 100 → +30%
+  });
+
   it("flags open positions missing a live quote instead of counting them as zero", () => {
     const result = computePnlSummary([makePosition()], new Map());
     expect(result.positionsWithoutPrice).toBe(1);
@@ -162,6 +172,16 @@ describe("computeSymbolPnlBreakdown", () => {
     const msftRow = result.find((r) => r.symbol === "MSFT");
     expect(aaplRow?.unrealizedPnl).toBe(500); // (150-100)*10
     expect(msftRow?.unrealizedPnl).toBe(-50); // (190-200)*5
+  });
+
+  it("reports each symbol's market value and cost bases", () => {
+    const aapl = makePosition({
+      exits: [{ id: "x1", date: "2026-01-15T00:00:00.000Z", price: 110, qty: 4 }],
+    });
+    const [row] = computeSymbolPnlBreakdown([aapl], new Map([["AAPL", makeQuote("AAPL", 130)]]));
+    expect(row.marketValue).toBe(780); // 6 open shares at 130
+    expect(row.realizedCost).toBe(400);
+    expect(row.unrealizedCost).toBe(600);
   });
 
   it("aggregates a closed lot and a fresh open lot of the same symbol into one row", () => {

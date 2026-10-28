@@ -87,7 +87,7 @@ export function AnalysisRunner() {
             {copyState === "copied" ? "Copied!" : "Run Analysis (Claude Skill)"}
           </Button>
           {copyState === "manual" && (
-            <span className="text-xs text-fg-muted">
+            <span className="text-xs text-ns-ink-muted">
               Clipboard blocked — text selected below, press ⌘/Ctrl+C to copy
             </span>
           )}

@@ -1,12 +1,10 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
+import { NsCard, NsEmpty } from "@/components/navy/primitives";
 
 /**
- * A ruled band of the log sheet. The label column sits left of the
- * registration axis; the axis itself is the content cell's left rule, so
- * stacked bands join into one continuous hairline down the page.
- *
- * `title` is the band's heading — it is never an eyebrow above another one.
+ * A titled section, drawn as a Navy Stream card. Kept under its old name so
+ * pages that grew up on the deck log (Disclosures) keep their structure.
  */
 export function Band({
   title,
@@ -24,25 +22,13 @@ export function Band({
   contentClassName?: string;
 }) {
   return (
-    <section className={cn("border-t border-rule-strong", className)}>
-      <div className="grid gap-x-6 gap-y-3 py-7 lg:grid-cols-[var(--axis)_1fr]">
-        <div className="flex items-baseline justify-between gap-3 lg:block lg:pr-6">
-          <h2 className="stamp-lg text-fg">{title}</h2>
-          {meta ? <p className="stamp mt-0 text-fg-subtle lg:mt-1.5">{meta}</p> : null}
-        </div>
-        <div className={cn("min-w-0 lg:border-l lg:border-rule lg:pl-6", contentClassName)}>
-          {action ? <div className="mb-3 flex justify-end">{action}</div> : null}
-          {children}
-        </div>
-      </div>
-    </section>
+    <NsCard title={title} meta={meta} action={action} className={cn("mt-3", className)}>
+      <div className={cn("min-w-0", contentClassName)}>{children}</div>
+    </NsCard>
   );
 }
 
-/**
- * The same grid without a heading, for the running-balance entry that opens
- * the sheet. Keeps the axis continuous with the bands below it.
- */
+/** The opening section of a page: a card whose heading is the page's label. */
 export function BandRaw({
   label,
   children,
@@ -53,18 +39,14 @@ export function BandRaw({
   className?: string;
 }) {
   return (
-    <section className={className}>
-      <div className="grid gap-x-6 gap-y-3 py-7 lg:grid-cols-[var(--axis)_1fr]">
-        <div className="lg:pr-6">
-          <h2 className="stamp-lg text-fg">{label}</h2>
-        </div>
-        <div className="min-w-0 lg:border-l lg:border-rule lg:pl-6">{children}</div>
-      </div>
+    <section className={cn("oc-card", className)}>
+      <h2 className="ns-title text-ns-ink">{label}</h2>
+      <div className="mt-3 min-w-0">{children}</div>
     </section>
   );
 }
 
-/** A ruled entry inside a band. Rows divide with hairlines, never with cards. */
+/** A row inside a section, divided from the next by a hairline. */
 export function LogRow({
   children,
   className,
@@ -77,8 +59,8 @@ export function LogRow({
   return (
     <div
       className={cn(
-        "border-b border-rule py-3 last:border-b-0",
-        interactive && "transition-colors duration-100 hover:bg-panel",
+        "border-b border-ns-line py-3 last:border-b-0",
+        interactive && "-mx-2 rounded-ns-md px-2 transition-colors duration-100 hover:bg-ns-sunken",
         className
       )}
     >
@@ -87,15 +69,7 @@ export function LogRow({
   );
 }
 
-/**
- * A log entry with nothing in it yet. Left-aligned and ruled, because on this
- * product an empty sheet is the honest first run, not an error.
- */
+/** A section with nothing in it yet. */
 export function EmptyEntry({ title, description }: { title: string; description?: string }) {
-  return (
-    <div className="py-5">
-      <p className="stamp text-fg-muted">{title}</p>
-      {description ? <p className="mt-2 max-w-md text-sm text-fg-subtle">{description}</p> : null}
-    </div>
-  );
+  return <NsEmpty title={title} description={description} />;
 }

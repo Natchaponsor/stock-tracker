@@ -1,27 +1,17 @@
 import type { Metadata } from "next";
-import { Archivo, Archivo_Narrow, Azeret_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
+/* Navy Stream: tokens first, then the component classes that read them. */
+import "@/styles/navy-stream/tokens.css";
+import "@/styles/navy-stream/bundle.css";
 import { AppShell } from "@/components/shell/AppShell";
 
-/* The log's three voices: a squarish grotesk for the sheet, a condensed cut
-   for stamped band headings, and a mono reserved for fix stamps and times. */
-const archivo = Archivo({
-  variable: "--font-archivo",
+/* Navy Stream's one family. tokens.css reads --font-inter into --font-sans. */
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
   display: "swap",
-});
-
-const archivoNarrow = Archivo_Narrow({
-  variable: "--font-archivo-narrow",
-  subsets: ["latin"],
-  display: "swap",
-});
-
-const azeretMono = Azeret_Mono({
-  variable: "--font-azeret",
-  subsets: ["latin"],
-  display: "swap",
-  weight: ["400", "500"],
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -37,18 +27,19 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${archivo.variable} ${archivoNarrow.variable} ${azeretMono.variable} h-full antialiased`}
+      data-theme="light"
+      className={`${inter.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>
         <script
           dangerouslySetInnerHTML={{
             __html:
-              "(function(){try{var t=localStorage.getItem('theme');document.documentElement.dataset.theme=t==='light'?'light':'dark';}catch(e){}})();",
+              "(function(){try{var t=localStorage.getItem('theme');document.documentElement.dataset.theme=t==='dark'?'dark':'light';}catch(e){}})();",
           }}
         />
       </head>
-      <body className="min-h-full flex flex-col bg-bg text-fg font-sans" suppressHydrationWarning>
+      <body className="min-h-full flex flex-col font-sans" suppressHydrationWarning>
         <AppShell>{children}</AppShell>
       </body>
     </html>

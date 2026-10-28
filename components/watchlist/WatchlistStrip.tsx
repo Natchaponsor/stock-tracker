@@ -5,7 +5,7 @@ import { MotionConfig, Reorder, useDragControls } from "framer-motion";
 import { GripVertical, Plus } from "lucide-react";
 import { usePositionStore } from "@/store/usePositionStore";
 import { WatchlistCard } from "./WatchlistCard";
-import { EmptyEntry } from "@/components/log/Band";
+import { NsEmpty } from "@/components/navy/primitives";
 import { MAX_WATCHLIST_SYMBOLS } from "@/lib/constants";
 import { moveKey } from "@/lib/reorder";
 import { cn } from "@/lib/cn";
@@ -39,8 +39,8 @@ function WatchRow({
       onDragStart={() => setDragging(true)}
       onDragEnd={() => setDragging(false)}
       className={cn(
-        "relative border-b border-rule bg-bg last:border-b-0",
-        dragging && "z-10 bg-panel outline outline-1 outline-rule-strong"
+        "relative border-b border-ns-line bg-ns-card last:border-b-0",
+        dragging && "z-10 rounded-ns-md border-transparent px-2 shadow-ns-card"
       )}
     >
       <WatchlistCard
@@ -61,11 +61,11 @@ function WatchRow({
             title="Drag to reorder"
             aria-label={`Reorder ${item.symbol}, position ${position} of ${count}. Use the up and down arrow keys to move it.`}
             className={cn(
-              "flex h-6 w-5 shrink-0 touch-none items-center justify-center text-fg-subtle transition-colors hover:text-fg",
+              "flex h-8 w-5 shrink-0 touch-none items-center justify-center text-ns-ink-subtle transition-colors hover:text-ns-ink",
               dragging ? "cursor-grabbing" : "cursor-grab"
             )}
           >
-            <GripVertical className="h-3.5 w-3.5" />
+            <GripVertical className="h-4 w-4" />
           </button>
         }
       />
@@ -100,7 +100,7 @@ export function WatchlistStrip() {
   return (
     <div>
       {watchlist.length === 0 ? (
-        <EmptyEntry
+        <NsEmpty
           title="Nothing on watch"
           description="Add a symbol to keep it on the sheet without holding any of it."
         />
@@ -127,19 +127,16 @@ export function WatchlistStrip() {
       </p>
 
       {watchlist.length < MAX_WATCHLIST_SYMBOLS && (
-        <form onSubmit={handleAdd} className="mt-4 flex items-center gap-2">
+        <form onSubmit={handleAdd} className="mt-3 flex items-center gap-2">
           <input
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             placeholder="Add symbol (e.g. MSFT)"
             aria-label="Add a symbol to the watchlist"
-            className="h-8 w-44 border border-rule-strong bg-panel px-2.5 text-sm text-fg placeholder:text-fg-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            className="ns-body h-11 min-w-0 flex-1 rounded-ns-md border border-ns-line bg-ns-card px-3.5 text-ns-ink placeholder:text-ns-ink-subtle focus-visible:border-ns-primary focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ns-primary-soft"
           />
-          <button
-            type="submit"
-            className="stamp flex h-8 items-center gap-1.5 border border-rule-strong px-2.5 text-fg-muted transition-colors hover:text-fg"
-          >
-            <Plus className="h-3 w-3" />
+          <button type="submit" className="oc-btn oc-btn-secondary h-11 px-4! py-0!">
+            <Plus className="h-4 w-4" />
             Add
           </button>
         </form>

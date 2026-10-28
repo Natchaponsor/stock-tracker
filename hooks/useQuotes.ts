@@ -41,7 +41,7 @@ export function useQuotes(symbols: string[]) {
   const key = merged.length > 0 ? `/api/quote?symbols=${merged.join(",")}` : null;
 
   // Fetches once on mount, then only on an explicit "Refresh Current Price" click
-  // (see RefreshPriceButton) — no background polling, to keep Finnhub call volume low.
+  // (see useRefreshPrices) — no background polling, to keep Finnhub call volume low.
   const { data, error, isLoading } = useSWR<Quote[]>(key, fetcher, {
     revalidateOnFocus: false,
     revalidateOnReconnect: false,

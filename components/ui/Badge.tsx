@@ -8,17 +8,17 @@ interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
 }
 
 const toneClasses: Record<Tone, string> = {
-  neutral: "bg-panel text-fg-muted border-border",
-  gain: "bg-gain/10 text-gain border-gain/30",
-  loss: "bg-loss/10 text-loss border-loss/30",
-  accent: "bg-accent/10 text-accent border-accent/30",
+  neutral: "bg-ns-sunken text-ns-ink-muted",
+  gain: "bg-ns-success-soft text-ns-success",
+  loss: "bg-ns-danger-soft text-ns-danger",
+  accent: "bg-ns-primary-soft text-ns-primary-text",
 };
 
 export function Badge({ className, tone = "neutral", ...props }: BadgeProps) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium",
+        "inline-flex items-center gap-1 rounded-full px-2 py-[3px] text-xs font-medium",
         toneClasses[tone],
         className
       )}

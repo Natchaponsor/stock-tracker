@@ -1,31 +1,69 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Pencil } from "lucide-react";
-import { BandRaw } from "@/components/log/Band";
-import { PnlText } from "@/components/ui/PnlText";
+import { Eye, EyeOff, Pencil, RefreshCw } from "lucide-react";
 import { usePositionStore } from "@/store/usePositionStore";
 import { useQuotes } from "@/hooks/useQuotes";
 import { computeCashSummary } from "@/lib/cash";
 import { computePositionsValue } from "@/lib/portfolio";
-import { formatCurrency, formatPct } from "@/lib/format";
+import { formatCurrency, formatPct, glyph } from "@/lib/format";
+import { formatAgo, formatAsOf } from "@/lib/priceTime";
+import { cn } from "@/lib/cn";
+import { useNow } from "@/components/log/clock";
 import { latestFixToken } from "@/components/log/fix";
-import { AllocationChart } from "@/components/portfolio/AllocationChart";
+import { useRefreshPrices } from "@/hooks/useRefreshPrices";
 
-const ROW = "flex flex-wrap items-baseline gap-x-4 gap-y-1 py-3";
-const LABEL = "stamp w-36 shrink-0 text-fg-subtle";
+const NO_EXTRA_SYMBOLS: string[] = [];
+
+/** "$12,480.25" → ["$12,480", ".25"], so the cents can fade back on the silk. */
+function splitCents(value: number): [string, string] {
+  const text = value.toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  const dot = text.lastIndexOf(".");
+  return dot === -1 ? [text, ""] : [text.slice(0, dot), text.slice(dot)];
+}
+
+/** How old the prices are, in plain words, for the header's glass pill. */
+function usePriceAge() {
+  const { quotes, isLoading, hasError } = useQuotes(NO_EXTRA_SYMBOLS);
+  const now = useNow();
+
+  let latest: number | null = null;
+  for (const quote of quotes.values()) {
+    if (quote.price === null || !quote.asOf) continue;
+    const t = new Date(quote.asOf).getTime();
+    if (Number.isFinite(t) && (latest === null || t > latest)) latest = t;
+  }
+
+  if (latest !== null) {
+    const asOf = formatAsOf(new Date(latest), now === null ? null : new Date(now));
+    const age = now === null ? "" : ` · ${formatAgo(now - latest)}`;
+    return { text: `Prices as of ${asOf}${age}`, short: `As of ${asOf}${age}`, title: new Date(latest).toLocaleString() };
+  }
+  if (hasError) return { text: "Prices unavailable" };
+  if (isLoading && quotes.size === 0) return { text: "Loading prices…" };
+  if (quotes.size === 0) return { text: "No stocks to price yet" };
+  return { text: "Waiting for prices" };
+}
 
 /**
- * The portfolio summary: the sheet's opening entry. The total is the largest ink
- * on the page because it is the number the reader came for; cash, positions and
- * the change from starting capital are its ruled sub-entries, set beside it
- * rather than stacked below it, and the allocation scale bar closes the entry.
+ * The dashboard's silk header. The portfolio total is the one hero number;
+ * cash, positions and the change from starting capital sit under it in a
+ * glass stat strip. Text on the silk stays white, so the change reads by its
+ * glyph and sign here rather than by green or red.
  */
 export function PortfolioOverview() {
   const startingCash = usePositionStore((s) => s.startingCash);
   const setStartingCash = usePositionStore((s) => s.setStartingCash);
   const positions = usePositionStore((s) => s.positions);
   const hidePnl = usePositionStore((s) => s.hidePnl);
+  const toggleHidePnl = usePositionStore((s) => s.toggleHidePnl);
+  const { refresh, refreshing } = useRefreshPrices();
+  const priceAge = usePriceAge();
 
   const openSymbols = useMemo(
     () => Array.from(new Set(positions.filter((p) => p.status === "open").map((p) => p.symbol))),
@@ -54,113 +92,148 @@ export function PortfolioOverview() {
   }
 
   const display = (v: number) => (hidePnl ? "••••••" : formatCurrency(v));
+  const [whole, cents] = splitCents(total);
+
+  const contextLine = [
+    `${openCount} open ${openCount === 1 ? "position" : "positions"}`,
+    portfolio.positionsWithoutPrice > 0 ? `${portfolio.positionsWithoutPrice} at cost, no quote yet` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
-    <BandRaw label="Portfolio summary">
-      <div className="grid gap-x-10 md:grid-cols-[auto_minmax(0,1fr)] md:items-start">
-        <div>
-          <p
-            key={fixToken}
-            className="figure animate-fix-stamp text-[clamp(2.75rem,8vw,4.5rem)] font-semibold leading-[0.95] text-fg"
+    <section aria-labelledby="portfolio-heading" className="oc-silk rounded-ns-xl px-5 pt-5 pb-14 md:px-8 md:pt-6">
+      <div className="flex items-center justify-between gap-3">
+        <p className="oc-glass ns-label min-w-0 truncate rounded-full! px-3.5 py-1.5" title={priceAge.title}>
+          {priceAge.short ? (
+            <>
+              <span className="sm:hidden">{priceAge.short}</span>
+              <span className="hidden sm:inline">{priceAge.text}</span>
+            </>
+          ) : (
+            priceAge.text
+          )}
+        </p>
+        <div className="flex shrink-0 items-center gap-2">
+          <button
+            type="button"
+            onClick={toggleHidePnl}
+            aria-pressed={hidePnl}
+            title={hidePnl ? "Show amounts" : "Hide amounts (privacy mode)"}
+            className="oc-icon-btn cursor-pointer focus-visible:outline-ns-on-primary"
           >
-            {display(total)}
-          </p>
-          <p className="stamp mt-2 text-fg-subtle">Cash + open positions</p>
-        </div>
-
-        <dl className="mt-6 border-t border-rule md:mt-0">
-          <div className={`${ROW} border-b border-rule`}>
-            <dt className={LABEL}>Cash</dt>
-            {editing ? (
-              <dd className="flex flex-wrap items-center gap-2">
-                <input
-                  type="number"
-                  step="0.01"
-                  value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
-                  autoFocus
-                  aria-label="Starting cash balance"
-                  className="figure h-8 w-32 border border-rule-strong bg-panel px-2 text-sm text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-                />
-                <button
-                  type="button"
-                  onClick={saveStartingCash}
-                  className="stamp h-8 bg-accent px-3 text-on-accent transition-colors hover:bg-accent-strong"
-                >
-                  Save
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setEditing(false)}
-                  className="stamp h-8 px-2 text-fg-muted transition-colors hover:text-fg"
-                >
-                  Cancel
-                </button>
-              </dd>
-            ) : (
-              <>
-                <dd className="figure text-xl font-medium text-fg">{display(cashSummary.cash)}</dd>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setDraft(String(startingCash));
-                    setEditing(true);
-                  }}
-                  className="flex h-6 w-6 items-center justify-center text-fg-subtle transition-colors hover:text-fg"
-                  title="Adjust starting cash balance"
-                >
-                  <Pencil className="h-3.5 w-3.5" />
-                  <span className="sr-only">Adjust starting cash balance</span>
-                </button>
-                <span className="fix-stamp ml-auto text-[11px] text-fg-subtle">
-                  {formatCurrency(startingCash)} starting
-                </span>
-              </>
-            )}
-          </div>
-
-          <div className={`${ROW} border-b border-rule`}>
-            <dt className={LABEL}>Positions</dt>
-            <dd key={fixToken} className="figure animate-fix-stamp text-xl font-medium text-fg">
-              {display(portfolio.positionsValue)}
-            </dd>
-            <span className="fix-stamp ml-auto text-[11px] text-fg-subtle">
-              {openCount} open
-              {portfolio.positionsWithoutPrice > 0 ? ` · ${portfolio.positionsWithoutPrice} pending quote` : ""}
-            </span>
-          </div>
-
-          <div className={ROW}>
-            <dt className={LABEL}>Change from capital</dt>
-            <dd key={fixToken}>
-              <PnlText
-                value={changeFromCapital}
-                formatted={formatCurrency(changeFromCapital, { signed: true })}
-                className="figure animate-fix-stamp text-xl"
-              />
-            </dd>
-            <span className="fix-stamp ml-auto text-[11px] text-fg-subtle">
-              {changePct !== null
-                ? `${hidePnl ? "••••" : formatPct(changePct, { signed: true })} vs ${formatCurrency(startingCash)} starting`
-                : "No starting capital set"}
-              {/* A held symbol with no quote yet is counted at cost, so say so
-                  rather than let the figure look fully marked to market. */}
-              {portfolio.positionsWithoutPrice > 0 ? ` · ${portfolio.positionsWithoutPrice} at cost` : ""}
-            </span>
-          </div>
-        </dl>
-      </div>
-
-      {/* Where the money sits belongs with the balance it divides, not a band of its own. */}
-      <div className="mt-6 border-t border-rule pt-3">
-        <div className="flex flex-wrap items-baseline justify-between gap-x-4">
-          <h3 className="stamp text-fg-subtle">Allocation</h3>
-          <span className="fix-stamp text-[11px] text-fg-subtle">Cash + open positions</span>
-        </div>
-        <div className="pt-3">
-          <AllocationChart />
+            {hidePnl ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
+            <span className="sr-only">{hidePnl ? "Show amounts" : "Hide amounts"}</span>
+          </button>
+          <button
+            type="button"
+            onClick={refresh}
+            disabled={refreshing}
+            title="Fetch current prices now. Nothing refreshes automatically."
+            className="oc-icon-btn cursor-pointer disabled:opacity-60 focus-visible:outline-ns-on-primary"
+          >
+            <RefreshCw className={cn("h-[18px] w-[18px]", refreshing && "animate-spin")} />
+            <span className="sr-only">{refreshing ? "Refreshing prices" : "Refresh prices"}</span>
+          </button>
         </div>
       </div>
-    </BandRaw>
+
+      <div className="mt-6 text-center">
+        <h2 id="portfolio-heading" className="ns-label text-ns-on-hero-muted">
+          Portfolio value
+        </h2>
+        <p key={fixToken} className="ns-amount-xl oc-num animate-fix-stamp mt-1 md:text-[56px] md:leading-[64px]">
+          {hidePnl ? (
+            "••••••"
+          ) : (
+            <>
+              {whole}
+              <span className="oc-decimals">{cents}</span>
+            </>
+          )}
+        </p>
+        <p className="ns-caption mt-1 text-ns-on-hero-muted">Cash + open positions · {contextLine}</p>
+      </div>
+
+      <dl className="oc-glass oc-num mx-auto mt-5 grid max-w-2xl grid-cols-3 py-3 text-center">
+        <div className="min-w-0 px-1.5 sm:px-2">
+          <dt className="ns-caption flex items-center justify-center gap-1 text-ns-on-hero-muted">
+            Cash
+            <button
+              type="button"
+              onClick={() => {
+                setDraft(String(startingCash));
+                setEditing(true);
+              }}
+              title="Adjust starting cash balance"
+              className="-my-1 flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors hover:text-ns-on-primary focus-visible:outline-ns-on-primary"
+            >
+              <Pencil className="h-3 w-3" />
+              <span className="sr-only">Adjust starting cash balance</span>
+            </button>
+          </dt>
+          <dd className="mt-0.5 truncate text-[16px] leading-[22px] font-semibold sm:text-[18px] sm:leading-6 md:text-[20px] md:leading-[26px]">{display(cashSummary.cash)}</dd>
+          <dd className="ns-caption truncate font-normal text-ns-on-hero-muted">
+            {formatCurrency(startingCash)} start
+          </dd>
+        </div>
+
+        <div className="min-w-0 border-x border-ns-glass-line px-1.5 sm:px-2">
+          <dt className="ns-caption text-ns-on-hero-muted">Positions</dt>
+          <dd key={fixToken} className="animate-fix-stamp mt-0.5 truncate text-[16px] leading-[22px] font-semibold sm:text-[18px] sm:leading-6 md:text-[20px] md:leading-[26px]">
+            {display(portfolio.positionsValue)}
+          </dd>
+          <dd className="ns-caption font-normal text-ns-on-hero-muted">{openCount} open</dd>
+        </div>
+
+        <div className="min-w-0 px-1.5 sm:px-2">
+          <dt className="ns-caption text-ns-on-hero-muted">Change</dt>
+          <dd key={fixToken} className="animate-fix-stamp mt-0.5 truncate text-[16px] leading-[22px] font-semibold sm:text-[18px] sm:leading-6 md:text-[20px] md:leading-[26px]">
+            <span aria-hidden="true" className="mr-1 text-[0.7em] align-[0.1em]">
+              {glyph(changeFromCapital)}
+            </span>
+            {hidePnl ? "••••" : formatCurrency(changeFromCapital, { signed: true })}
+          </dd>
+          <dd className="ns-caption truncate font-normal text-ns-on-hero-muted">
+            {changePct !== null
+              ? `${hidePnl ? "••••" : formatPct(changePct, { signed: true })} total`
+              : "No starting capital"}
+          </dd>
+        </div>
+      </dl>
+
+      {editing && (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            saveStartingCash();
+          }}
+          className="oc-glass mx-auto mt-3 flex max-w-2xl flex-wrap items-center gap-2 p-2"
+        >
+          <label htmlFor="starting-cash" className="ns-label px-2 text-ns-on-hero-muted">
+            Starting cash
+          </label>
+          <input
+            id="starting-cash"
+            type="number"
+            step="0.01"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            autoFocus
+            className="ns-body oc-num h-10 min-w-0 flex-1 rounded-ns-sm border border-ns-glass-line bg-ns-glass px-3 text-ns-on-primary placeholder:text-ns-on-hero-muted focus-visible:outline-2 focus-visible:outline-ns-on-primary"
+          />
+          <button type="submit" className="oc-btn bg-ns-card px-4! py-2.5! text-ns-primary-text">
+            Save
+          </button>
+          <button
+            type="button"
+            onClick={() => setEditing(false)}
+            className="oc-btn bg-transparent px-3! py-2.5! text-ns-on-primary"
+          >
+            Cancel
+          </button>
+        </form>
+      )}
+    </section>
   );
 }

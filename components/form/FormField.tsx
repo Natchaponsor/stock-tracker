@@ -1,17 +1,22 @@
 import type { ReactNode } from "react";
 
+/** A Navy Stream field: label above, white rounded box, blue border and soft ring on focus. */
 export function FormField({ label, children, hint }: { label: string; children: ReactNode; hint?: string }) {
   return (
-    <label className="block space-y-1.5">
-      <span className="text-xs font-medium text-fg-muted">{label}</span>
+    <label className="block">
+      <span className="oc-field-label">{label}</span>
       {children}
-      {hint && <span className="block text-xs text-fg-subtle">{hint}</span>}
+      {hint && <span className="ns-caption mt-1.5 block font-normal text-ns-ink-subtle">{hint}</span>}
     </label>
   );
 }
 
-export const inputClass =
-  "h-9 w-full rounded-lg border border-border bg-panel px-3 text-sm text-fg placeholder:text-fg-subtle focus:outline-none focus:ring-2 focus:ring-accent tabular-nums";
+const fieldBase =
+  "rounded-ns-md border border-ns-line bg-ns-card text-[15px] text-ns-ink placeholder:text-ns-ink-subtle focus:border-ns-primary focus:outline-none focus:ring-3 focus:ring-ns-primary-soft";
 
-export const textareaClass =
-  "w-full rounded-lg border border-border bg-panel px-3 py-2 text-sm text-fg placeholder:text-fg-subtle focus:outline-none focus:ring-2 focus:ring-accent";
+export const inputClass = `${fieldBase} h-11 w-full px-3.5 tabular-nums`;
+
+export const textareaClass = `${fieldBase} w-full px-3.5 py-2.5`;
+
+/** For inputs that size themselves (inline fill rows, journal box). */
+export const fieldClass = fieldBase;

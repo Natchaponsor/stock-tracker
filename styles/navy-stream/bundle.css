@@ -1,0 +1,60 @@
+/* Copied from the Navy Stream design system (project/components/bundle.css).
+   Its Google Fonts @import is dropped: app/layout.tsx self-hosts Inter with
+   next/font and exposes it as --font-inter, which tokens.css feeds into --font-sans. */
+
+html, body { margin: 0; background: var(--surface-page); color: var(--ink); font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
+.oc-num { font-variant-numeric: tabular-nums; }
+.oc-wrap { padding: var(--space-4); display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: flex-start; }
+
+.oc-silk {
+  color: var(--on-primary);
+  background:
+    radial-gradient(120% 40% at 30% 45%, rgba(255, 255, 255, 0.10) 0%, transparent 60%),
+    radial-gradient(70% 55% at 12% 0%, var(--hero-glow) 0%, transparent 70%),
+    radial-gradient(60% 50% at 95% 15%, var(--hero-mid) 0%, transparent 70%),
+    radial-gradient(90% 60% at 50% 110%, var(--hero-deep) 0%, transparent 70%),
+    linear-gradient(165deg, var(--hero-base) 0%, var(--hero-deep) 100%);
+}
+.oc-glass { background: var(--hero-glass); border: 1px solid var(--hero-glass-line); border-radius: var(--radius-md); }
+.oc-hero-muted { color: var(--on-hero-muted); }
+.oc-decimals { opacity: 0.55; }
+
+.oc-card { background: var(--surface-card); border-radius: var(--radius-lg); box-shadow: var(--shadow-card); padding: var(--space-4); }
+.oc-sheet { background: var(--surface-page); border-radius: var(--radius-xl) var(--radius-xl) 0 0; }
+
+.oc-btn { font: 600 15px/20px var(--font-sans); border: 0; cursor: pointer; border-radius: var(--radius-full); padding: 14px 24px; display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); }
+.oc-btn-primary { color: var(--on-primary); background: linear-gradient(90deg, var(--ocean-400) 0%, var(--ocean-500) 100%); box-shadow: var(--shadow-primary); }
+.oc-btn-primary:active { background: var(--ocean-700); }
+.oc-btn-secondary { color: var(--primary-text); background: var(--primary-soft); }
+.oc-btn-block { width: 100%; }
+.oc-icon-btn { width: 40px; height: 40px; border-radius: var(--radius-full); display: inline-flex; align-items: center; justify-content: center; border: 0; color: var(--on-primary); background: var(--hero-glass); box-shadow: inset 0 0 0 1px var(--hero-glass-line); }
+.oc-fab { width: 56px; height: 56px; border-radius: var(--radius-full); border: 0; color: var(--on-primary); background: linear-gradient(160deg, var(--ocean-400), var(--ocean-500)); box-shadow: var(--shadow-primary); display: inline-flex; align-items: center; justify-content: center; }
+
+.oc-link { color: var(--primary-text); font: 500 13px/18px var(--font-sans); text-decoration: none; }
+.oc-badge { display: inline-flex; align-items: center; gap: 4px; font: 500 12px/16px var(--font-sans); padding: 3px 8px; border-radius: var(--radius-full); }
+.oc-badge-up { color: var(--success); background: var(--success-soft); }
+.oc-badge-down { color: var(--danger); background: var(--danger-soft); }
+.oc-badge-warn { color: var(--warning); background: var(--warning-soft); }
+.oc-badge-info { color: var(--primary-text); background: var(--primary-soft); }
+
+.oc-track { height: 8px; border-radius: var(--radius-full); background: var(--surface-sunken); overflow: hidden; }
+.oc-fill { height: 100%; border-radius: var(--radius-full); }
+
+.oc-seg { display: flex; padding: 4px; border-radius: var(--radius-full); background: var(--surface-sunken); }
+.oc-seg button { flex: 1; border: 0; background: transparent; font: 500 14px/20px var(--font-sans); color: var(--ink-muted); padding: 9px 0; border-radius: var(--radius-full); cursor: pointer; }
+.oc-seg button[aria-pressed="true"] { background: var(--surface-card); color: var(--ink); box-shadow: var(--shadow-card); }
+
+.oc-tile { background: var(--surface-card); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 14px 8px; display: flex; flex-direction: column; align-items: center; gap: 6px; font: 500 13px/18px var(--font-sans); color: var(--ink-muted); cursor: pointer; }
+.oc-tile[aria-pressed="true"] { background: var(--primary-soft); border-color: var(--ocean-100); color: var(--primary-text); }
+
+.oc-field-label { font: 500 13px/18px var(--font-sans); color: var(--ink-muted); margin-bottom: 6px; display: block; }
+.oc-field { background: var(--surface-card); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 13px 14px; display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); font: 400 15px/22px var(--font-sans); color: var(--ink); }
+.oc-field svg { color: var(--ink-muted); flex: none; }
+.oc-attach { border: 1.5px dashed var(--line); background: var(--surface-sunken); border-radius: var(--radius-md); padding: 13px 14px; display: flex; align-items: center; gap: 10px; font: 500 14px/20px var(--font-sans); color: var(--ink); }
+
+.oc-tabbar { position: relative; background: var(--surface-card); border-radius: var(--radius-xl); box-shadow: var(--shadow-bar); display: grid; grid-template-columns: 1fr 1fr 72px 1fr 1fr; align-items: end; padding: 12px 8px 14px; }
+.oc-tab { display: flex; flex-direction: column; align-items: center; gap: 4px; font: 500 12px/16px var(--font-sans); color: var(--ink-muted); }
+.oc-tab[aria-current="page"] { color: var(--primary-text); }
+.oc-tabbar .oc-fab { position: absolute; left: 50%; top: -22px; transform: translateX(-50%); }
+
+.oc-cat-icon { width: 28px; height: 28px; border-radius: var(--radius-full); display: inline-flex; align-items: center; justify-content: center; color: #fff; flex: none; }

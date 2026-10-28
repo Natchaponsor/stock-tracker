@@ -31,7 +31,7 @@ export function ConfirmDialog({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onCancel}
-            className="fixed inset-0 z-50 bg-black/60"
+            className="fixed inset-0 z-50 bg-ns-ocean-900/50"
           />
           <motion.div
             role="alertdialog"
@@ -41,12 +41,12 @@ export function ConfirmDialog({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 8 }}
             transition={{ type: "spring", stiffness: 400, damping: 32 }}
-            className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-border bg-card p-5 shadow-xl"
+            className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-ns-lg bg-ns-card p-5 shadow-ns-card"
           >
-            <h2 id="confirm-dialog-title" className="font-serif text-lg font-medium text-fg">
+            <h2 id="confirm-dialog-title" className="ns-heading text-ns-ink">
               {title}
             </h2>
-            <p className="mt-2 text-sm leading-relaxed text-fg-muted">{description}</p>
+            <p className="ns-body mt-2 text-ns-ink-muted">{description}</p>
             <div className="mt-5 flex justify-end gap-2">
               <Button variant="ghost" size="sm" onClick={onCancel}>
                 Cancel

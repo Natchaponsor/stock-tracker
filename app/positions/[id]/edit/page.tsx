@@ -32,7 +32,7 @@ export default function EditPositionPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="font-serif text-2xl font-medium text-fg">Edit Position — {position.symbol}</h1>
+      <h1 className="ns-title text-ns-ink">Edit Position — {position.symbol}</h1>
       <PositionForm existingPosition={position} />
     </div>
   );

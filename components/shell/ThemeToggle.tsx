@@ -8,11 +8,11 @@ type Theme = "light" | "dark";
 const listeners = new Set<() => void>();
 
 function getSnapshot(): Theme {
-  return document.documentElement.dataset.theme === "light" ? "light" : "dark";
+  return document.documentElement.dataset.theme === "dark" ? "dark" : "light";
 }
 
 function getServerSnapshot(): Theme {
-  return "dark";
+  return "light";
 }
 
 function subscribe(listener: () => void) {
@@ -34,8 +34,8 @@ export function ThemeToggle() {
       type="button"
       onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
       aria-pressed={theme === "light"}
-      title={theme === "dark" ? "Switch to day watch" : "Switch to night watch"}
-      className="flex h-8 w-8 items-center justify-center border border-rule-strong text-fg-muted transition-colors hover:text-fg"
+      title={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
+      className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-ns-sunken text-ns-ink-muted transition-colors hover:text-ns-ink"
     >
       {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
       <span className="sr-only">{theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}</span>

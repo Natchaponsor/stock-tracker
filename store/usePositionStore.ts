@@ -6,12 +6,14 @@ import { generateSeedPositions, generateSeedStrategies, generateSeedWatchlist } 
 import { DEFAULT_STARTING_CASH } from "@/lib/cash";
 import { migratePositionShape } from "@/lib/migratePosition";
 import { orderByKeys } from "@/lib/reorder";
-import type { ExportPayload, Fill, JournalNote, Position, Strategy, WatchlistItem } from "@/lib/types";
+import type { CustomSector, ExportPayload, Fill, JournalNote, Position, Strategy, WatchlistItem } from "@/lib/types";
 
 interface PositionState {
   positions: Position[];
   strategies: Strategy[];
   watchlist: WatchlistItem[];
+  /** User-named sectors. A symbol listed here overrides the built-in sector table. */
+  customSectors: CustomSector[];
   startingCash: number;
   hidePnl: boolean;
   hasHydrated: boolean;
@@ -43,6 +45,11 @@ interface PositionState {
   /** Persists a new watchlist order, given as the symbols in display order. */
   reorderWatchlist: (symbols: string[]) => void;
 
+  /** Creates or updates a custom sector. Its symbols leave any other custom sector,
+   * so every symbol belongs to at most one. */
+  saveCustomSector: (sector: CustomSector) => void;
+  deleteCustomSector: (id: string) => void;
+
   toggleHidePnl: () => void;
 }
 
@@ -52,6 +59,7 @@ export const usePositionStore = create<PositionState>()(
       positions: [],
       strategies: [],
       watchlist: [],
+      customSectors: [],
       startingCash: 0,
       hidePnl: false,
       hasHydrated: false,
@@ -70,6 +78,7 @@ export const usePositionStore = create<PositionState>()(
           positions: generateSeedPositions(),
           strategies: generateSeedStrategies(),
           watchlist: generateSeedWatchlist(),
+          customSectors: [],
           startingCash: DEFAULT_STARTING_CASH,
           initialized: true,
         }),
@@ -79,6 +88,7 @@ export const usePositionStore = create<PositionState>()(
           positions: [],
           strategies: [],
           watchlist: [],
+          customSectors: [],
           startingCash: 0,
           initialized: true,
         }),
@@ -88,6 +98,7 @@ export const usePositionStore = create<PositionState>()(
           positions: payload.positions,
           strategies: payload.strategies,
           watchlist: payload.watchlist,
+          customSectors: payload.customSectors,
           startingCash: payload.startingCash,
           initialized: true,
         }),
@@ -155,6 +166,21 @@ export const usePositionStore = create<PositionState>()(
       reorderWatchlist: (symbols) =>
         set((state) => ({ watchlist: orderByKeys(state.watchlist, symbols, (w) => w.symbol) })),
 
+      saveCustomSector: (sector) =>
+        set((state) => {
+          const symbols = new Set(sector.symbols);
+          const others = state.customSectors
+            .filter((c) => c.id !== sector.id)
+            .map((c) => ({ ...c, symbols: c.symbols.filter((s) => !symbols.has(s)) }));
+          const existing = state.customSectors.findIndex((c) => c.id === sector.id);
+          const next = [...others];
+          next.splice(existing === -1 ? next.length : existing, 0, sector);
+          return { customSectors: next };
+        }),
+
+      deleteCustomSector: (id) =>
+        set((state) => ({ customSectors: state.customSectors.filter((c) => c.id !== id) })),
+
       toggleHidePnl: () => set({ hidePnl: !get().hidePnl }),
     }),
     {
@@ -165,6 +191,7 @@ export const usePositionStore = create<PositionState>()(
         positions: state.positions,
         strategies: state.strategies,
         watchlist: state.watchlist,
+        customSectors: state.customSectors,
         startingCash: state.startingCash,
         hidePnl: state.hidePnl,
         initialized: state.initialized,

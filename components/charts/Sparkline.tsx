@@ -7,7 +7,7 @@ interface SparklineProps {
   color?: string;
 }
 
-export function Sparkline({ data, color = "var(--color-accent)" }: SparklineProps) {
+export function Sparkline({ data, color = "var(--primary)" }: SparklineProps) {
   if (data.length < 2) return null;
   return (
     <ResponsiveContainer width="100%" height="100%">

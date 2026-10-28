@@ -21,8 +21,8 @@ interface Row {
 
 function SignalRow({ row }: { row: Row }) {
   return (
-    <div className="flex items-center justify-between border-b border-border py-2.5 last:border-0">
-      <span className="text-xs font-medium uppercase tracking-wide text-fg-subtle">{row.name}</span>
+    <div className="flex items-center justify-between border-b border-ns-line py-2.5 last:border-0">
+      <span className="ns-label text-ns-ink-subtle">{row.name}</span>
       <Badge tone={toneToBadge[row.signal.tone]}>{row.signal.label}</Badge>
     </div>
   );

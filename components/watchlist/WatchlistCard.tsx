@@ -3,21 +3,19 @@
 import { useMemo, type ReactNode } from "react";
 import Link from "next/link";
 import { X } from "lucide-react";
-import { Skeleton } from "@/components/ui/Skeleton";
-import { PnlText } from "@/components/ui/PnlText";
+import { NsChangeBadge, NsPnl, NsSkeleton, SymbolMark } from "@/components/navy/primitives";
 import { useQuotes } from "@/hooks/useQuotes";
 import { usePositionStore } from "@/store/usePositionStore";
 import { computePositionMetrics } from "@/lib/positionMetrics";
-import { formatCurrency, glyph } from "@/lib/format";
-import { cn } from "@/lib/cn";
+import { formatCurrency } from "@/lib/format";
 import { formatAsOf } from "@/lib/priceTime";
 import { useNow } from "@/components/log/clock";
 import type { WatchlistItem } from "@/lib/types";
 
 /**
- * One watched symbol, as an entry on the sheet. The row divider lives on the
- * wrapper in WatchlistStrip (each row sits in its own draggable item), so this
- * renders the row body only. `handle` is the drag grip, drawn left of the row.
+ * One watched symbol. The row divider lives on the wrapper in WatchlistStrip
+ * (each row sits in its own draggable item), so this renders the row body
+ * only. `handle` is the drag grip, drawn left of the row.
  */
 export function WatchlistCard({ item, handle }: { item: WatchlistItem; handle?: ReactNode }) {
   const { symbol } = item;
@@ -38,88 +36,82 @@ export function WatchlistCard({ item, handle }: { item: WatchlistItem; handle?: 
   }, [openPosition, quote]);
 
   const loadingQuote = !quote;
+  const changePct = quote?.changePct ?? null;
 
   return (
-    <div className="flex items-center gap-2 py-3 transition-colors duration-100 hover:bg-panel">
+    <div className="flex items-center gap-2.5 py-3">
       {handle}
-      <div className="grid min-w-0 flex-1 grid-cols-[1fr_auto] items-baseline gap-x-4 gap-y-1.5 sm:grid-cols-[8rem_7rem_6.5rem_1fr_1.5rem]">
-        {openPosition ? (
-          <Link
-            href={`/positions/${openPosition.id}`}
-            className="stamp-lg text-fg transition-colors hover:text-accent"
-          >
-            {symbol}
-            <span className="stamp ml-2 text-fg-subtle">held</span>
-          </Link>
-        ) : (
-          <span className="stamp-lg text-fg">{symbol}</span>
-        )}
+      <SymbolMark symbol={symbol} />
 
-        {loadingQuote ? (
-          <Skeleton className="h-5 w-16 justify-self-end sm:justify-self-auto" />
-        ) : (
-          <span
-            key={`price-${quote.asOf ?? "no-fix"}`}
-            className="figure animate-fix-stamp justify-self-end text-sm font-medium text-fg sm:justify-self-auto"
-          >
-            {quote.price !== null ? formatCurrency(quote.price) : "—"}
-          </span>
-        )}
-
-        {!loadingQuote && (
-          <span
-            key={`change-${quote.asOf ?? "no-fix"}`}
-            className={cn(
-              "figure animate-fix-stamp text-sm",
-              quote.changePct !== null && quote.changePct > 0
-                ? "text-gain"
-                : quote.changePct !== null && quote.changePct < 0
-                  ? "text-loss"
-                  : "text-fg-muted"
-            )}
-          >
-            {quote.changePct !== null ? (
-              <>
-                <span aria-hidden="true">{glyph(quote.changePct)} </span>
-                {quote.changePct > 0 ? "+" : quote.changePct < 0 ? "−" : ""}
-                {Math.abs(quote.changePct).toFixed(2)}%
-              </>
-            ) : (
-              "—"
-            )}
-          </span>
-        )}
-
-        <span className="fix-stamp col-span-2 text-[11px] text-fg-subtle sm:col-span-1">
+      <div className="min-w-0 flex-1">
+        <p className="flex items-center gap-2">
+          {openPosition ? (
+            <Link
+              href={`/positions/${openPosition.id}`}
+              className="ns-body font-semibold text-ns-ink transition-colors hover:text-ns-primary-text"
+            >
+              {symbol}
+            </Link>
+          ) : (
+            <span className="ns-body font-semibold text-ns-ink">{symbol}</span>
+          )}
+          {openPosition && <span className="oc-badge oc-badge-info">Held</span>}
+        </p>
+        <p className="ns-caption mt-0.5 truncate font-normal text-ns-ink-subtle">
           {quote?.asOf ? (
             <span title={new Date(quote.asOf).toLocaleString()}>
-              as of {formatAsOf(new Date(quote.asOf), now === null ? null : new Date(now))}
+              As of {formatAsOf(new Date(quote.asOf), now === null ? null : new Date(now))}
             </span>
           ) : (
-            <span>watching since {new Date(item.addedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
+            <span>
+              Watching since {new Date(item.addedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+            </span>
           )}
           {positionMetrics?.unrealizedPnl != null && (
             <>
               {" · "}
-              <PnlText
+              <NsPnl
                 value={positionMetrics.unrealizedPnl}
                 formatted={formatCurrency(positionMetrics.unrealizedPnl, { signed: true })}
-                className="text-[11px]"
+                showGlyph={false}
               />
             </>
           )}
-        </span>
-
-        <button
-          type="button"
-          onClick={() => removeWatchlistSymbol(symbol)}
-          className="col-start-2 row-start-1 flex h-6 w-6 items-center justify-center justify-self-end text-fg-subtle transition-colors hover:text-loss sm:col-start-auto sm:row-start-auto"
-          title={`Remove ${symbol} from watchlist`}
-        >
-          <X className="h-3.5 w-3.5" />
-          <span className="sr-only">Remove {symbol} from watchlist</span>
-        </button>
+        </p>
       </div>
+
+      <div className="flex shrink-0 flex-col items-end gap-1">
+        {loadingQuote ? (
+          <>
+            <NsSkeleton className="h-5 w-16" />
+            <NsSkeleton className="h-4 w-12" />
+          </>
+        ) : (
+          <>
+            <span
+              key={`price-${quote.asOf ?? "no-fix"}`}
+              className="ns-body oc-num animate-fix-stamp font-semibold text-ns-ink"
+            >
+              {quote.price !== null ? formatCurrency(quote.price) : "—"}
+            </span>
+            <NsChangeBadge value={changePct}>
+              {changePct !== null
+                ? `${changePct > 0 ? "+" : changePct < 0 ? "−" : ""}${Math.abs(changePct).toFixed(2)}%`
+                : "No change"}
+            </NsChangeBadge>
+          </>
+        )}
+      </div>
+
+      <button
+        type="button"
+        onClick={() => removeWatchlistSymbol(symbol)}
+        className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full text-ns-ink-subtle transition-colors hover:bg-ns-danger-soft hover:text-ns-danger"
+        title={`Remove ${symbol} from watchlist`}
+      >
+        <X className="h-4 w-4" />
+        <span className="sr-only">Remove {symbol} from watchlist</span>
+      </button>
     </div>
   );
 }
