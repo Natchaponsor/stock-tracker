@@ -8,9 +8,11 @@ not dozens of same-day trades).
 - **Almost entirely client-side.** Positions, strategies, cash balance, and your
   watchlist are seeded on first load and persisted only in `localStorage`. No login,
   no accounts.
-- **One server touchpoint** — `app/api/quote/route.ts`, a stateless proxy to
-  [Finnhub](https://finnhub.io) that relays a public current price + day change and
-  never sees or stores your positions.
+- **Two server touchpoints, both stateless proxies to [Finnhub](https://finnhub.io)** —
+  `app/api/quote/route.ts` relays a public current price + day change, and
+  `app/api/logo/route.ts` serves each company's logo (looked up about once a month and
+  cached), so your browser never talks to Finnhub directly. Neither sees or stores
+  your positions; a symbol with no logo falls back to its lettered sector circle.
 - **Manual price refresh, not background polling.** Nothing fetches on a timer —
   prices are fetched once on page load and again only when you click "Refresh
   prices," to keep API call volume low and predictable.

@@ -5,6 +5,7 @@ import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { glyph } from "@/lib/format";
 import { resolveSector } from "@/lib/sectors";
+import { logoSrc } from "@/lib/logo";
 import { usePositionStore } from "@/store/usePositionStore";
 
 /**
@@ -125,18 +126,49 @@ export function NsChangeBadge({ value, children }: { value: number | null; child
   );
 }
 
-/** A symbol's mark: a circle in its sector's category colour with the ticker's first letter. */
+/** Width of the sector-coloured ring left showing around a company logo. */
+const LOGO_RING = 2;
+
+/**
+ * A symbol's mark: the company logo inside a ring of its sector's category
+ * colour. The ring is simply the sector circle showing around a logo inset
+ * {LOGO_RING}px, so with no logo (still loading, unknown or non-US ticker,
+ * upstream down) the mark is the sector circle with the ticker's first letter.
+ */
 export function SymbolMark({ symbol, size = 32 }: { symbol: string; size?: number }) {
   const customSectors = usePositionStore((s) => s.customSectors);
   const sector = resolveSector(symbol, customSectors);
+  // Keyed by symbol, so a reused mark that changes symbol gets a fresh attempt.
+  const [failedSymbol, setFailedSymbol] = useState<string | null>(null);
+  const showLogo = failedSymbol !== symbol;
+  const inner = size - LOGO_RING * 2;
+
   return (
     <span
       aria-hidden="true"
       title={sector.name}
-      className="oc-cat-icon ns-label font-semibold"
+      className="oc-cat-icon ns-label relative font-semibold"
       style={{ background: sector.color, width: size, height: size }}
     >
       {symbol.charAt(0)}
+      {showLogo && (
+        // A plain <img>, not next/image: the logo route already caches each file
+        // for a month, and resizing a 28-32px mark isn't worth the optimiser quota.
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={logoSrc(symbol)}
+          alt=""
+          width={inner}
+          height={inner}
+          loading="lazy"
+          decoding="async"
+          // Every page that draws a mark waits for the stored book to load before
+          // rendering it, so this handler is always attached before the request starts.
+          onError={() => setFailedSymbol(symbol)}
+          className="absolute rounded-full object-cover"
+          style={{ inset: LOGO_RING, width: inner, height: inner }}
+        />
+      )}
     </span>
   );
 }
