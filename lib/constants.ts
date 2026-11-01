@@ -1,4 +1,6 @@
-export const MAX_WATCHLIST_SYMBOLS = 8;
+// The quote proxy prices at most 25 symbols per refresh (watchlist + holdings
+// combined, see app/api/quote/route.ts), so this leaves room for held stocks.
+export const MAX_WATCHLIST_SYMBOLS = 15;
 
 export const EMA_FAST_PERIOD = 50;
 export const EMA_SLOW_PERIOD = 200;

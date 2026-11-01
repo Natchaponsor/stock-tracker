@@ -126,7 +126,12 @@ export function WatchlistStrip() {
         {announcement}
       </p>
 
-      {watchlist.length < MAX_WATCHLIST_SYMBOLS && (
+      {watchlist.length >= MAX_WATCHLIST_SYMBOLS ? (
+        // Say why the add box is gone instead of letting it silently vanish.
+        <p className="ns-caption mt-3 text-ns-ink-subtle">
+          Watchlist full ({MAX_WATCHLIST_SYMBOLS} symbols max). Remove one to add another.
+        </p>
+      ) : (
         <form onSubmit={handleAdd} className="mt-3 flex items-center gap-2">
           <input
             value={draft}

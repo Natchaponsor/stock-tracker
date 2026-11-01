@@ -58,7 +58,11 @@ function ShareBar({ share, color }: { share: number; color: string }) {
   );
 }
 
-const ROW_COLUMNS = "grid-cols-[minmax(0,1fr)_5.75rem_5.75rem] sm:grid-cols-[minmax(0,1fr)_8rem_7.5rem_7.5rem]";
+// The % Portfolio column follows the table's own width (a container query on
+// the breakdown), not the window: on a half-width card at tablet/small-laptop
+// sizes it would squeeze the ticker name to nothing, so below 32rem the share
+// bar moves to its own line under each row instead.
+const ROW_COLUMNS = "grid-cols-[minmax(0,1fr)_5.75rem_5.75rem] @lg:grid-cols-[minmax(0,1fr)_8rem_7.5rem_7.5rem]";
 
 export function PortfolioPnlPanel() {
   const positions = usePositionStore((s) => s.positions);
@@ -137,10 +141,10 @@ export function PortfolioPnlPanel() {
           </button>
 
           {expanded && (
-            <div className="mt-2">
-              <div className={cn("ns-caption grid gap-x-2 border-b border-ns-line pb-2 text-ns-ink-subtle sm:gap-x-3", ROW_COLUMNS)}>
+            <div className="@container mt-2">
+              <div className={cn("ns-caption grid gap-x-2 border-b border-ns-line pb-2 text-ns-ink-subtle @lg:gap-x-3", ROW_COLUMNS)}>
                 <span>Stock</span>
-                <span className="hidden sm:block">% Portfolio</span>
+                <span className="hidden @lg:block">% Portfolio</span>
                 <span className="text-center">Realized</span>
                 <span className="text-center">Unrealized</span>
               </div>
@@ -152,7 +156,7 @@ export function PortfolioPnlPanel() {
                     <li
                       key={s.symbol}
                       className={cn(
-                        "grid items-center gap-x-2 border-b border-ns-line py-2.5 last:border-b-0 sm:gap-x-3",
+                        "grid items-center gap-x-2 border-b border-ns-line py-2.5 last:border-b-0 @lg:gap-x-3",
                         ROW_COLUMNS
                       )}
                     >
@@ -160,7 +164,7 @@ export function PortfolioPnlPanel() {
                         <SymbolMark symbol={s.symbol} size={28} />
                         <p className="ns-body truncate font-semibold text-ns-ink">{s.symbol}</p>
                       </div>
-                      <div className="hidden sm:block">
+                      <div className="hidden @lg:block">
                         <ShareBar share={share} color={color} />
                       </div>
                       <div className="ns-label flex flex-col items-center text-center">
@@ -180,8 +184,8 @@ export function PortfolioPnlPanel() {
                           <span className="text-ns-ink-subtle">—</span>
                         )}
                       </div>
-                      {/* Phones have no room for a share column, so the bar gets its own line. */}
-                      <div className="col-span-3 mt-2 pl-[38px] sm:hidden">
+                      {/* Too narrow for a share column, so the bar gets its own line. */}
+                      <div className="col-span-3 mt-2 pl-[38px] @lg:hidden">
                         <ShareBar share={share} color={color} />
                       </div>
                     </li>
