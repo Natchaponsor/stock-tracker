@@ -16,17 +16,29 @@ not dozens of same-day trades).
 - **Manual price refresh, not background polling.** Nothing fetches on a timer —
   prices are fetched once on page load and again only when you click "Refresh
   prices," to keep API call volume low and predictable.
-- **Light/dark theme**, toggled from the top bar and remembered across visits, fully responsive.
+- **Light theme by default, dark on request.** The toggle is remembered across
+  visits. On phones a bottom tab bar (with a raised Log button) replaces the top
+  menu.
 
 ## What works right now
 
-- **Dashboard** — "Portfolio summary": the total, with cash (editable),
-  mark-to-market positions value and change from starting capital beside it, plus
-  the allocation scale bar (cash + each symbol); portfolio P&L (realized vs.
-  unrealized, per-stock breakdown open by default); a watchlist you can reorder by
-  dragging its grip (or ↑/↓ on the grip); a **Recorded log** of
-  every buy and sell, newest first — entry price, date and unrealized P&L on buys;
-  selling price, date and realized P&L on sells; per-strategy win-rate/avg-return.
+- **Dashboard** opens on the **Portfolio summary** header: the total, with cash
+  (editable), positions value and change from starting capital beneath it, a
+  "Prices as of 10:17 AM · 1 min ago" chip, and a privacy toggle that hides every
+  amount. Below it, as cards:
+  - **Portfolio P&L**: realized vs. unrealized, with a per-stock breakdown open by
+    default. The "% Portfolio" column appears only when the card is wide enough;
+    narrower cards show a share bar instead.
+  - **Allocation by sector**: cash plus one bar per sector. "Assign new sector"
+    lets you create your own named sector, pick one of the six sector colours,
+    and move symbols into it. Your sectors override the built-in table.
+  - **Watchlist**: up to 15 symbols, each with its company logo ringed in its
+    sector colour, the latest price and its age. Reorder by dragging the grip (or
+    ↑/↓ on the grip). When it's full, a note tells you to remove one first.
+  - **Recorded log**: every buy and sell, newest first. Buys show entry price,
+    date and unrealized P&L; sells show selling price, date and realized P&L.
+  - **Strategy performance**: per-strategy win rate and average return
+    (collapsed by default).
 - **Positions** — Buy shares (a new symbol, or adding to one you already hold) and
   Sell shares (FIFO across whatever open lots exist for that symbol, auto-closing
   a lot it fully depletes); scale in/out any time from a position's own page; edit
@@ -35,10 +47,14 @@ not dozens of same-day trades).
   reflection), each snapshotting the price at the time.
 - **Strategies** — define named rule sets (entry rule / exit rule) and see how each
   is actually performing across the positions tagged to it.
-- **Data menu** — Export (download everything as JSON), Import (restore from a
-  previously exported file, with a preview of what it contains), Reset to demo data,
-  Erase all data — every option behind its own confirmation dialog. Erasing stays
-  erased across reloads; it won't silently reseed the demo dataset.
+- **Data menu**: Export (download everything as JSON, format v2, which includes
+  watchlist order and custom sectors), Import (restore from a previously exported
+  file, with a preview of what it contains; v1 files still import), Reset to demo
+  data, and Erase all data. Every option sits behind its own confirmation dialog.
+  Erasing stays erased across reloads; it won't silently reseed the demo dataset.
+- **Company logos**: fetched through the app's own `/api/logo` route and cached
+  for about a month. A symbol with no logo (or a non-US listing) falls back to
+  its first letter on the sector colour.
 - **Live prices** — current price + day change per symbol via Finnhub, fetched
   on load and on manual refresh only, labeled with how stale the quote actually is
   (Finnhub's free tier doesn't update outside regular US market hours).
@@ -103,10 +119,71 @@ not dozens of same-day trades).
 - **Cash** — a starting balance you set, netted automatically against every fill
   across every position; shown as its own slice in the portfolio allocation chart.
 
+## Design system: Navy Stream
+
+The UI is built on **Navy Stream**, a vendored design system. Its values are
+copied into the repo and used as they come; this app adds no colours, radii or
+type sizes of its own. [DESIGN.md](DESIGN.md) is the full reference (tokens,
+components, layout, measured contrast); this is the short version of how it's
+wired and the rules for using it.
+
+### Where things live
+
+| Layer | File | Role |
+|---|---|---|
+| Tokens | `styles/navy-stream/tokens.css` | Every colour, spacing, radius, shadow and type value as a CSS variable. Light on `:root`, dark on `:root[data-theme="dark"]`. |
+| Components | `styles/navy-stream/bundle.css` | The system's ready-made `oc-*` classes: `oc-silk` (hero gradient), `oc-card`, `oc-btn-*`, `oc-badge-*`, `oc-track`, `oc-tabbar`, `oc-num` (tabular figures)… |
+| Tailwind bridge | `app/globals.css` | Exposes the tokens as `ns-*` utilities (`bg-ns-card`, `text-ns-ink-muted`, `rounded-ns-lg`, `shadow-ns-card`) and the type classes `ns-amount-xl` … `ns-caption`. |
+| Primitives | `components/navy/primitives.tsx`, `components/ui/` | `NsCard`, `NsPnl`, `NsChangeBadge`, `SymbolMark`, `NsEmpty`, `NsSkeleton`; `Button`, `Segmented`, `ConfirmDialog`, … |
+| Shell | `components/navy/NavyShell.tsx` | Top menu from `md` up, bottom tab bar + Log FAB on phones. |
+| Sectors | `lib/sectors.ts` | Maps sectors to the system's `cat-*` colours and resolves each symbol's sector. |
+
+### Rules of use
+
+How to decide what to reach for when building a screen, in order:
+
+1. **Use a primitive if one fits.** A section is an `NsCard`; a signed amount is
+   `NsPnl` or `NsChangeBadge`; a ticker's icon is `SymbolMark`; a destructive
+   confirm is `ConfirmDialog`.
+2. **Otherwise use an `oc-*` class** if the system already has that component
+   (hero, glass chip, badge, progress track, tab bar).
+3. **Otherwise compose `ns-*` utilities.** Use `var(--token)` in inline styles
+   only when the value is dynamic (a sector colour, a bar width).
+4. **Never write a raw colour** (`#hex`, `rgb()`, `text-blue-600`) in a
+   component or stylesheet. If a value is genuinely missing, add a token to
+   `tokens.css` with a dark value and bridge it in `globals.css`. Don't patch it
+   locally.
+
+The fixed meanings behind those choices:
+
+- **Direction:** gains are `success` (green), losses `danger` (red), flat is
+  muted. Each one also carries a ▲/▼ glyph and a sign, so colour never works
+  alone. Green and red are never used for emphasis.
+- **Blue:** `primary` is for fills (buttons, focus ring); `primary-text` is for
+  blue text (links, the active tab), and it brightens in dark mode to stay
+  readable.
+- **Hero tokens** (`hero-*`, glass, `on-hero-muted`) appear only inside the
+  silk Portfolio summary header.
+- **Sectors** take their colour only from `lib/sectors.ts`, which reuses the
+  six `cat-*` tokens. User-made sectors choose from the same six.
+- **Figures** always carry `oc-num`, so columns align on the digit.
+- **Width inside cards** responds to the card, not the screen: tables use
+  container queries (`@container` / `@lg:`), because a card in the two-column
+  grid is narrow even on a wide monitor.
+- **Light is the default theme.** Design there first, then check dark.
+
+Two cascade gotchas:
+
+- `bundle.css` is unlayered, so `oc-*` rules beat Tailwind. Override one with
+  Tailwind's `!` suffix (`px-1!`) instead of editing the vendored file.
+- Tailwind's own `rounded-sm…xl` keep their stock sizes. Navy surfaces use
+  `rounded-ns-*`.
+
 ## Stack
 
-Next.js (App Router) + TypeScript, Tailwind CSS v4, Recharts, Zustand (`persist`), SWR,
-Framer Motion, date-fns, Vitest.
+Next.js 16 (App Router, Turbopack) + React 19 + TypeScript, Tailwind CSS v4,
+Navy Stream (vendored CSS tokens/components), Inter via `next/font`, Recharts,
+Zustand (`persist`), SWR, Framer Motion, lucide-react, date-fns, Vitest.
 
 ## Getting started
 
@@ -125,8 +202,9 @@ quote proxy fails soft on a missing key, same as any other upstream error).
 
 ## Deploy
 
-Requires a Node/Edge runtime for the price-proxy route, so it deploys to
-**Vercel**, not a static export. Add `FINNHUB_API_KEY` as an environment variable in
+Requires a Node/Edge runtime for the two proxy routes (`/api/quote`, `/api/logo`),
+so it deploys to **Vercel**, not a static export. Live at
+<https://stock-tracker-phi-lyart.vercel.app/>, deployed from `main`. Add `FINNHUB_API_KEY` as an environment variable in
 the Vercel project settings — it's read server-side only and never reaches the client.
 
 ## License

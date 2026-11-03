@@ -1,321 +1,285 @@
 ---
-name: Stock Tracker — The Deck Log
-description: A navigator's watch log for a swing-trading book — ruled bands on one registration axis, every price a fix taken at a stated time.
+name: Stock Tracker — Navy Stream
+description: A calm, card-based swing-trading book on the Navy Stream system. An ocean-silk header holds the one number you came for, and white cards rise out of it.
+source:
+  tokens: styles/navy-stream/tokens.css
+  components: styles/navy-stream/bundle.css
+  bridge: app/globals.css
+  primitives: components/navy/primitives.tsx, components/ui/
+defaultTheme: light
 colors:
-  bg: "#070c12"
-  card: "#0c141c"
-  panel: "#131d27"
-  border: "#25313d"
-  rule: "#1b2631"
-  rule-strong: "#3b4c5e"
-  fg: "#e5ecf3"
-  fg-muted: "#9fb0c0"
-  fg-subtle: "#7b8da0"
-  accent: "#5b8ae0"
-  accent-strong: "#82a8f0"
-  on-accent: "#0a1017"
-  gain: "#4fb07a"
-  loss: "#e2705a"
-  plot: "#6aa9e0"
-  plot-quiet: "#506b82"
-  ema-fast: "#f0a92e"
-  ema-slow: "#6aa9e0"
+  # Light values; dark overrides are listed under "Colors → Dark theme".
+  ocean-50: "#eaf2fc"
+  ocean-100: "#d3e4f8"
+  ocean-300: "#6fa6e8"
+  ocean-400: "#3a80d8"
+  ocean-500: "#0a5bc4"
+  ocean-700: "#07438f"
+  ocean-900: "#04295a"
+  surface-page: "#f3f5f9"
+  surface-card: "#ffffff"
+  surface-sunken: "#eef1f6"
+  line: "#e3e8f0"
+  ink: "#0f1b2d"
+  ink-muted: "#5b6b80"
+  ink-subtle: "#6e7d91"
+  primary: "#0a5bc4"
+  primary-text: "#0a5bc4"
+  primary-soft: "#eaf2fc"
+  on-primary: "#ffffff"
+  hero-glow: "#6fa6e8"
+  hero-mid: "#3a80d8"
+  hero-base: "#0a5bc4"
+  hero-deep: "#07438f"
+  hero-glass: "rgba(255,255,255,0.14)"
+  hero-glass-line: "rgba(255,255,255,0.24)"
+  on-hero-muted: "rgba(255,255,255,0.80)"
+  success: "#14804a"
+  success-soft: "#e3f6eb"
+  danger: "#d02f2f"
+  danger-soft: "#fdeaea"
+  warning: "#a35f00"
+  warning-soft: "#fff2dc"
+  cat-food: "#ee7b1e"
+  cat-transport: "#5b62e0"
+  cat-shopping: "#22a55b"
+  cat-fun: "#e04fc4"
+  cat-bills: "#8b5cf6"
+  cat-health: "#14a3a3"
 typography:
-  display:
-    fontFamily: "Archivo, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "clamp(2.75rem, 8vw, 4.5rem)"
-    fontWeight: 600
-    lineHeight: 0.95
-    letterSpacing: "-0.02em"
-    fontFeature: "tabular-nums lining-nums"
-  headline:
-    fontFamily: "Archivo, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "1.875rem"
-    fontWeight: 600
-    lineHeight: 1.1
-    letterSpacing: "-0.02em"
-    fontFeature: "tabular-nums lining-nums"
-  title:
-    fontFamily: "Archivo Narrow, Archivo, ui-sans-serif, sans-serif"
-    fontSize: "0.8125rem"
-    fontWeight: 600
-    lineHeight: 1.2
-    letterSpacing: "0.1em"
-  body:
-    fontFamily: "Archivo, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "0.875rem"
-    fontWeight: 400
-    lineHeight: 1.5
-    letterSpacing: "normal"
-  label:
-    fontFamily: "Archivo Narrow, Archivo, ui-sans-serif, sans-serif"
-    fontSize: "0.6875rem"
-    fontWeight: 600
-    lineHeight: 1.2
-    letterSpacing: "0.14em"
-  stamp:
-    fontFamily: "Azeret Mono, ui-monospace, SFMono-Regular, monospace"
-    fontSize: "0.6875rem"
-    fontWeight: 400
-    lineHeight: 1.4
-    letterSpacing: "0.02em"
-    fontFeature: "tabular-nums lining-nums"
+  fontFamily: "Inter (self-hosted via next/font), system-ui, -apple-system, Segoe UI, Roboto, sans-serif"
+  amount-xl: { weight: 600, size: "44px", lineHeight: "52px", tracking: "-0.02em", class: "ns-amount-xl" }
+  amount-lg: { weight: 600, size: "32px", lineHeight: "38px", tracking: "-0.02em", class: "ns-amount-lg" }
+  amount-md: { weight: 600, size: "22px", lineHeight: "28px", tracking: "-0.01em", class: "ns-amount-md" }
+  title: { weight: 700, size: "26px", lineHeight: "32px", tracking: "-0.01em", class: "ns-title" }
+  heading: { weight: 600, size: "17px", lineHeight: "24px", class: "ns-heading" }
+  body: { weight: 400, size: "15px", lineHeight: "22px", class: "ns-body" }
+  label: { weight: 500, size: "13px", lineHeight: "18px", class: "ns-label" }
+  caption: { weight: 500, size: "11px", lineHeight: "14px", tracking: "0.01em", class: "ns-caption" }
 rounded:
-  none: "0px"
+  sm: "10px"
+  md: "14px"
+  lg: "20px"
+  xl: "28px"
+  full: "999px"
 spacing:
-  hair: "0.375rem"
-  row: "0.75rem"
-  entry: "1rem"
-  gutter: "1.5rem"
-  band: "1.75rem"
-  axis: "11.5rem"
+  "1": "4px"
+  "2": "8px"
+  "3": "12px"
+  "4": "16px"
+  "5": "20px"
+  "6": "24px"
+  "8": "32px"
+shadows:
+  card: "0 1px 2px rgba(15,27,45,.04), 0 6px 18px rgba(15,27,45,.05)"
+  primary: "0 8px 20px rgba(10,91,196,.32)"
+  bar: "0 -4px 24px rgba(15,27,45,.06)"
 components:
-  button-accent:
-    backgroundColor: "{colors.accent}"
-    textColor: "{colors.on-accent}"
-    typography: "{typography.label}"
-    rounded: "{rounded.none}"
-    padding: "0 0.625rem"
-    height: "2rem"
-  button-accent-hover:
-    backgroundColor: "{colors.accent-strong}"
-    textColor: "{colors.on-accent}"
-  button-outline:
-    backgroundColor: "transparent"
-    textColor: "{colors.fg-muted}"
-    typography: "{typography.label}"
-    rounded: "{rounded.none}"
-    padding: "0 0.625rem"
-    height: "2rem"
-  button-outline-hover:
-    textColor: "{colors.fg}"
-  button-on-accent:
-    backgroundColor: "transparent"
-    textColor: "{colors.on-accent}"
-    typography: "{typography.label}"
-    rounded: "{rounded.none}"
-    padding: "0 0.625rem"
-    height: "1.75rem"
-  tab-active:
-    backgroundColor: "transparent"
-    textColor: "{colors.fg}"
-    typography: "{typography.label}"
-    rounded: "{rounded.none}"
-    padding: "0.5rem 0.75rem"
-  tab-inactive:
-    backgroundColor: "transparent"
-    textColor: "{colors.fg-subtle}"
-    typography: "{typography.label}"
-    rounded: "{rounded.none}"
-    padding: "0.5rem 0.75rem"
-  band:
-    backgroundColor: "transparent"
-    textColor: "{colors.fg}"
-    rounded: "{rounded.none}"
-    padding: "1.75rem 0"
-  log-row:
-    backgroundColor: "transparent"
-    textColor: "{colors.fg}"
-    rounded: "{rounded.none}"
-    padding: "0.75rem 0"
-  log-row-hover:
-    backgroundColor: "{colors.panel}"
-  fix-rule:
-    backgroundColor: "{colors.accent}"
-    textColor: "{colors.on-accent}"
-    typography: "{typography.stamp}"
-    rounded: "{rounded.none}"
-    padding: "0 1rem"
-    height: "2.5rem"
-  fix-rule-quiet:
-    backgroundColor: "{colors.panel}"
-    textColor: "{colors.fg-muted}"
-  input-figure:
-    backgroundColor: "{colors.panel}"
-    textColor: "{colors.fg}"
-    rounded: "{rounded.none}"
-    padding: "0 0.5rem"
-    height: "2rem"
-  menu-surface:
-    backgroundColor: "{colors.card}"
-    textColor: "{colors.fg}"
-    rounded: "{rounded.none}"
-    padding: "0.25rem 0"
-    width: "15rem"
+  hero: { class: "oc-silk rounded-ns-xl", text: "{colors.on-primary}" }
+  glass-chip: { class: "oc-glass", background: "{colors.hero-glass}", border: "{colors.hero-glass-line}", rounded: "{rounded.md}" }
+  card: { class: "oc-card / NsCard", background: "{colors.surface-card}", rounded: "{rounded.lg}", shadow: "{shadows.card}", padding: "16px" }
+  button-primary: { class: "oc-btn-primary / <Button variant=primary>", background: "linear-gradient(90deg, ocean-400, ocean-500)", text: "{colors.on-primary}", rounded: "{rounded.full}", shadow: "{shadows.primary}" }
+  button-secondary: { class: "oc-btn-secondary / <Button variant=secondary>", background: "{colors.primary-soft}", text: "{colors.primary-text}", rounded: "{rounded.full}" }
+  button-ghost: { class: "<Button variant=ghost>", text: "{colors.ink-muted}", hover: "{colors.surface-sunken}" }
+  button-danger: { class: "<Button variant=danger>", background: "{colors.danger-soft}", text: "{colors.danger}" }
+  fab: { class: "oc-fab", size: "56px", background: "linear-gradient(160deg, ocean-400, ocean-500)", shadow: "{shadows.primary}" }
+  badge-up: { class: "oc-badge-up / NsChangeBadge", text: "{colors.success}", background: "{colors.success-soft}" }
+  badge-down: { class: "oc-badge-down / NsChangeBadge", text: "{colors.danger}", background: "{colors.danger-soft}" }
+  badge-info: { class: "oc-badge-info", text: "{colors.primary-text}", background: "{colors.primary-soft}" }
+  track: { class: "oc-track + oc-fill", height: "8px", background: "{colors.surface-sunken}", rounded: "{rounded.full}" }
+  segmented: { class: "<Segmented> (oc-seg pattern)", background: "{colors.surface-sunken}", selected: "{colors.surface-card} + {shadows.card}" }
+  symbol-mark: { class: "SymbolMark (oc-cat-icon)", ring: "sector colour, 2px", fill: "company logo; sector-coloured letter as fallback" }
+  tabbar: { class: "oc-tabbar", background: "{colors.surface-card}", rounded: "{rounded.xl}", shadow: "{shadows.bar}", breakpoint: "below md" }
+  dialog: { class: "ConfirmDialog", background: "{colors.surface-card}", rounded: "{rounded.lg}", scrim: "ocean-900 / 50%" }
 ---
 
-# Design System: Stock Tracker — The Deck Log
+# Design System: Stock Tracker — Navy Stream
 
 ## Overview
 
-**Creative North Star: "The Deck Log"**
+**North star: "Calm water, one number."**
 
-This is a navigator's watch log, not a trading terminal. The page is a ruled sheet: horizontal bands separated by hairlines, every band's label column locked to a single vertical registration axis (`--axis: 11.5rem`) that runs the full height of the page, so consecutive bands join into one continuous rule rather than reading as a stack of separate objects. There are no floating cards, no elevated stat tiles, no delta chips. Depth is achieved entirely with rule weight and ink value.
+The dashboard opens on a deep ocean-silk header that holds the figure you came for, the portfolio total, set large in white. Everything else sits on white cards that rise out of the bottom of that header. The cards overlap its lower edge (`-mt-7`), so their rounded corners form the curve and no strip of page shows between them. The rest of the app is the same cards on a cool grey page.
 
-The world has two states of the same sheet. Dark is the default — the chart table at night: a deep navy-black ground (`#070c12`), a graphite-blue log plane, cool slate rules. Light is the same sheet on a day watch — cool paper grey (`#eef1f4`), deliberately not cream and not white. Neither is a derived theme; every token carries a first-class value in both.
+Navy Stream is a vendored design system, not something invented here. Its tokens and component classes are copied into `styles/navy-stream/` and used as they come. This app's job is to map its finance surfaces (P&L, allocation, watchlist, log) onto those pieces without adding new colours, radii, or type sizes.
 
-The surface's honesty is the aesthetic. A price is a *fix* taken at a stated time, and the navy fix rule sits directly under the masthead stating the age of the numbers before any number appears. Nothing refreshes on a timer; the reader presses Refresh prices and the figures re-stamp with a mechanical snap. "Fix" is the system's internal name for a set of prices taken at a moment; the interface itself says it in plain words ("Prices as of …"). Where a figure isn't known, the sheet says so in words ("pending quote", "sold out") instead of implying zero.
+The honesty rules from the old deck-log design still apply, now written in plain words. A price says how old it is ("Prices as of 10:17 AM · 1 min ago"). Nothing refreshes on a timer. A figure the app can't know is shown in words, never as zero.
 
-**Key Characteristics:**
-- Ruled horizontal bands on one continuous registration axis; never cards
-- Zero corner radius anywhere in the log world
-- Flat by default — the only shadow in the system is the floating-menu drop
-- One accent (signal navy), reserved for state-changing controls and the now-marker
-- Gain and loss always carry a glyph and an explicit sign alongside colour
-- Tabular lining figures globally; type scale encodes magnitude
-- Dark and light both authored, both AA-bound
+**Key characteristics**
+- Light is the default theme; dark is a full token override, not an inversion.
+- One brand hue (ocean blue). Green and red are kept for signed values only.
+- Cards with soft shadows and generous radii. The hero is the only gradient surface.
+- Inter throughout, tabular figures on every number (`oc-num`).
+- Phones get a bottom tab bar with a raised Log button; md+ gets a top menu.
+
+## How the system is wired
+
+| Layer | File | What lives there |
+|---|---|---|
+| Tokens | `styles/navy-stream/tokens.css` | Every colour, space, radius, shadow and type value as a CSS variable. Light on `:root`, dark on `:root[data-theme="dark"]`. |
+| Component classes | `styles/navy-stream/bundle.css` | The system's `oc-*` classes (`oc-silk`, `oc-card`, `oc-btn-*`, `oc-badge-*`, `oc-track`, `oc-tabbar`, `oc-cat-icon`, …). Copied verbatim except the Google Fonts `@import`, which is dropped because Inter is self-hosted with `next/font`. |
+| Tailwind bridge | `app/globals.css` | `@theme inline` maps tokens to `ns-*` utilities: `bg-ns-card`, `text-ns-ink-muted`, `border-ns-line`, `rounded-ns-lg`, `shadow-ns-card`, etc. Also defines the type classes (`ns-amount-xl` … `ns-caption`), the focus ring, and the reduced-motion kill switch. |
+| Primitives | `components/navy/primitives.tsx` | `NsCard`, `NsEmpty`, `NsPnl`, `NsChangeBadge`, `SymbolMark`, `NsSkeleton`. |
+| UI kit | `components/ui/` | `Button`, `Badge`, `Card`, `Segmented`, `ConfirmDialog`, `Skeleton`, `PnlText`, `CountUp`, `EmptyState`, all re-skinned onto `ns-*` utilities. |
+| Shell | `components/navy/NavyShell.tsx` | Top menu (md+), bottom tab bar + FAB (phones), page width, footer. |
+| Sectors | `lib/sectors.ts` | Maps each sector to a `cat-*` token; resolves a symbol's sector (custom choice first, then the built-in table). |
+
+**Two cascade facts to know before styling anything:**
+1. `bundle.css` is **unlayered**, so `oc-*` rules beat Tailwind utilities. To override one, use Tailwind's important suffix: `grid-cols-[…]!`, `px-1!`. (The tab bar in `NavyShell` does exactly this.)
+2. `globals.css` pins Tailwind's own `--radius-sm…xl`, so `rounded-lg` keeps Tailwind's size. Navy Stream radii are always `rounded-ns-*`.
 
 ## Colors
 
-A cold instrument palette — navy-black ground, slate rules, one navy signal — with a blue plot ink that is data and never a control. The signal and the plot ink are now both blues, so they are told apart by role and placement (controls vs. charts), not by hue; see the note under Tertiary.
+### Brand: ocean
+- **Primary** (`primary` `#0a5bc4`): fills, the primary-button gradient end, the focus ring, the caret. Same value in both themes.
+- **Primary text** (`primary-text`; light `#0a5bc4`, dark `#7fb0ee`): blue *text* such as links, the active nav pill, the active tab, and info badges. In dark mode it is brightened so it stays readable on navy cards. Use this, not `primary`, for anything that is text.
+- **Primary soft** (`primary-soft`; light `#eaf2fc`, dark `#10284a`): the active nav pill, secondary buttons, info badges, text selection.
+- **Ocean ramp** (`ocean-50 … ocean-900`): gradient stops for buttons and the FAB (`ocean-400 → ocean-500`), pressed state (`ocean-700`), dialog scrim (`ocean-900/50`), and the `ocean-100` hover on secondary buttons.
 
-### Primary
-- **Signal Navy** (`accent`; light `#1c3664`, dark `#5b8ae0`): the lamp. On the day sheet it is true navy; on the night sheet it is brightened to a navy-family blue, because true navy would vanish against the navy-black ground. It fills the fix rule when there is a real fix to report, backs the Log Position button and Save, underlines the active nav tab, draws the caret and the focus ring, and colours the now-marker. It appears nowhere else.
-- **Lamp Strong** (`accent-strong`; light `#122548`, dark `#82a8f0`): hover state of accent grounds and the fix rule's own border — deeper navy by day, brighter blue at night.
-- **Lamp Ink** (`on-accent`; light `#f3f6fb`, dark `#0a1017`): the text and iconography that sits on accent grounds — near-white on navy by day, near-black on the brightened blue at night — and the focus-ring colour when the ground is the accent.
+### Hero
+`hero-glow`, `hero-mid`, `hero-base`, `hero-deep` are the four stops of `oc-silk`, the radial "silk" gradient behind the portfolio header. On top of it, `hero-glass` / `hero-glass-line` make the frosted chips (price age, stats, controls), and `on-hero-muted` is secondary text on the silk. These tokens are used **only** inside the hero.
 
-### Secondary
-- **Starboard Green** (`gain`) / **Port Red** (`loss`): gains and losses on figures, percentages, the P&L bars, the buy/sell items in the Log Position menu, and the destructive item in the Data menu. Never used for emphasis on anything that isn't a signed value.
+### Surfaces and ink
+- `surface-page` (page), `surface-card` (cards, dialogs, tab bar), `surface-sunken` (track backgrounds, segmented controls, chart grids, ghost-button hover), `line` (hairlines and borders).
+- `ink` (headings, figures), `ink-muted` (secondary text, labels, inactive tabs), `ink-subtle` (meta and least-important captions; see the accessibility notes before using it for small text in light mode).
 
-### Tertiary
-- **Plot Blue** (`plot`, aliased by `ema-slow`) and **Quiet Plot** (`plot-quiet`): the blue pencil of a plot sheet. Chart series, allocation bars, cash bars. Data ink only — a plot-blue element is never clickable. Since the accent moved to navy, plot ink and accent share a hue family (dark: plot `#6aa9e0` vs. accent `#5b8ae0`; light: `#1b5fa8` vs. `#1c3664`). The separation now rests on role: accent appears only on controls, the active tab, and the now-marker; plot ink only inside charts. If that ever stops being enough, move the plot ink off blue rather than the accent.
-- **Fast EMA** (`ema-fast`, `#f0a92e` dark / `#8a5500` light) keeps the former accent amber on purpose, now independent of the accent, so it stays distinct from the blue slow EMA. It is the only amber left in the system, and it is data ink on the analysis charts, not a control.
+### Signed values
+- **Gains → `success`, losses → `danger`. Always.** Text uses the full colour; badges use the `-soft` ground with the full-colour text (`oc-badge-up` / `oc-badge-down`). Flat or zero values use `ink-muted` (or `oc-badge-info`).
+- Colour never works alone: `NsPnl` and `NsChangeBadge` add a ▲/▼ glyph and an explicit sign.
+- `warning` / `warning-soft` are for stale or caution states, never for direction.
 
-### Neutral
-- **Night Ground** (`bg`): the page and the sticky masthead.
-- **Log Plane** (`card`): floating menu and chart-tooltip surfaces — the only surfaces that leave the sheet.
-- **Graphite** (`panel`): row hover, input fields, and the quiet state of the fix rule.
-- **Hairline** (`rule`): the intra-band divider — row-to-row, and the axis rule on each band's content cell.
-- **Band Rule** (`rule-strong`): the heavier rule that separates one band from the next, outlines controls, and draws scrollbar thumbs.
-- **Ink** (`fg`) / **Half Ink** (`fg-muted`) / **Quarter Ink** (`fg-subtle`): headings and figures / secondary readings and control labels / band meta, timestamps, and column headers.
-- **Border** (`border`): retained for the un-converted primitives on the other three routes; the log world uses `rule` and `rule-strong`.
+### Sectors
+Sectors reuse the system's category colours. They never introduce new ones:
 
-### Named Rules
-**The Signal Navy Rule.** The accent marks a control that changes state, the active tab, and the now-marker. It is never decoration, never a highlight on a value, never a second brand colour. Audit test: if an accent-coloured element cannot be clicked and is not the now-marker, it is wrong.
+| Sector | Token |
+|---|---|
+| Technology | `cat-transport` |
+| Energy | `cat-food` |
+| Healthcare | `cat-health` |
+| Consumer | `cat-shopping` |
+| Financials | `cat-bills` |
+| Communication | `cat-fun` |
+| Other | `ink-subtle` |
 
-**The Two Cues Rule.** Direction is never carried by colour alone. Every gain/loss value ships a glyph (▲ / ▼ / •) and an explicit sign alongside the green or red.
+`resolveSector(symbol, customSectors)` is the only way to get a symbol's sector and colour. A user can create their own named sector ("Assign new sector" on the allocation card). It must wear one of the six `cat-*` swatches (`SECTOR_SWATCHES`), never a free colour, and the symbols assigned to it win over the built-in table. Custom sectors are stored with the book and travel in export/import (format v2).
 
-**The Day Watch Rule.** Light is the same sheet at midday, not a bleach of the dark theme: cool paper grey (`#eef1f4`), never cream, never pure white as the page ground. Every token in `@theme` has an authored counterpart in `:root[data-theme="light"]` — no token may be derived, inverted, or left to fall through.
-
-**The AA Floor Rule.** Text and meaningful non-text contrast holds WCAG 2.2 AA in both themes. Measured on the shipped tokens (ink, half ink, quarter ink, gain, loss and accent, each on `bg`, `card` and `panel`; plus `on-accent` on `accent` and on `accent-strong`), the lowest pairing is 4.76:1 light (quarter ink on graphite) and 4.99:1 dark (accent on graphite). The accent itself sits at 10.52:1 light and 5.75:1 dark on the page ground. On accent grounds the focus ring switches to `on-accent` (11.01:1 light, 5.60:1 dark), because the global accent ring would be invisible there.
+### Dark theme
+`app/layout.tsx` sets `data-theme` before paint from `localStorage` (default `light`). Dark overrides: page `#0b1220`, card `#141e2e`, sunken `#1b2840`, line `#26344b`, ink `#eef3fa` / `#a3b1c4` / `#8696ad`, primary-text `#7fb0ee`, primary-soft `#10284a`, hero `#4a86d4` / `#2a6cc0` / `#094fab` / `#05306a`, success `#5fd895` on `#0f2e1f`, danger `#f27b7b` on `#3a1616`, warning `#f5b94a` on `#3a2a0c`, plus heavier card/bar shadows. Ocean ramp, cat colours, spacing, radii and type are shared.
 
 ## Typography
 
-**Display Font:** Archivo (figures and body; `--font-sans`)
-**Stamp Font:** Archivo Narrow (band headings and labels; `--font-stamp`, and what `--font-serif` now resolves to)
-**Label/Mono Font:** Azeret Mono (fix stamps, timestamps, provenance lines; `--font-mono`)
+One family: **Inter**, self-hosted through `next/font` (`--font-inter` → `--font-sans`). No second face.
 
-**Character:** A squarish grotesk for the sheet's figures, a condensed cut for stamped small-caps headings, and a squared mono for anything that reports a time. The pairing reads as printed instrumentation: the numbers are monumental, the labels are rubber-stamped, the times look measured. All three load through `next/font/google`; no system display face and no webfont outside `next/font`.
+| Class | Spec | Used for |
+|---|---|---|
+| `ns-amount-xl` | 600 · 44/52 · −0.02em | The portfolio total in the hero. One per page. |
+| `ns-amount-lg` | 600 · 32/38 · −0.02em | A page's lead figure (e.g. the Disclosures total). |
+| `ns-amount-md` | 600 · 22/28 · −0.01em | Card lead figures (realized / unrealized P&L). |
+| `ns-title` | 700 · 26/32 · −0.01em | Page titles. |
+| `ns-heading` | 600 · 17/24 | Card headings, dialog titles, the wordmark. |
+| `ns-body` | 400 · 15/22 | Prose, descriptions, menu items. |
+| `ns-label` | 500 · 13/18 | Row text, column headers, field labels, nav. |
+| `ns-caption` | 500 · 11/14 · 0.01em | Timestamps, meta, tab-bar labels. |
 
-### Hierarchy
-- **Display** (600, `clamp(2.75rem, 8vw, 4.5rem)`, 0.95): the portfolio-summary total — the one number the reader came for. One per page.
-- **Headline** (600, 1.875rem): realized P&L, the lead figure of a band.
-- **Title** (`.stamp-lg`, 600, 0.8125rem, 0.1em, uppercase): band headings, the wordmark, symbol tickers, strategy names.
-- **Body** (400, 0.875rem): menu items, descriptions, empty-entry prose (capped near `max-w-prose`).
-- **Label** (`.stamp`, 600, 0.6875rem, 0.14em, uppercase): band meta, column headers, control labels, field labels, tags, nav tabs.
-- **Mono** (`.fix-stamp`, 400, 0.6875rem, 0.02em; 0.12em and uppercase in the fix rule): fix ages, timestamps, share counts, starting-cash and footer provenance.
-
-### Named Rules
-**The Stamp-Is-The-Heading Rule.** `.stamp` and `.stamp-lg` *are* the band's heading. A stamped line never sits above another heading as a kicker or eyebrow — if a stamped line appears, it is the title of what follows or the meta beneath it, nothing else.
-
-**The Tabular Figure Rule.** `font-feature-settings: "tnum" 1, "lnum" 1` is on at `body`, and every number-bearing element additionally carries `.figure` (tabular, -0.02em) or `.fix-stamp` (tabular mono). Columns of figures must align on the digit; no proportional numerals anywhere.
-
-**The Magnitude Rule.** Type size encodes how much a figure matters, not where it sits. Portfolio total > band lead figure > row figure > sub-figure, and a figure never gets promoted a step for layout balance.
+- Every number carries `oc-num` (tabular figures) so columns align on the digit.
+- The hero total dims its cents with `oc-decimals` (55% opacity), so the dollars carry the weight.
+- Size follows importance, not layout: hero total > page lead > card lead > row figure.
 
 ## Layout
 
-One centred column, `max-w-[1200px]`, gutters `1rem` rising to `1.5rem` at `sm`. The floor is 390px.
+- **Width:** one centred column, `max-w-[1200px]`, `px-4` rising to `px-6` at `md`. Holds down to 360–390px.
+- **Shell (`NavyShell`):**
+  - **md and up:** a sticky top header with the silk brand square, "Stock Tracker" in `ns-heading`, a pill nav (Dashboard, Strategies, Analysis, Disclosures; active = `bg-ns-primary-soft text-ns-primary-text`), then the refresh button (off-dashboard), theme toggle, Data menu and the Log position pill.
+  - **Phones:** a fixed bottom `oc-tabbar` (max 480px wide) with the four sections and the Log position FAB raised in the centre column. The page gets bottom padding so content never hides under it.
+- **Dashboard:** the silk hero, then a `Sheet` grid that pulls up into it, one column below `lg` and **two columns from 1024px** (`lg:grid-cols-2`). Order: P&L · Allocation by sector · Watchlist (full width) · Recorded log (open) · Strategy performance (collapsed).
+- **Container queries over breakpoints for card internals.** A card in the two-column grid is narrow even on a wide screen, so tables inside cards respond to the *card's* width. The P&L table is `@container`, and its "% Portfolio" column appears only at `@lg` (card ≥ 32rem). Narrower cards show the share as a bar line under the row.
+- **Spacing** sticks to the 4px scale (`--space-1…8`). Card padding is 16px, and the gap between cards is 12px, or 16px at `lg`.
 
-The page is a vertical stack of bands. Each band is a two-column grid, `var(--axis) 1fr`, at `lg` and above: the stamped heading and its meta live left of the axis, the content cell takes `border-left` on the hairline and `padding-left: 1.5rem`. Because every band repeats the same grid — including the footer and the loading skeleton — the axis reads as one unbroken hairline down the page. Below `lg` the grid collapses to a single column, the heading and meta share a baseline row, and the axis rule drops away rather than shrinking.
+## Elevation and depth
 
-Vertical rhythm: `1.75rem` above and below each band's content, `0.75rem` per ruled row (`1rem` for the denser position rows), `1.5rem` column gutter. Bands separate with `border-top` in the heavier band rule; rows inside a band separate with `border-bottom` in the hairline, last row unruled. The footer closes the sheet with a 2px band rule.
+Three shadows, each with one job:
+- **`shadow-card`**: every card, the selected segment, dialogs, menus.
+- **`shadow-primary`**: the blue glow under primary buttons and the FAB. Nothing else gets it.
+- **`shadow-bar`**: the upward shadow on the phone tab bar.
 
-Shell furniture is fixed-height: masthead 3rem rising to 3.5rem at `sm` (sticky, `z-40`), the fix rule 2.5rem full-bleed immediately below it, controls 1.75rem (in the fix rule) or 2rem (in the masthead). Below `sm` the nav tabs drop to their own ruled row under the masthead rather than competing with the controls. Data tables collapse from labelled columns to stacked rows with per-cell stamped labels at `sm`.
-
-## Elevation & Depth
-
-The sheet is flat. Bands, rows, figures, charts, and the fix rule have no shadow and no elevated background — separation is carried entirely by rule weight (hairline inside a band, band rule between bands) and ink value. Content never floats.
-
-The one exception is genuinely floating UI: dropdown menus and chart tooltips, which leave the sheet and need to read as above it.
-
-### Shadow Vocabulary
-- **Menu drop** (`box-shadow: 0 8px 24px -8px rgba(0,0,0,0.5)`): the Data menu, the Log Position menu, and the allocation chart's tooltip. Paired with a `rule-strong` border and the `card` ground.
-
-### Named Rules
-**The Flat Sheet Rule.** If an element is part of the log, it has no shadow. A shadow means the element has left the page — and only transient overlays are allowed to.
+The silk hero sits flat. Depth there comes from the gradient and the frosted glass chips. Cards never stack on cards. A section inside a card is separated with a `line` hairline or a `surface-sunken` ground, not another shadow.
 
 ## Shapes
 
-Square corners, without exception in the converted world: `border-radius: 0` on buttons, inputs, menus, tooltips, tags, and even the scrollbar thumb. The form language is rules and blocks — the 3px ink bar that prefixes the wordmark, the 3px now-marker travelling its hairline scale, the 2px accent underline on the active tab, the full-bleed accent band. Controls are described by a 1px border in `rule-strong` or by an accent fill; nothing is described by a radius.
+| Token | Size | Where |
+|---|---|---|
+| `rounded-ns-sm` | 10px | Small inner elements, skeleton bars, inputs inside tight rows |
+| `rounded-ns-md` | 14px | Glass chips, fields, tiles, menu items |
+| `rounded-ns-lg` | 20px | Cards, dialogs |
+| `rounded-ns-xl` | 28px | The hero, the tab bar |
+| `rounded-full` | pill | Buttons, badges, tracks, nav pills, avatars/SymbolMarks |
 
-Icons are SVG (lucide-react), sized 12–18px. The ▲ / ▼ / • characters are directional data markers on signed values, not an icon set; they never stand in for an interface icon.
-
-### Named Rules
-**The Square Corner Rule.** Radius is zero on every surface of the log. A rounded corner in this world is a leak from the old system.
+Icons are lucide-react, 16–20px, stroke style. The ▲/▼ characters are data markers on signed values, not icons.
 
 ## Components
 
-### Buttons
-- **Shape:** square (0 radius), fixed height — 2rem in the masthead, 1.75rem in the fix rule.
-- **Accent:** navy fill with lamp ink, stamped label, `0.625rem` horizontal padding. Used for the one primary action per region: Log Position, Save.
-- **Outline:** transparent with a 1px `rule-strong` border and half-ink label; hover raises the label to full ink. Theme toggle, Data menu, Refresh prices off the lamp.
-- **On-accent:** the same outline button re-inked for the accent band — `on-accent/30` border, `on-accent` label, border goes solid on hover, focus ring switches to `on-accent`.
-- **Hover / Focus:** colour-only transitions (`transition-colors`, 100–150ms). No lift, no scale, no shadow. Focus is the global 2px accent outline at 2px offset.
-- **Ghost:** bare text in half or quarter ink, hover to full ink. Inline affordances — the cash pencil, Cancel, the P&L expander (which starts open).
-- **Grip:** a quarter-ink `GripVertical` at the left of each watchlist row, hover to full ink. It is the only place a drag can start, so pressing the symbol link or the remove button never becomes a drag; it also answers ↑/↓ to move the row from the keyboard, with the new position announced to screen readers.
+- **Hero (`PortfolioOverview`).** `oc-silk rounded-ns-xl`. Top row: an `oc-glass` chip reading "Prices as of …" (short form on phones) and the privacy toggle (Eye/EyeOff hides amounts). Centre: "Portfolio summary", the total in `ns-amount-xl oc-num` with `oc-decimals`. Below: a 3-column `oc-glass` strip of Cash (editable), Positions and Change from starting capital.
+- **Card (`NsCard`).** `oc-card` with a heading row (`title`, optional `meta`, optional `action`). `collapsible` + `defaultOpen` turn the heading into a disclosure button. Every dashboard section is one of these.
+- **P&L (`NsPnl`, `NsChangeBadge`).** Signed text or pill with glyph + sign, coloured by the signed-values rule.
+- **SymbolMark.** A circle in the symbol's sector colour with the company logo inset by a 2px ring, so the sector still reads at a glance. Logos come from the app's own `/api/logo` route. If one is missing or fails, the circle shows the ticker's first letter on the sector colour. The `title` names the sector.
+- **Bars (`oc-track` + `oc-fill`).** 8px pill tracks on `surface-sunken` for allocation and share-of-portfolio. Fill is the sector colour, or success/danger for P&L.
+- **Allocation by sector.** Bar per sector plus a cash slice. "Assign new sector" opens `SectorDialog` to name a sector, pick its swatch and assign symbols.
+- **Watchlist.** Up to 15 symbols, then a quiet "Watchlist full (15 symbols max). Remove one to add another." note in place of the add field. Rows reorder by dragging the grip only (framer-motion `Reorder` + `useDragControls`). The grip also takes ↑/↓, and an `aria-live` region announces the new position.
+- **Buttons (`components/ui/Button`).** `primary` (blue gradient + glow, one per region: Log position, Save), `secondary` (soft blue), `ghost` (muted text, sunken hover), `danger` (soft red, for destructive confirms). All pill-shaped.
+- **Segmented (`components/ui/Segmented`).** The `oc-seg` pattern: sunken track, selected option lifts onto a card ground with `shadow-card`.
+- **ConfirmDialog.** Destructive actions go through it: card ground, `rounded-ns-lg`, `ocean-900/50` scrim, scale-and-fade entrance. The Data menu (reset, erase, import) uses it today. *Gap:* the position page's Close and Delete buttons still use the browser's native `confirm()` and should move to `ConfirmDialog`.
+- **Empty states (`NsEmpty`).** One muted line saying what's missing and how to add it. Never an illustration, never an error tone.
+- **Skeletons.** `DashboardSkeleton` mirrors the hero-plus-cards shape so nothing jumps when the persisted store hydrates.
+- **Legacy names.** `components/log/Band.tsx` keeps `Band` / `BandRaw` / `LogRow` / `EmptyEntry` as thin wrappers over `NsCard` / `NsEmpty`, so the Disclosures page keeps its structure. New code should use the Navy primitives directly.
 
-### Cards / Containers
-There are no cards in the log world. The container is the **Band**: `border-top` in the band rule, a `var(--axis) 1fr` grid, `1.75rem` vertical padding, stamped heading left of the axis, content cell taking the axis hairline as its left border. `BandRaw` is the same grid without the top rule, used for the opening Portfolio summary entry so the sheet starts clean. In that entry the total sits left and its ruled sub-entries (Cash, Positions, Change from capital) sit to its right from `md` up, stacking beneath it below `md`; the allocation scale bar closes the entry at full width.
+## Motion
 
-### Inputs / Fields
-- **Style:** `panel` ground, 1px `rule-strong` border, 0 radius, 2rem tall, `.figure` numerals for amounts.
-- **Focus:** 2px accent outline at 2px offset; caret is the accent.
+- **Price stamp.** Price-derived figures are keyed on the latest quote token. When fresh prices land they replay `animate-fix-stamp` (140ms, `steps(3, end)`): a quick snap, not a count-up tween.
+- **Reorder.** Watchlist rows slide aside during a drag.
+- **ConfirmDialog** fades and scales in from 96%.
+- **Reduced motion.** `<MotionConfig reducedMotion="user">` plus a global rule in `globals.css` remove animations and transitions under `prefers-reduced-motion: reduce`. Values just swap.
 
-### Navigation
-The masthead is one ruled band: a 3px ink bar plus the stamped wordmark, the three sections as log tabs, and the controls pushed right. Tabs are stamped labels with a 2px bottom border — accent and full ink when active, transparent and quarter ink otherwise, hovering to full ink. Below `sm` the tabs move to their own full-width ruled row and split the width evenly.
+## Data honesty rules
 
-### Log Row
-The unit of content inside a band: `border-bottom` hairline, `0.75rem` vertical padding, no bottom rule on the last row, optional `panel` hover for interactive rows. Rows are baseline-aligned grids of fixed column widths; on narrow viewports each cell grows its own stamped label. Watchlist rows are reorderable: dragged from the grip, the lifted row takes the `panel` ground and a `rule-strong` outline (no shadow, per the Flat Sheet Rule), the others slide aside, and under reduced motion they jump instead of sliding. The order is saved with the rest of the book.
+- **Manual refresh only.** Prices are fetched on load and when you press "Refresh prices". Nothing polls.
+- **Age before value.** The hero chip states the quote's own timestamp ("Prices as of Fri 4:00 PM · 2 days ago"), not the fetch time. Watchlist rows repeat it per symbol.
+- **Absent, not zero.** Unknown figures read "pending quote", "Prices unavailable", "N at cost", etc.
+- **Two server touchpoints.** `/api/quote` and `/api/logo` are the only runtime requests. Both are stateless Finnhub proxies, so the browser never talks to Finnhub.
 
-### Empty Entry
-An empty band is left-aligned and ruled, with a stamped title in half ink and one line of quarter-ink prose. It is never centred, never illustrated, never framed — an empty sheet is an honest first run, not an error.
+## Accessibility notes (measured)
 
-### The Fix Rule (signature)
-A full-bleed 2.5rem band directly under the masthead, carrying the age of the data before any figure on the page. When a real fix exists the lamp burns: accent ground, lamp ink, `accent-strong` bottom border, reading `PRICES AS OF <time> · <age>` in uppercase mono (for example `PRICES AS OF 10:17 AM · 1 MIN AGO`, or `PRICES AS OF FRI 4:00 PM · 2 DAYS AGO`), with the privacy toggle and Refresh prices anchored right. The time is the market price's own timestamp, not the moment the app fetched, so a weekend refresh still honestly reads as Friday's close; it shows the time alone for today, the weekday within the past week, and the date beyond that. With nothing logged or the quote upstream unavailable the band goes quiet — `panel` ground, half ink, reading "Prices unavailable", "Loading prices…", "No stocks to price yet" or "Waiting for prices" — rather than implying currency it doesn't have. Watchlist rows repeat the same phrasing per symbol ("as of 10:17 AM"). The **now-marker** is a 3px bar on a hairline scale spanning seven days: hard left on a fresh fix, travelling right as the fix ages, walking back to the start when a fix is taken.
+The focus ring is a global 2px `primary` outline at 2px offset. Contrast ratios below are measured on the shipped tokens against WCAG 2.2 AA (4.5:1 for normal text, 3:1 for large text and UI).
 
-### The Fix Stamp (signature motion)
-Every price-derived figure is keyed on a shared fix token (`latestFixToken`). When a new fix lands the key changes and the figure replays `animate-fix-stamp` — `fix-stamp-in` over 140ms on `steps(3, end)`, a 1px settle with an opacity snap. It is a stamp, not a tween. Under `prefers-reduced-motion: reduce` the animation is removed outright and the value simply swaps.
+**Passes in both themes:** `ink` and `ink-muted` on every surface (lowest 4.81:1, light `ink-muted` on sunken); `primary-text` on card and on primary-soft; `success`/`danger`/`warning` text on cards; white on `primary` (6.35:1); white and `on-hero-muted` on `hero-base`/`hero-deep`; every dark-theme badge pairing.
 
-### Named Rules
-**The Manual Fix Rule.** Nothing in this app fetches on a timer. Prices change only when the reader presses Refresh prices, and the surface states the age of the data before it states the data. `/api/quote` is the only runtime network request.
+**Known gaps. Treat these as constraints when placing text:**
+- **Light `ink-subtle`** is 4.20:1 on card, 3.84 on page and 3.71 on sunken. It's fine for large or non-essential text, but use `ink-muted` for small text that matters.
+- **Light soft badges:** `success` on `success-soft` measures 4.42:1 and `danger` on `danger-soft` 4.39:1, just under 4.5. Badge text is 12px/500, so the badge glyph and sign carry the meaning too.
+- **Hero highlight areas:** the glow/mid stops of `oc-silk` are lighter (white on `hero-glow` 2.53:1 light / 3.72 dark). Keep hero text over the base/deep part of the gradient, and keep `on-hero-muted` text off the top-left glow.
+- **Dark focus ring:** `primary` against the dark page is 2.95:1, just under the 3:1 UI minimum.
+- **SymbolMark fallback letters:** white on most `cat-*` colours is 2.8–4.2:1 (only `cat-transport` passes at 4.92). The mark is `aria-hidden` and the ticker is always printed beside it, so the letter is decoration, but don't rely on it to carry information.
 
-**The Accent Ground Focus Rule.** On an accent ground the global accent focus ring is invisible, so the ring and the control's border switch to `on-accent`. Any new control placed on the accent inherits this switch.
+These come from the vendored system's values. Fixing them means changing the tokens upstream, or adding a documented local override, rather than patching single components.
 
-**The Absent-Figure Rule.** A figure the app cannot know is written out as absent in words ("pending quote", "sold out") rather than rendered as zero or quietly dropped. Where a figure is approximate, the sheet says how ("N at cost" when a held symbol has no quote yet).
+## Do's and don'ts
 
-## Do's and Don'ts
+### Do
+- **Do** style with `ns-*` utilities (`bg-ns-card`, `text-ns-ink-muted`, `rounded-ns-lg`, `shadow-ns-card`) or `var(--token)` in inline styles. Use `oc-*` classes where the system already has the component.
+- **Do** reach for an existing primitive (`NsCard`, `NsPnl`, `NsChangeBadge`, `SymbolMark`, `Button`, `Segmented`, `ConfirmDialog`) before writing markup.
+- **Do** colour gains `success`, losses `danger`, and add the glyph and sign.
+- **Do** get sector colours only through `lib/sectors.ts`.
+- **Do** put `oc-num` on every figure.
+- **Do** use `primary-text` for blue text and `primary` for blue fills.
+- **Do** use container queries for anything inside a card that changes with width.
+- **Do** check both themes. Light is the default, so design there first.
+- **Do** override an `oc-*` rule with Tailwind's `!` suffix rather than editing `bundle.css`.
 
-### Do:
-- **Do** build new surfaces out of `Band` / `BandRaw` / `LogRow` so the registration axis (`--axis: 11.5rem`) stays continuous down the page.
-- **Do** define every new token in both `@theme` and `:root[data-theme="light"]`, with an authored light value — never a derivation.
-- **Do** reserve the accent for controls that change state, the active tab, and the now-marker.
-- **Do** pair every gain/loss colour with a glyph (▲ / ▼ / •) and an explicit sign.
-- **Do** put `.figure` on every number and `.fix-stamp` on every time, so figures stay tabular and times read as measurement.
-- **Do** key price-derived figures on the fix token so they re-stamp with `animate-fix-stamp` when a fix lands.
-- **Do** switch focus rings and control borders to `on-accent` on accent grounds.
-- **Do** state what the sheet does not know, in words, where a figure would otherwise go.
-- **Do** describe price age in plain words ("Prices as of …", "Refresh prices"); keep "fix" as an internal name only, never as interface copy.
-- **Do** hold the 390px floor: collapse the axis, stack the columns, and grow per-cell stamped labels.
-- **Do** load type through `next/font` only, from the three families already in the layout.
-
-### Don't:
-- **Don't** put a stamped line above a heading as a kicker or eyebrow — the stamp is the heading.
-- **Don't** use the accent as decoration, as a background for content, or as emphasis on a value.
-- **Don't** introduce a border radius into the log world; every surface is square.
-- **Don't** put a shadow on a band, a row, a figure, or a chart — the menu drop is for floating overlays only.
-- **Don't** reintroduce the elevated stat-tile grid or a delta chip; a figure belongs in a ruled band, not a card.
-- **Don't** signal direction with colour alone, and don't add a third signed colour.
-- **Don't** fetch quotes on a timer, animate a live tape, or otherwise imply currency between fixes.
-- **Don't** ease a price into place; a fix arrives on `steps(3, end)` in 140ms, and not at all under reduced motion.
-- **Don't** add a fourth typeface, a system display face, or a second accent hue.
-- **Don't** use proportional numerals or turn off `tnum`/`lnum`.
+### Don't
+- **Don't** write a raw colour (`#hex`, `rgb()`, a Tailwind palette colour like `text-blue-600`) in a component or stylesheet. The only raw values allowed are the vendored ones in `styles/navy-stream/`.
+- **Don't** use `rounded-sm/md/lg/xl` for Navy surfaces. Those are Tailwind's sizes; use `rounded-ns-*`.
+- **Don't** add a colour, radius, shadow or type size that isn't a token. If one is missing, add it to `tokens.css` (with a dark value) and bridge it in `globals.css`.
+- **Don't** use hero tokens (`hero-*`, glass, `on-hero-muted`) outside the silk header.
+- **Don't** use `success`/`danger` for emphasis or decoration, or `warning` for direction.
+- **Don't** put a shadow on something inside a card, or nest cards.
+- **Don't** fetch on a timer or animate a value as if it were streaming.
+- **Don't** edit `bundle.css` or `tokens.css` for one component's needs. They mirror the upstream system.
