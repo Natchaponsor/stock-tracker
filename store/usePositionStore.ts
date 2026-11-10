@@ -20,6 +20,11 @@ interface PositionState {
   /** True once the store has ever been seeded or explicitly erased — guards against
    * re-seeding demo data after the user intentionally erases everything. */
   initialized: boolean;
+  /** When the book was last exported as JSON (its only backup), or null if never. */
+  lastExportedAt: string | null;
+  /** When this book began: first load, reset, erase or import. Starts the backup
+   * reminder's clock for a book that has never been exported. */
+  bookStartedAt: string | null;
 
   setHasHydrated: (v: boolean) => void;
   seedIfNeeded: () => void;
@@ -27,6 +32,7 @@ interface PositionState {
   eraseAll: () => void;
   importData: (payload: ExportPayload) => void;
   setStartingCash: (amount: number) => void;
+  markExported: () => void;
 
   addPosition: (position: Position) => void;
   updatePosition: (id: string, patch: Partial<Position>) => void;
@@ -64,12 +70,17 @@ export const usePositionStore = create<PositionState>()(
       hidePnl: false,
       hasHydrated: false,
       initialized: false,
+      lastExportedAt: null,
+      bookStartedAt: null,
 
       setHasHydrated: (v) => set({ hasHydrated: v }),
 
       seedIfNeeded: () => {
         if (!get().initialized) {
           get().resetDemo();
+        } else if (get().bookStartedAt === null) {
+          // A book from before the backup reminder existed: start its clock now.
+          set({ bookStartedAt: new Date().toISOString() });
         }
       },
 
@@ -81,6 +92,7 @@ export const usePositionStore = create<PositionState>()(
           customSectors: [],
           startingCash: DEFAULT_STARTING_CASH,
           initialized: true,
+          bookStartedAt: new Date().toISOString(),
         }),
 
       eraseAll: () =>
@@ -91,6 +103,7 @@ export const usePositionStore = create<PositionState>()(
           customSectors: [],
           startingCash: 0,
           initialized: true,
+          bookStartedAt: new Date().toISOString(),
         }),
 
       importData: (payload) =>
@@ -101,9 +114,12 @@ export const usePositionStore = create<PositionState>()(
           customSectors: payload.customSectors,
           startingCash: payload.startingCash,
           initialized: true,
+          bookStartedAt: new Date().toISOString(),
         }),
 
       setStartingCash: (amount) => set({ startingCash: amount }),
+
+      markExported: () => set({ lastExportedAt: new Date().toISOString() }),
 
       addPosition: (position) => set((state) => ({ positions: [...state.positions, position] })),
 
@@ -195,6 +211,8 @@ export const usePositionStore = create<PositionState>()(
         startingCash: state.startingCash,
         hidePnl: state.hidePnl,
         initialized: state.initialized,
+        lastExportedAt: state.lastExportedAt,
+        bookStartedAt: state.bookStartedAt,
       }),
       migrate: (persisted) => {
         const state = persisted as { positions?: unknown[] };

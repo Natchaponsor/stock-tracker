@@ -47,17 +47,24 @@ not dozens of same-day trades).
   reflection), each snapshotting the price at the time.
 - **Strategies** — define named rule sets (entry rule / exit rule) and see how each
   is actually performing across the positions tagged to it.
-- **Data menu**: Export (download everything as JSON, format v2, which includes
-  watchlist order and custom sectors), Import (restore from a previously exported
-  file, with a preview of what it contains; v1 files still import), Reset to demo
-  data, and Erase all data. Every option sits behind its own confirmation dialog.
-  Erasing stays erased across reloads; it won't silently reseed the demo dataset.
+- **Data menu**: Export data (a JSON backup of everything, format v2, which
+  includes watchlist order and custom sectors), Export recorded log (CSV, one row
+  per buy or sell with date, shares, price, amount, realized P&L and Strategy
+  Notes, ready for a spreadsheet), Import (restore from a JSON backup, with a
+  preview of what it contains; v1 files still import), Reset to demo data, and
+  Erase all data. Every option that replaces data sits behind its own
+  confirmation dialog. Erasing stays erased across reloads; it won't silently
+  reseed the demo dataset.
+- **Backup reminder**: your book lives only in this browser, so the Data menu
+  shows when you last exported a JSON backup ("Last backup Nov 9 · 3 days ago").
+  After 14 days without one, a dot appears on the Data button until you export.
 - **Company logos**: fetched through the app's own `/api/logo` route and cached
   for about a month. A symbol with no logo (or a non-US listing) falls back to
   its first letter on the sector colour.
 - **Live prices** — current price + day change per symbol via Finnhub, fetched
-  on load and on manual refresh only, labeled with how stale the quote actually is
-  (Finnhub's free tier doesn't update outside regular US market hours).
+  on load and on manual refresh only. Every price says how old it is in one
+  wording, from the market's own timestamp: "as of 1:00 PM · 9 hr ago" (Finnhub's
+  free tier doesn't update outside regular US market hours).
 - **Analysis tab** — pick an action (Technical/Fundamental/Stock Performance, Market
   Performance, Sector Rotation), a stock, and a market (Korea, Thailand, Japan, or US:
   NYSE, NASDAQ, NYSE American, S&P 500), and it builds a ready-to-run
@@ -70,41 +77,77 @@ not dozens of same-day trades).
   `npm run disclosures:signals [-- --book export.json]` derives
   `data/disclosure-signals.json`, the per-symbol packets a decision agent reads.
 
-## Coming Soon
+## Roadmap
 
-- **Signals — Trend (EMA), RSI, MACD, Volume, and P/E.** Every position page has a
-  Signals panel wired to real, unit-tested logic (`lib/indicators.ts`, `lib/signal.ts`)
-  that currently has no data to read, so each row shows "Coming Soon!" until a
-  provider is connected:
-  - **Trend (50/200 EMA cross), RSI (14), MACD (12/26/9), Volume** all come from
-    the *same* historical daily-bar fetch (`/api/history`) — one API call per
-    symbol lights up all four. Finnhub's free tier covers live quotes but not
-    historical candles (`/stock/candle` needs a paid plan), so this is blocked on
-    picking a historical-data provider (candidate: Twelve Data's free tier, which
-    does include daily time series). See `app/quote-lab` on the
-    `test/quote-fetch-lab` branch for the manual-fetch harness used to evaluate
-    providers without burning through rate limits.
-  - **P/E ratio** is fundamental/company data, not a price quote or candle — a
-    different data category, so it needs its own endpoint (`/api/fundamentals`,
-    already scaffolded) and likely its own provider, since not every quote/candle
-    API also carries fundamentals on a free tier.
+From an audit of the code, the tests and the live site in November 2026. Work runs
+in three phases, and each phase starts once the gate before it is met. Everything
+stays within the zero-cost rule: free tiers only, nothing that needs a credit card.
+Ticked items have shipped.
 
-## Potential future features
+### Now: harden what exists (about 1–2 weeks)
 
-- A working historical-data provider → revive price charts, the Trend/RSI/MACD/Volume
-  signals, and the MAE/MFE-style "how much heat did I take" view the day-trading
-  journal has.
-- A fundamentals provider → light up the P/E ratio signal.
-- Multiple accounts/portfolios, if one cash balance stops being enough.
-- Alerts (e.g. "notify me if a watchlist symbol crosses its 200-day") once a
-  provider with real history is in place.
-- CSV export of positions (mirroring the day-trading journal's trade-log export),
-  in addition to the existing full-JSON export.
-- **Multiple brokerages/accounts per symbol.** Selling currently assumes every share
-  of a symbol is one fungible pool and applies FIFO automatically across whatever
-  open lots exist for it — there's no way yet to tag a lot by broker/account or
-  choose which one a sell comes from. Not supported today; would need fills to carry
-  an account tag and the Sell flow to let you pick one instead of always FIFO-ing.
+- [x] **Backup reminder.** Last-backup date in the Data menu; a dot on the Data
+  button after 14 days without a JSON export.
+- [x] **One price-age wording.** "as of 1:00 PM · 9 hr ago" everywhere, from one
+  helper (`formatPriceAge` in `lib/priceTime.ts`).
+- [ ] **Stop dead API calls.** Every position page calls `/api/history`, which asks
+  Finnhub for daily candles, a paid-only endpoint, so it always fails and Trend sits
+  on "Gathering history…". Skip `/api/history` and `/api/fundamentals` until a
+  provider exists.
+- [ ] **Warn past 25 symbols.** `/api/quote` silently drops symbols beyond 25. With
+  15 on the watchlist, 11+ open positions leave some holdings unpriced. Warn, or
+  split into two requests.
+- [ ] **ConfirmDialog everywhere.** Close/Delete position and Delete strategy still
+  use the browser's `confirm()` and `alert()`.
+- [ ] **CI.** A GitHub Actions workflow running lint, test and build on every push
+  and pull request.
+- [ ] **Fresh first load.** After a quiet spell, the first quote request can return
+  the server's cached price from days ago (labelled honestly with its old time); the
+  next request is fresh. Skip the cache when it's older than the last market close.
+- [ ] **Held P&L on narrow watchlist rows.** At phone width, a held symbol's P&L
+  is cut off at the end of its line.
+- [ ] **Contrast fixes.** Light `ink-subtle` text, soft gain/loss badges and the
+  dark focus ring fall just short of WCAG AA (measured in [DESIGN.md](DESIGN.md)).
+- [ ] **Harden `/api/quote`.** Validate symbols the way `/api/logo` does, and stop
+  refetching on every page change.
+
+**Gate 1:** CI is green on `main` and the backup reminder is live.
+
+### Next: use your own data and free feeds
+
+- [x] **CSV export** of the recorded log.
+- [ ] **Show stop and target** on the position page and in the P&L breakdown. They
+  are entered on every buy but never shown.
+- [ ] **Flag a crossed stop or target** when prices refresh.
+- [ ] **P/E ratio** from Finnhub's basic financials, if the free tier covers it.
+  The endpoint (`/api/fundamentals`) and the Valuation row are already scaffolded.
+- [ ] **Earnings-date warning** for held and watched symbols, if Finnhub's free
+  earnings calendar covers it.
+- [ ] **Daily price history.** Finnhub's free tier has no candles, so this needs a
+  second provider (candidate: Twelve Data's free tier, signup only; confirm its
+  daily-call limit). One call per symbol lights up the price chart plus Trend
+  (50/200 EMA), RSI (14), MACD (12/26/9) and Volume, all already wired to tested
+  logic in `lib/indicators.ts` and `lib/signal.ts`. `app/quote-lab` on the
+  `test/quote-fetch-lab` branch is the harness for trying providers without
+  burning rate limits.
+- [ ] **Browser smoke tests** for buy → sell → export → import.
+
+**Gate 2:** a free daily-history provider is chosen.
+
+### Later: bigger data-model changes
+
+- [ ] **Fees and commissions** on fills.
+- [ ] **Several brokers or accounts per symbol.** Selling treats every share of a
+  symbol as one pool and applies FIFO across its open lots. Fills would need an
+  account tag, and Sell would let you pick lots.
+- [ ] **Installable phone app** (PWA) with a home-screen icon.
+- [ ] **Benchmark** against the S&P 500 (needs daily history).
+- [ ] **Dividends and stock splits.**
+- [ ] **"How much heat did I take"** (MAE/MFE per position), like the day-trading
+  journal has (needs daily history).
+- [ ] **Multiple portfolios**, if one cash balance stops being enough.
+- [ ] **"Open in Claude"** beside the Analysis tab's Copy prompt. Running analysis
+  inside the app would need the paid Claude API, so the tab stays prompt-based.
 
 ## Data model
 

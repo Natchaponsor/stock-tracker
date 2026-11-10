@@ -7,8 +7,8 @@ import { NsChangeBadge, NsPnl, NsSkeleton, SymbolMark } from "@/components/navy/
 import { useQuotes } from "@/hooks/useQuotes";
 import { usePositionStore } from "@/store/usePositionStore";
 import { computePositionMetrics } from "@/lib/positionMetrics";
-import { formatCurrency } from "@/lib/format";
-import { formatAsOf } from "@/lib/priceTime";
+import { capitalize, formatCurrency } from "@/lib/format";
+import { formatAsOf, formatPriceAge } from "@/lib/priceTime";
 import { useNow } from "@/components/log/clock";
 import type { WatchlistItem } from "@/lib/types";
 
@@ -60,7 +60,11 @@ export function WatchlistCard({ item, handle }: { item: WatchlistItem; handle?: 
         <p className="ns-caption mt-0.5 truncate font-normal text-ns-ink-subtle">
           {quote?.asOf ? (
             <span title={new Date(quote.asOf).toLocaleString()}>
-              As of {formatAsOf(new Date(quote.asOf), now === null ? null : new Date(now))}
+              {/* Phones drop the "· 9 hr ago" so a held row's P&L still fits; the header chip carries the age. */}
+              <span className="sm:hidden">As of {formatAsOf(new Date(quote.asOf), now === null ? null : new Date(now))}</span>
+              <span className="hidden sm:inline">
+                {capitalize(formatPriceAge(new Date(quote.asOf), now === null ? null : new Date(now)))}
+              </span>
             </span>
           ) : (
             <span>

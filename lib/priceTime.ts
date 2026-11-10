@@ -40,3 +40,13 @@ export function formatAgo(ms: number): string {
   const days = Math.floor(hours / 24);
   return `${days} ${days === 1 ? "day" : "days"} ago`;
 }
+
+/**
+ * The one way the app states a price's age: "as of 1:00 PM · 9 hr ago".
+ * `asOf` is the market's own timestamp, not when the app fetched it. The
+ * "ago" part is left off until `now` is known (not mounted yet).
+ */
+export function formatPriceAge(asOf: Date, now: Date | null): string {
+  const when = `as of ${formatAsOf(asOf, now)}`;
+  return now === null ? when : `${when} · ${formatAgo(now.getTime() - asOf.getTime())}`;
+}

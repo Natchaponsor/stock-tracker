@@ -6,8 +6,8 @@ import { usePositionStore } from "@/store/usePositionStore";
 import { useQuotes } from "@/hooks/useQuotes";
 import { computeCashSummary } from "@/lib/cash";
 import { computePositionsValue } from "@/lib/portfolio";
-import { formatCurrency, formatPct, glyph } from "@/lib/format";
-import { formatAgo, formatAsOf } from "@/lib/priceTime";
+import { capitalize, formatCurrency, formatPct, glyph } from "@/lib/format";
+import { formatPriceAge } from "@/lib/priceTime";
 import { cn } from "@/lib/cn";
 import { useNow } from "@/components/log/clock";
 import { latestFixToken } from "@/components/log/fix";
@@ -40,9 +40,8 @@ function usePriceAge() {
   }
 
   if (latest !== null) {
-    const asOf = formatAsOf(new Date(latest), now === null ? null : new Date(now));
-    const age = now === null ? "" : ` · ${formatAgo(now - latest)}`;
-    return { text: `Prices as of ${asOf}${age}`, short: `As of ${asOf}${age}`, title: new Date(latest).toLocaleString() };
+    const age = formatPriceAge(new Date(latest), now === null ? null : new Date(now));
+    return { text: `Prices ${age}`, short: capitalize(age), title: new Date(latest).toLocaleString() };
   }
   if (hasError) return { text: "Prices unavailable" };
   if (isLoading && quotes.size === 0) return { text: "Loading prices…" };

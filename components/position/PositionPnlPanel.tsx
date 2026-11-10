@@ -1,13 +1,15 @@
 "use client";
 
-import { formatDistanceToNow } from "date-fns";
 import { Card, CardHeader, CardTitle, CardSubtitle } from "@/components/ui/Card";
 import { PnlText } from "@/components/ui/PnlText";
 import { PnlComparisonChart } from "@/components/pnl/PnlComparisonChart";
 import { formatCurrency } from "@/lib/format";
+import { formatPriceAge } from "@/lib/priceTime";
+import { useNow } from "@/components/log/clock";
 import type { PositionMetrics, Quote } from "@/lib/types";
 
 export function PositionPnlPanel({ metrics, quote }: { metrics: PositionMetrics; quote?: Quote }) {
+  const now = useNow();
   return (
     <Card>
       <CardHeader>
@@ -41,7 +43,7 @@ export function PositionPnlPanel({ metrics, quote }: { metrics: PositionMetrics;
             {quote?.price != null && (
               <p className="text-[11px] text-ns-ink-subtle">
                 {formatCurrency(quote.price)} current
-                {quote.asOf && ` · as of ${formatDistanceToNow(new Date(quote.asOf), { addSuffix: true })}`}
+                {quote.asOf && ` · ${formatPriceAge(new Date(quote.asOf), now === null ? null : new Date(now))}`}
               </p>
             )}
           </div>

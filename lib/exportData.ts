@@ -103,8 +103,12 @@ export function validateImportPayload(json: unknown): ImportResult {
 }
 
 export function downloadJson(filename: string, payload: unknown) {
-  const json = JSON.stringify(payload, null, 2);
-  const blob = new Blob([json], { type: "application/json;charset=utf-8;" });
+  downloadText(filename, JSON.stringify(payload, null, 2), "application/json;charset=utf-8;");
+}
+
+/** Saves text as a file through a temporary link; the data never leaves the browser. */
+export function downloadText(filename: string, text: string, type: string) {
+  const blob = new Blob([text], { type });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;

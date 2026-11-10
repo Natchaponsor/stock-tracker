@@ -43,3 +43,8 @@ export function glyph(value: number): "▲" | "▼" | "•" {
   if (value < 0) return "▼";
   return "•";
 }
+
+/** "as of 1:00 PM" → "As of 1:00 PM", for a phrase that opens a line. */
+export function capitalize(text: string): string {
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}

@@ -1,9 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, Download, RotateCcw, Trash2, Upload } from "lucide-react";
+import { format } from "date-fns";
+import { ChevronDown, Download, FileSpreadsheet, RotateCcw, Trash2, Upload } from "lucide-react";
 import { usePositionStore } from "@/store/usePositionStore";
-import { buildExportPayload, downloadJson, validateImportPayload } from "@/lib/exportData";
+import { buildExportPayload, downloadJson, downloadText, validateImportPayload } from "@/lib/exportData";
+import { buildLedgerCsv } from "@/lib/csv";
+import { backupStatus } from "@/lib/backup";
+import { useNow } from "@/components/log/clock";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { cn } from "@/lib/cn";
 import type { ExportPayload } from "@/lib/types";
@@ -27,6 +31,11 @@ export function DataMenu() {
   const eraseAll = usePositionStore((s) => s.eraseAll);
   const resetDemo = usePositionStore((s) => s.resetDemo);
   const importData = usePositionStore((s) => s.importData);
+  const markExported = usePositionStore((s) => s.markExported);
+  const lastExportedAt = usePositionStore((s) => s.lastExportedAt);
+  const bookStartedAt = usePositionStore((s) => s.bookStartedAt);
+  const now = useNow();
+  const backup = backupStatus({ lastExportedAt, bookStartedAt, hasData: positions.length > 0, now });
 
   useEffect(() => {
     function onClick(e: MouseEvent) {
@@ -56,10 +65,19 @@ export function DataMenu() {
     }
   }
 
+  function exportCsv() {
+    downloadText(
+      `stock-tracker-recorded-log-${format(new Date(), "yyyy-MM-dd")}.csv`,
+      buildLedgerCsv(positions, strategies),
+      "text/csv;charset=utf-8;"
+    );
+  }
+
   function runPendingAction() {
     if (pending === "export") {
       const payload = buildExportPayload(startingCash, positions, strategies, watchlist, customSectors);
-      downloadJson(`stock-tracker-export-${new Date().toISOString().slice(0, 10)}.json`, payload);
+      downloadJson(`stock-tracker-export-${format(new Date(), "yyyy-MM-dd")}.json`, payload);
+      markExported();
     } else if (pending === "erase") {
       eraseAll();
     } else if (pending === "reset") {
@@ -119,6 +137,12 @@ export function DataMenu() {
         className="ns-label flex h-9 cursor-pointer items-center gap-1 rounded-full bg-ns-sunken px-3.5 text-ns-ink-muted transition-colors hover:text-ns-ink"
       >
         Data
+        {backup.due && (
+          <>
+            <span aria-hidden="true" className="h-2 w-2 rounded-full bg-ns-warning" />
+            <span className="sr-only">(backup due)</span>
+          </>
+        )}
         <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", open && "rotate-180")} />
       </button>
 
@@ -127,11 +151,19 @@ export function DataMenu() {
       {open && (
         <div
           role="menu"
-          className="absolute right-0 z-30 mt-2 w-60 overflow-hidden rounded-ns-md border border-ns-line bg-ns-card shadow-ns-card"
+          className="absolute right-0 z-30 mt-2 w-64 overflow-hidden rounded-ns-md border border-ns-line bg-ns-card shadow-ns-card"
         >
-          <p className="ns-caption border-b border-ns-line px-3 py-2 text-ns-ink-subtle">
-            Your data · this browser only
-          </p>
+          <div className="border-b border-ns-line px-3 py-2">
+            <p className="ns-caption text-ns-ink-muted">Your data · this browser only</p>
+            <p className={cn("ns-caption mt-0.5", backup.due ? "text-ns-warning" : "text-ns-ink-muted")}>
+              {backup.label}
+            </p>
+            {backup.due && (
+              <p className="ns-caption mt-1 font-normal text-ns-ink-muted">
+                It only lives here. Export a copy so you can restore it.
+              </p>
+            )}
+          </div>
           <button
             type="button"
             onClick={() => {
@@ -142,7 +174,19 @@ export function DataMenu() {
             className={cn(item, "text-ns-ink")}
           >
             <Download className={icon} />
-            Export data
+            Export data (JSON backup)
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              exportCsv();
+              setOpen(false);
+            }}
+            role="menuitem"
+            className={cn(item, "text-ns-ink")}
+          >
+            <FileSpreadsheet className={icon} />
+            Export recorded log (CSV)
           </button>
           <button
             type="button"

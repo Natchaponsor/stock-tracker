@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatAgo, formatAsOf, formatClock } from "../priceTime";
+import { formatAgo, formatAsOf, formatClock, formatPriceAge } from "../priceTime";
 
 // Local-time constructors, so these hold in any timezone. Oct 27 2026 is a Tuesday.
 const at = (y: number, mo: number, d: number, h: number, mi: number) => new Date(y, mo - 1, d, h, mi);
@@ -49,5 +49,16 @@ describe("formatAgo", () => {
 
   it("never goes negative on a small clock skew", () => {
     expect(formatAgo(-5_000)).toBe("just now");
+  });
+});
+
+describe("formatPriceAge", () => {
+  it("states when the price is from and how long ago", () => {
+    expect(formatPriceAge(at(2026, 10, 27, 10, 17), NOW)).toBe("as of 10:17 AM · 1 min ago");
+    expect(formatPriceAge(at(2026, 10, 23, 16, 0), NOW)).toBe("as of Fri 4:00 PM · 3 days ago");
+  });
+
+  it("leaves off the age until 'now' is known", () => {
+    expect(formatPriceAge(at(2026, 10, 27, 10, 17), null)).toBe("as of Oct 27, 2026, 10:17 AM");
   });
 });
