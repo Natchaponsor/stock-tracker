@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { NsCard, NsEmpty, NsPnl, SymbolMark } from "@/components/navy/primitives";
 import { useQuotes } from "@/hooks/useQuotes";
@@ -9,6 +10,7 @@ import { usePositionStore } from "@/store/usePositionStore";
 import { buildLedger, type LedgerRow } from "@/lib/ledger";
 import { formatCurrency, formatPct } from "@/lib/format";
 import { cn } from "@/lib/cn";
+import { usePlatform } from "@/hooks/usePlatform";
 
 const COLUMNS = "sm:grid-cols-[minmax(0,1fr)_7rem_8rem_9rem]";
 
@@ -84,11 +86,107 @@ function LogEntry({ row, tags, fix }: { row: LedgerRow; tags: string[]; fix: str
 }
 
 /**
+ * The web version of the log: a Navy Stream DataTable. Each row opens its
+ * position; the symbol is the row's link so keyboard users can reach it too.
+ */
+function LogTable({
+  rows,
+  tagsByPosition,
+  fixFor,
+}: {
+  rows: LedgerRow[];
+  tagsByPosition: Map<string, string[]>;
+  fixFor: (symbol: string) => string;
+}) {
+  const router = useRouter();
+  return (
+    <table className="oc-table hidden md:table">
+      <thead>
+        <tr>
+          <th>Stock</th>
+          <th>Date</th>
+          <th className="oc-optional">Shares</th>
+          <th>Price</th>
+          <th className="oc-right">P&amp;L</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((row) => {
+          const isBuy = row.kind === "buy";
+          const tags = isBuy ? (tagsByPosition.get(row.positionId) ?? []) : [];
+          return (
+            <tr
+              key={row.key}
+              onClick={() => router.push(`/positions/${row.positionId}`)}
+              className="cursor-pointer"
+            >
+              <td>
+                <div className="oc-ticker">
+                  <SymbolMark symbol={row.symbol} size={34} />
+                  <div className="min-w-0">
+                    <span className="flex items-center gap-2">
+                      <Link
+                        href={`/positions/${row.positionId}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="text-ns-ink no-underline hover:text-ns-primary-text"
+                      >
+                        {row.symbol}
+                      </Link>
+                      <span className={cn("oc-badge", isBuy ? "oc-badge-info" : "bg-ns-sunken text-ns-ink-muted")}>
+                        {isBuy ? "Buy" : "Sell"}
+                      </span>
+                    </span>
+                    {tags.length > 0 && <div className="oc-sub truncate font-normal">{tags.join(", ")}</div>}
+                  </div>
+                </div>
+              </td>
+              <td className="text-ns-ink-muted">{format(new Date(row.date), "MMM d, yyyy")}</td>
+              <td className="oc-optional text-ns-ink-muted">{row.qty} sh</td>
+              <td>
+                {formatCurrency(row.price)}
+                <div className="oc-sub">{isBuy ? "Entry" : "Sold at"}</div>
+              </td>
+              <td className="oc-right">
+                {row.pnl !== null ? (
+                  <>
+                    <NsPnl
+                      key={isBuy ? fixFor(row.symbol) : undefined}
+                      value={row.pnl}
+                      formatted={formatCurrency(row.pnl, { signed: true })}
+                      className={cn("font-semibold", isBuy && "animate-fix-stamp")}
+                    />
+                    <div className="oc-sub">
+                      {row.returnPct !== null && (
+                        <span className={row.returnPct >= 0 ? "oc-up" : "oc-down"}>
+                          {formatPct(row.returnPct, { signed: true })}
+                        </span>
+                      )}
+                      {row.returnPct !== null && " · "}
+                      {isBuy ? "Unrealized" : "Realized"}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-ns-ink-subtle">—</span>
+                    <div className="oc-sub">{row.soldOut ? "Sold out" : "Pending quote"}</div>
+                  </>
+                )}
+              </td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  );
+}
+
+/**
  * Every buy and sell on the book, newest first. A buy reports what its shares
  * are worth against its entry price now (unrealized); a sell reports what the
  * sale locked in (realized). Both reconcile with the Profit & Loss band above.
  */
 export function RecordedLog({ className, defaultOpen = true }: { className?: string; defaultOpen?: boolean }) {
+  const platform = usePlatform();
   const positions = usePositionStore((s) => s.positions);
   const strategies = usePositionStore((s) => s.strategies);
 
@@ -130,27 +228,39 @@ export function RecordedLog({ className, defaultOpen = true }: { className?: str
         />
       ) : (
         <div>
-          <div
-            className={cn(
-              "ns-caption hidden border-b border-ns-line pb-2 text-ns-ink-subtle sm:grid sm:gap-x-4",
-              COLUMNS
-            )}
-          >
-            <span>Stock</span>
-            <span>Shares</span>
-            <span>Price</span>
-            <span>P&amp;L</span>
-          </div>
-          <div className="divide-y divide-ns-line">
-            {rows.map((row) => (
-              <LogEntry
-                key={row.key}
-                row={row}
-                tags={tagsByPosition.get(row.positionId) ?? []}
-                fix={quotes.get(row.symbol)?.asOf ?? "no-fix"}
-              />
-            ))}
-          </div>
+          {platform !== "phone" && (
+            <LogTable
+              rows={rows}
+              tagsByPosition={tagsByPosition}
+              fixFor={(symbol) => quotes.get(symbol)?.asOf ?? "no-fix"}
+            />
+          )}
+          {/* Phones keep the list rows. */}
+          {platform !== "web" && (
+            <>
+              <div
+                className={cn(
+                  "ns-caption hidden border-b border-ns-line pb-2 text-ns-ink-subtle sm:grid sm:gap-x-4 md:hidden!",
+                  COLUMNS
+                )}
+              >
+                <span>Stock</span>
+                <span>Shares</span>
+                <span>Price</span>
+                <span>P&amp;L</span>
+              </div>
+              <div className="divide-y divide-ns-line md:hidden">
+                {rows.map((row) => (
+                  <LogEntry
+                    key={row.key}
+                    row={row}
+                    tags={tagsByPosition.get(row.positionId) ?? []}
+                    fix={quotes.get(row.symbol)?.asOf ?? "no-fix"}
+                  />
+                ))}
+              </div>
+            </>
+          )}
           <p className="ns-caption mt-3 font-normal text-ns-ink-subtle">
             P&amp;L uses each position&apos;s average entry price, so these rows add up to the Profit &amp; loss card.
           </p>

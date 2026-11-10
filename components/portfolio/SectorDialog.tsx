@@ -15,7 +15,7 @@ const SWATCH_LABEL: Record<SectorSwatch, string> = {
   "cat-health": "Teal",
   "cat-shopping": "Green",
   "cat-bills": "Violet",
-  "cat-fun": "Pink",
+  "cat-fun": "Gold",
 };
 
 interface Draft {

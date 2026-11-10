@@ -31,6 +31,11 @@
   --color-ns-danger-soft: var(--danger-soft);
   --color-ns-warning: var(--warning);
   --color-ns-warning-soft: var(--warning-soft);
+  /* Fuchsia: only for "act on this now" (alerts, a hit target or stop). */
+  --color-ns-accent: var(--accent);
+  --color-ns-accent-text: var(--accent-text);
+  --color-ns-accent-soft: var(--accent-soft);
+  --color-ns-on-accent: var(--on-accent);
 
   --radius-ns-sm: var(--radius-sm);
   --radius-ns-md: var(--radius-md);
@@ -40,6 +45,7 @@
   --shadow-ns-card: var(--shadow-card);
   --shadow-ns-primary: var(--shadow-primary);
   --shadow-ns-bar: var(--shadow-bar);
+  --shadow-ns-accent: var(--shadow-accent);
 
   /* tokens.css redefines --radius-sm…xl at :root for Navy Stream; pin
      Tailwind's own rounded-* steps so a stray rounded-lg stays Tailwind's size.
@@ -99,8 +105,9 @@
     caret-color: var(--primary);
   }
 
+  /* Navy Stream web: everything clickable shows a soft 3px ocean-100 ring. */
   :focus-visible {
-    outline: 2px solid var(--primary);
+    outline: 3px solid var(--ocean-100);
     outline-offset: 2px;
   }
 
@@ -112,6 +119,10 @@
 
 @layer components {
   /* Navy Stream type styles, read from the --type-* tokens in tokens.css. */
+  .ns-amount-web {
+    font: var(--type-amount-web);
+    letter-spacing: var(--type-amount-web-tracking);
+  }
   .ns-amount-xl {
     font: var(--type-amount-xl);
     letter-spacing: var(--type-amount-xl-tracking);

@@ -48,3 +48,15 @@ export function glyph(value: number): "▲" | "▼" | "•" {
 export function capitalize(text: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
+
+/** "$12,480.25" → ["$12,480", ".25"], so the cents can fade back on the silk. */
+export function splitCents(value: number): [string, string] {
+  const text = value.toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  const dot = text.lastIndexOf(".");
+  return dot === -1 ? [text, ""] : [text.slice(0, dot), text.slice(dot)];
+}

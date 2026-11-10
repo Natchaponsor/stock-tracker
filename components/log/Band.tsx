@@ -22,7 +22,7 @@ export function Band({
   contentClassName?: string;
 }) {
   return (
-    <NsCard title={title} meta={meta} action={action} className={cn("mt-3", className)}>
+    <NsCard title={title} meta={meta} action={action} className={cn("mt-3 md:mt-6", className)}>
       <div className={cn("min-w-0", contentClassName)}>{children}</div>
     </NsCard>
   );
@@ -39,7 +39,7 @@ export function BandRaw({
   className?: string;
 }) {
   return (
-    <section className={cn("oc-card", className)}>
+    <section className={cn("oc-card md:p-6!", className)}>
       <h2 className="ns-title text-ns-ink">{label}</h2>
       <div className="mt-3 min-w-0">{children}</div>
     </section>

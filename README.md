@@ -178,7 +178,7 @@ wired and the rules for using it.
 | Components | `styles/navy-stream/bundle.css` | The system's ready-made `oc-*` classes: `oc-silk` (hero gradient), `oc-card`, `oc-btn-*`, `oc-badge-*`, `oc-track`, `oc-tabbar`, `oc-num` (tabular figures)… |
 | Tailwind bridge | `app/globals.css` | Exposes the tokens as `ns-*` utilities (`bg-ns-card`, `text-ns-ink-muted`, `rounded-ns-lg`, `shadow-ns-card`) and the type classes `ns-amount-xl` … `ns-caption`. |
 | Primitives | `components/navy/primitives.tsx`, `components/ui/` | `NsCard`, `NsPnl`, `NsChangeBadge`, `SymbolMark`, `NsEmpty`, `NsSkeleton`; `Button`, `Segmented`, `ConfirmDialog`, … |
-| Shell | `components/navy/NavyShell.tsx` | Top menu from `md` up, bottom tab bar + Log FAB on phones. |
+| Shell | `components/navy/NavyShell.tsx` | Sidebar + top bar from 768px (icons-only sidebar until 1024px), bottom tab bar + Log FAB on phones. |
 | Sectors | `lib/sectors.ts` | Maps sectors to the system's `cat-*` colours and resolves each symbol's sector. |
 
 ### Rules of use

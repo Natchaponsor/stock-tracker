@@ -10,5 +10,6 @@ All UI uses **Navy Stream**. Its colors and styles live in `styles/navy-stream/t
 - Stocks are not spending: gains use `success` (green), losses use `danger` (red).
 - Sectors reuse the `cat-*` category colors through `lib/sectors.ts`. User-made sectors (`customSectors` in the store, part of export/import) pick from the same six colors and override the built-in table.
 - Currency is US dollars (`$`).
-- Phones get the bottom tab bar; wide screens (`md` and up) get the top menu (`components/navy/NavyShell.tsx`). Light is the default theme.
+- Two platform sets (`components/navy/NavyShell.tsx`): phones (below 768px) get the silk header and bottom tab bar; from 768px the web set takes over (sidebar, icons only until 1024px, top bar, summary banner, data tables). Never stretch the phone layout onto a wide screen. Light is the default theme.
+- Fuchsia `accent` means "act on this now" only (a position past its stop or target): at most one call-out card per page, never for text, large areas, or gains/losses.
 - Every route is on Navy Stream; the old deck-log tokens and classes are gone. Shared primitives live in `components/navy/primitives.tsx` and `components/ui/`.

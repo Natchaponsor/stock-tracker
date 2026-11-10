@@ -1,6 +1,6 @@
 ---
 name: Stock Tracker — Navy Stream
-description: A calm, card-based swing-trading book on the Navy Stream system. An ocean-silk header holds the one number you came for, and white cards rise out of it.
+description: A calm, card-based swing-trading book on the Navy Stream system, in two platform sets. Phones get an ocean-silk header with white cards rising out of it; the web gets a sidebar, a wide silk summary banner, one fuchsia call-out and data tables.
 source:
   tokens: styles/navy-stream/tokens.css
   components: styles/navy-stream/bundle.css
@@ -27,6 +27,10 @@ colors:
   primary-text: "#0a5bc4"
   primary-soft: "#eaf2fc"
   on-primary: "#ffffff"
+  accent: "#f72cb8"
+  accent-text: "#a0087a"
+  accent-soft: "#fde2f4"
+  on-accent: "#3a0029"
   hero-glow: "#6fa6e8"
   hero-mid: "#3a80d8"
   hero-base: "#0a5bc4"
@@ -43,11 +47,12 @@ colors:
   cat-food: "#ee7b1e"
   cat-transport: "#5b62e0"
   cat-shopping: "#22a55b"
-  cat-fun: "#e04fc4"
+  cat-fun: "#e0a400"
   cat-bills: "#8b5cf6"
   cat-health: "#14a3a3"
 typography:
   fontFamily: "Inter (self-hosted via next/font), system-ui, -apple-system, Segoe UI, Roboto, sans-serif"
+  amount-web: { weight: 600, size: "52px", lineHeight: "60px", tracking: "-0.02em", class: "ns-amount-web" }
   amount-xl: { weight: 600, size: "44px", lineHeight: "52px", tracking: "-0.02em", class: "ns-amount-xl" }
   amount-lg: { weight: 600, size: "32px", lineHeight: "38px", tracking: "-0.02em", class: "ns-amount-lg" }
   amount-md: { weight: 600, size: "22px", lineHeight: "28px", tracking: "-0.01em", class: "ns-amount-md" }
@@ -70,10 +75,18 @@ spacing:
   "5": "20px"
   "6": "24px"
   "8": "32px"
+  "10": "40px"
+layout:
+  sidebar-width: "248px"
+  sidebar-collapsed: "76px"
+  content-max: "1440px"
+  bp-tablet: "768px"
+  bp-desktop: "1024px"
 shadows:
   card: "0 1px 2px rgba(15,27,45,.04), 0 6px 18px rgba(15,27,45,.05)"
   primary: "0 8px 20px rgba(10,91,196,.32)"
   bar: "0 -4px 24px rgba(15,27,45,.06)"
+  accent: "0 8px 20px rgba(247,44,184,.30)"
 components:
   hero: { class: "oc-silk rounded-ns-xl", text: "{colors.on-primary}" }
   glass-chip: { class: "oc-glass", background: "{colors.hero-glass}", border: "{colors.hero-glass-line}", rounded: "{rounded.md}" }
@@ -90,6 +103,12 @@ components:
   segmented: { class: "<Segmented> (oc-seg pattern)", background: "{colors.surface-sunken}", selected: "{colors.surface-card} + {shadows.card}" }
   symbol-mark: { class: "SymbolMark (oc-cat-icon)", ring: "sector colour, 2px", fill: "company logo; sector-coloured letter as fallback" }
   tabbar: { class: "oc-tabbar", background: "{colors.surface-card}", rounded: "{rounded.xl}", shadow: "{shadows.bar}", breakpoint: "below md" }
+  sidebar: { class: "oc-sidebar + oc-nav", width: "{layout.sidebar-width}", collapsed: "{layout.sidebar-collapsed} below 1024px", breakpoint: "768px and up" }
+  summary-banner: { class: "SummaryBanner (oc-silk oc-banner)", amount: "ns-amount-web", stats: "oc-glass oc-banner-stats", breakpoint: "768px and up" }
+  alert-callout: { class: "AlertCallout (oc-card oc-card-web oc-callout)", border: "{colors.accent}", button: "oc-btn-accent", limit: "one per page" }
+  data-table: { class: "oc-table", hover: "{colors.surface-sunken}", breakpoint: "768px and up" }
+  button-accent: { class: "oc-btn-accent", background: "{colors.accent}", text: "{colors.on-accent}", shadow: "{shadows.accent}", use: "AlertCallout only" }
+  badge-accent: { class: "oc-badge-accent + oc-dot", text: "{colors.accent-text}", background: "{colors.accent-soft}" }
   dialog: { class: "ConfirmDialog", background: "{colors.surface-card}", rounded: "{rounded.lg}", scrim: "ocean-900 / 50%" }
 ---
 
@@ -110,7 +129,8 @@ The honesty rules from the old deck-log design still apply, now written in plain
 - One brand hue (ocean blue). Green and red are kept for signed values only.
 - Cards with soft shadows and generous radii. The hero is the only gradient surface.
 - Inter throughout, tabular figures on every number (`oc-num`).
-- Phones get a bottom tab bar with a raised Log button; md+ gets a top menu.
+- Two platform sets, never a stretched phone layout. Phones: silk header, cards rising out of it, bottom tab bar with a raised Log button. From 768px, the web set: sidebar (icons only until 1024px), top bar, wide summary banner, one call-out, data tables.
+- One fuchsia accent, used only for "act on this now".
 
 ## How the system is wired
 
@@ -121,7 +141,7 @@ The honesty rules from the old deck-log design still apply, now written in plain
 | Tailwind bridge | `app/globals.css` | `@theme inline` maps tokens to `ns-*` utilities: `bg-ns-card`, `text-ns-ink-muted`, `border-ns-line`, `rounded-ns-lg`, `shadow-ns-card`, etc. Also defines the type classes (`ns-amount-xl` … `ns-caption`), the focus ring, and the reduced-motion kill switch. |
 | Primitives | `components/navy/primitives.tsx` | `NsCard`, `NsEmpty`, `NsPnl`, `NsChangeBadge`, `SymbolMark`, `NsSkeleton`. |
 | UI kit | `components/ui/` | `Button`, `Badge`, `Card`, `Segmented`, `ConfirmDialog`, `Skeleton`, `PnlText`, `CountUp`, `EmptyState`, all re-skinned onto `ns-*` utilities. |
-| Shell | `components/navy/NavyShell.tsx` | Top menu (md+), bottom tab bar + FAB (phones), page width, footer. |
+| Shell | `components/navy/NavyShell.tsx` | Sidebar + top bar (768px+, `oc-app` / `oc-sidebar` / `oc-page`), slim header + bottom tab bar + FAB (phones), footer. |
 | Sectors | `lib/sectors.ts` | Maps each sector to a `cat-*` token; resolves a symbol's sector (custom choice first, then the built-in table). |
 
 **Two cascade facts to know before styling anything:**
@@ -147,6 +167,9 @@ The honesty rules from the old deck-log design still apply, now written in plain
 - **Gains → `success`, losses → `danger`. Always.** Text uses the full colour; badges use the `-soft` ground with the full-colour text (`oc-badge-up` / `oc-badge-down`). Flat or zero values use `ink-muted` (or `oc-badge-info`).
 - Colour never works alone: `NsPnl` and `NsChangeBadge` add a ▲/▼ glyph and an explicit sign.
 - `warning` / `warning-soft` are for stale or caution states, never for direction.
+
+### Accent: fuchsia
+`accent` (#F72CB8) means "act on this now" and nothing else. Here that is an open position whose live price has reached its stop or target (`computeAlerts` in `lib/alerts.ts`). It appears in three places at most: the `AlertCallout` card (border, badge, the one `oc-btn-accent` button), and the "N alerts" chip on the summary banner as a small `oc-dot` with a white ring, the only pink allowed on the silk. Never for body text, large areas, or gains and losses, which stay green and red even inside the call-out.
 
 ### Sectors
 Sectors reuse the system's category colours. They never introduce new ones:
@@ -187,13 +210,16 @@ One family: **Inter**, self-hosted through `next/font` (`--font-inter` → `--fo
 
 ## Layout
 
-- **Width:** one centred column, `max-w-[1200px]`, `px-4` rising to `px-6` at `md`. Holds down to 360–390px.
+- **Frame:** `oc-app` grid with the sidebar on the left and `oc-page` on the right: 32px top and 40px side padding, centred and growing up to `content-max` (1440px). Below 768px the page padding drops to 16px. Holds down to 360–390px.
 - **Shell (`NavyShell`):**
-  - **md and up:** a sticky top header with the silk brand square, "Stock Tracker" in `ns-heading`, a pill nav (Dashboard, Strategies, Analysis, Disclosures; active = `bg-ns-primary-soft text-ns-primary-text`), then the refresh button (off-dashboard), theme toggle, Data menu and the Log position pill.
-  - **Phones:** a fixed bottom `oc-tabbar` (max 480px wide) with the four sections and the Log position FAB raised in the centre column. The page gets bottom padding so content never hides under it.
-- **Dashboard:** the silk hero, then a `Sheet` grid that pulls up into it, one column below `lg` and **two columns from 1024px** (`lg:grid-cols-2`). Order: P&L · Allocation by sector · Watchlist (full width) · Recorded log (open) · Strategy performance (collapsed).
+  - **1024px and up:** the full 248px `oc-sidebar` (silk brand mark, "Stock Tracker", then `oc-nav` items Dashboard, Strategies, Analysis, Disclosures; current page = `primary-soft` fill). It stays put while the page scrolls.
+  - **768 to 1023px:** the same sidebar at 76px, icons only. Each item keeps its name in `aria-label` and as a tooltip.
+  - **768px and up:** an `oc-topbar` over every page. The dashboard opens it with a greeting ("Good evening") and the date plus price age; other pages show just the price age, since they bring their own `ns-title`. Controls on the right: hide amounts, refresh prices, theme, Data menu, Log position.
+  - **Phones:** a slim header (brand, theme, Data) and a fixed bottom `oc-tabbar` (max 480px wide) with the four sections and the Log position FAB raised in the centre column. The page gets bottom padding so content never hides under it.
+- **Dashboard, web:** `SummaryBanner`, then 28px down the card grid: one column until 1024px, then **1.7 : 1** with P&L on the left and the `AlertCallout` (when there is one) above Allocation on the right. Watchlist, Recorded log (a full `oc-table`) and Strategy record (collapsed) run full width.
+- **Dashboard, phone:** the silk hero, then the cards pulled up into it (`-mt-7`). Order: P&L · call-out · Allocation · Watchlist · Recorded log (list rows) · Strategy record.
 - **Container queries over breakpoints for card internals.** A card in the two-column grid is narrow even on a wide screen, so tables inside cards respond to the *card's* width. The P&L table is `@container`, and its "% Portfolio" column appears only at `@lg` (card ≥ 32rem). Narrower cards show the share as a bar line under the row.
-- **Spacing** sticks to the 4px scale (`--space-1…8`). Card padding is 16px, and the gap between cards is 12px, or 16px at `lg`.
+- **Spacing** sticks to the 4px scale (`--space-1…10`). Phones: 16px card padding, 12px gaps. Web (768px+): 24px card padding (`oc-card-web`), 24px gaps.
 
 ## Elevation and depth
 
@@ -201,6 +227,7 @@ Three shadows, each with one job:
 - **`shadow-card`**: every card, the selected segment, dialogs, menus.
 - **`shadow-primary`**: the blue glow under primary buttons and the FAB. Nothing else gets it.
 - **`shadow-bar`**: the upward shadow on the phone tab bar.
+- **`shadow-accent`**: the pink glow under the call-out's one accent button. Nothing else.
 
 The silk hero sits flat. Depth there comes from the gradient and the frosted glass chips. Cards never stack on cards. A section inside a card is separated with a `line` hairline or a `surface-sunken` ground, not another shadow.
 
@@ -219,6 +246,9 @@ Icons are lucide-react, 16–20px, stroke style. The ▲/▼ characters are data
 ## Components
 
 - **Hero (`PortfolioOverview`).** `oc-silk rounded-ns-xl`. Top row: an `oc-glass` chip reading "Prices as of …" (short form on phones) and the privacy toggle (Eye/EyeOff hides amounts). Centre: "Portfolio summary", the total in `ns-amount-xl oc-num` with `oc-decimals`. Below: a 3-column `oc-glass` strip of Cash (editable), Positions and Change from starting capital.
+- **Summary banner (`SummaryBanner`, web).** `oc-silk oc-banner`: "Portfolio value" in `ns-amount-web` with faded cents, glass chips for today's move ($ and %) and, when any exist, "N alerts" with the ringed dot (links to the call-out). On the right an `oc-banner-stats` glass strip: Cash (editable), Positions, Since start, Best today. Stacks below 1024px.
+- **Alert call-out (`AlertCallout`).** `oc-card oc-card-web oc-callout`, only when a position has reached its stop or target. Badge "Needs your attention" with the price time, the symbol mark and "AAPL hit your target", then entry, gain or loss if sold (green/red), and the strategy's exit rule. "Review trade" (`oc-btn-accent`) opens the position; "Dismiss for now" hides it until reload. More alerts are named in one line underneath, never as a second card.
+- **Data table (`oc-table`, web).** The recorded log from 768px: Stock (mark, symbol, Buy/Sell badge, tags), Date, Shares (`oc-optional`), Price, P&L. Rows fill `surface-sunken` with rounded ends on hover and open the position on click. Watchlist rows get the same hover.
 - **Card (`NsCard`).** `oc-card` with a heading row (`title`, optional `meta`, optional `action`). `collapsible` + `defaultOpen` turn the heading into a disclosure button. Every dashboard section is one of these.
 - **P&L (`NsPnl`, `NsChangeBadge`).** Signed text or pill with glyph + sign, coloured by the signed-values rule.
 - **SymbolMark.** A circle in the symbol's sector colour with the company logo inset by a 2px ring, so the sector still reads at a glance. Logos come from the app's own `/api/logo` route. If one is missing or fails, the circle shows the ticker's first letter on the sector colour. The `title` names the sector.

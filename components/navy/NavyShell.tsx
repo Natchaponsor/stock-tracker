@@ -2,13 +2,17 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChartLine, FileText, LayoutDashboard, ListChecks, RefreshCw } from "lucide-react";
+import { ChartLine, Eye, EyeOff, FileText, LayoutDashboard, ListChecks, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { LogPositionMenu } from "@/components/shell/LogPositionMenu";
 import { DataMenu } from "@/components/shell/DataMenu";
 import { ThemeToggle } from "@/components/shell/ThemeToggle";
 import { Footer } from "@/components/shell/Footer";
 import { useRefreshPrices } from "@/hooks/useRefreshPrices";
+import { usePriceAge } from "@/hooks/usePriceAge";
+import { usePositionStore } from "@/store/usePositionStore";
+import { useNow } from "@/components/log/clock";
+import { usePlatform } from "@/hooks/usePlatform";
 
 const NAV_ITEMS = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -17,88 +21,168 @@ const NAV_ITEMS = [
   { href: "/disclosures", label: "Disclosures", icon: FileText },
 ];
 
+const ROUND_BTN =
+  "flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full bg-ns-card text-ns-ink-muted shadow-ns-card transition-colors hover:text-ns-ink disabled:opacity-60";
+
 /**
- * The app frame for every page. Wide screens keep the previous layout's single
- * top menu (name, sections, controls); phones move the sections into Navy
- * Stream's bottom tab bar, with Log position as the raised add button.
+ * The app frame for every page, following Navy Stream's two platform sets.
+ * Web (768px and up): the Sidebar on the left (icons only below 1024px) and a
+ * top bar over the page with the controls. Phones: a slim header and the
+ * bottom tab bar, with Log position as the raised add button. Breakpoints
+ * match the ones built into bundle.css's oc-app / oc-sidebar rules.
+ *
+ * Only the matching set is rendered once the width is known (usePlatform);
+ * before that both are in the page and CSS shows the right one.
  */
 export function NavyShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
-  const { refresh, refreshing } = useRefreshPrices();
+  const platform = usePlatform();
+  const showWeb = platform !== "phone";
+  const showPhone = platform !== "web";
 
   return (
-    <div className="flex min-h-screen flex-col bg-ns-page text-ns-ink">
-      <header className="sticky top-0 z-40 border-b border-ns-line bg-ns-card">
-        <div className="mx-auto flex h-14 w-full max-w-[1200px] items-center gap-4 px-4 md:h-16 md:px-6">
-          <Link href="/" className="flex shrink-0 items-center gap-2.5" aria-label="Stock Tracker — dashboard">
-            <span aria-hidden="true" className="oc-silk h-7 w-7 rounded-ns-sm" />
-            <span className="ns-heading text-ns-ink">Stock Tracker</span>
+    <div className="oc-app bg-ns-page text-ns-ink">
+      {showWeb && (
+        <aside className="oc-sidebar sticky top-0 h-screen self-start">
+          <Link href="/" className="oc-brand text-ns-ink no-underline" aria-label="Stock Tracker — dashboard">
+            {/* A div, not a span: bundle.css hides spans in .oc-brand when the sidebar collapses. */}
+            <div aria-hidden="true" className="oc-brand-mark oc-silk" />
+            <span>Stock Tracker</span>
           </Link>
-
-          <nav className="hidden min-w-0 items-center gap-1 md:flex" aria-label="Sections">
+          <nav className="flex w-full flex-col gap-1.5" aria-label="Sections">
             {NAV_ITEMS.map((item) => {
-              const active = isActive(item.href);
+              const Icon = item.icon;
               return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  aria-current={active ? "page" : undefined}
-                  className={cn(
-                    "ns-label whitespace-nowrap rounded-full px-3.5 py-2 transition-colors",
-                    active
-                      ? "bg-ns-primary-soft text-ns-primary-text"
-                      : "text-ns-ink-muted hover:text-ns-ink"
-                  )}
+                  aria-current={isActive(item.href) ? "page" : undefined}
+                  // The label span hides when the sidebar collapses to icons, so the
+                  // link keeps its name here and shows it as a tooltip.
+                  aria-label={item.label}
+                  title={item.label}
+                  className="oc-nav"
                 >
-                  {item.label}
+                  <Icon strokeWidth={1.8} aria-hidden="true" />
+                  <span>{item.label}</span>
                 </Link>
               );
             })}
           </nav>
+        </aside>
+      )}
 
-          <div className="ml-auto flex shrink-0 items-center gap-2">
-            {/* The dashboard header carries its own refresh beside the price time. */}
-            {pathname !== "/" && (
-              <button
-                type="button"
-                onClick={refresh}
-                disabled={refreshing}
-                title="Fetch current prices now. Nothing refreshes automatically."
-                className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-ns-sunken text-ns-ink-muted transition-colors hover:text-ns-ink disabled:opacity-60"
-              >
-                <RefreshCw className={cn("h-4 w-4", refreshing && "animate-spin")} />
-                <span className="sr-only">{refreshing ? "Refreshing prices" : "Refresh prices"}</span>
-              </button>
-            )}
-            <ThemeToggle />
-            <DataMenu />
-            <LogPositionMenu variant="pill" className="hidden md:block" />
-          </div>
+      <div className="flex min-w-0 flex-col">
+        {showPhone && (
+          <header className="sticky top-0 z-40 border-b border-ns-line bg-ns-card md:hidden">
+            <div className="flex h-14 items-center gap-3 px-4">
+              <Link href="/" className="flex shrink-0 items-center gap-2.5" aria-label="Stock Tracker — dashboard">
+                <span aria-hidden="true" className="oc-silk h-7 w-7 rounded-ns-sm" />
+                <span className="ns-heading text-ns-ink">Stock Tracker</span>
+              </Link>
+              <div className="ml-auto flex shrink-0 items-center gap-2">
+                <ThemeToggle />
+                <DataMenu />
+              </div>
+            </div>
+          </header>
+        )}
+
+        <main className="oc-page mx-auto flex-1">
+          {showWeb && <TopBar isDashboard={pathname === "/"} />}
+          {children}
+        </main>
+
+        {/* Room under the footer so the floating tab bar never covers it. */}
+        <div className="pb-28 md:pb-0">
+          <Footer />
         </div>
-      </header>
-
-      <main className="mx-auto w-full max-w-[1200px] flex-1 px-4 pt-4 pb-10 md:px-6 md:pt-6">{children}</main>
-
-      {/* Room under the footer so the floating tab bar never covers it. */}
-      <div className="pb-28 md:pb-0">
-        <Footer />
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-40 px-2 pb-[max(12px,env(safe-area-inset-bottom))] md:hidden">
-        {/* A slightly narrower add-button column and side padding than the
-            stock tab bar, so "Disclosures" fits whole on a 360px phone. */}
-        <nav className="oc-tabbar mx-auto max-w-[480px] grid-cols-[1fr_1fr_64px_1fr_1fr]! px-1!" aria-label="Sections">
-          {NAV_ITEMS.slice(0, 2).map((item) => (
-            <TabLink key={item.href} item={item} active={isActive(item.href)} />
-          ))}
-          {/* The middle column holds the raised add button. Stretching it to
-              the bar's full height lets the button sit half above the bar. */}
-          <LogPositionMenu variant="fab" className="-mt-3 self-stretch" />
-          {NAV_ITEMS.slice(2).map((item) => (
-            <TabLink key={item.href} item={item} active={isActive(item.href)} />
-          ))}
-        </nav>
+      {showPhone && (
+        <div className="fixed inset-x-0 bottom-0 z-40 px-2 pb-[max(12px,env(safe-area-inset-bottom))] md:hidden">
+          {/* A slightly narrower add-button column and side padding than the
+              stock tab bar, so "Disclosures" fits whole on a 360px phone. */}
+          <nav className="oc-tabbar mx-auto max-w-[480px] grid-cols-[1fr_1fr_64px_1fr_1fr]! px-1!" aria-label="Sections">
+            {NAV_ITEMS.slice(0, 2).map((item) => (
+              <TabLink key={item.href} item={item} active={isActive(item.href)} />
+            ))}
+            {/* The middle column holds the raised add button. Stretching it to
+                the bar's full height lets the button sit half above the bar. */}
+            <LogPositionMenu variant="fab" className="-mt-3 self-stretch" />
+            {NAV_ITEMS.slice(2).map((item) => (
+              <TabLink key={item.href} item={item} active={isActive(item.href)} />
+            ))}
+          </nav>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function greeting(hour: number): string {
+  if (hour < 12) return "Good morning";
+  if (hour < 18) return "Good afternoon";
+  return "Good evening";
+}
+
+/**
+ * The web top bar (Navy Stream oc-topbar). On the dashboard it opens with a
+ * greeting and today's date; elsewhere the page brings its own title, so the
+ * left side just says how old the prices are. Controls sit on the right.
+ */
+function TopBar({ isDashboard }: { isDashboard: boolean }) {
+  const now = useNow();
+  const priceAge = usePriceAge();
+  const hidePnl = usePositionStore((s) => s.hidePnl);
+  const toggleHidePnl = usePositionStore((s) => s.toggleHidePnl);
+  const { refresh, refreshing } = useRefreshPrices();
+  const today = now === null ? null : new Date(now);
+
+  return (
+    <div className="oc-topbar hidden! md:flex!">
+      <div className="min-w-0">
+        {isDashboard ? (
+          <>
+            {/* The greeting needs the clock, which only exists after mount. */}
+            <p className="ns-title text-ns-ink">{today ? greeting(today.getHours()) : "Dashboard"}</p>
+            <p className="mt-1 truncate text-[14px] leading-5 text-ns-ink-muted" title={priceAge.title}>
+              {today && `${today.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })} · `}
+              {priceAge.text}
+            </p>
+          </>
+        ) : (
+          <p className="ns-label truncate font-normal text-ns-ink-muted" title={priceAge.title}>
+            {priceAge.text}
+          </p>
+        )}
+      </div>
+
+      <div className="flex shrink-0 items-center gap-2">
+        <button
+          type="button"
+          onClick={toggleHidePnl}
+          aria-pressed={hidePnl}
+          title={hidePnl ? "Show amounts" : "Hide amounts (privacy mode)"}
+          className={ROUND_BTN}
+        >
+          {hidePnl ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
+          <span className="sr-only">{hidePnl ? "Show amounts" : "Hide amounts"}</span>
+        </button>
+        <button
+          type="button"
+          onClick={refresh}
+          disabled={refreshing}
+          title="Fetch current prices now. Nothing refreshes automatically."
+          className={ROUND_BTN}
+        >
+          <RefreshCw className={cn("h-[18px] w-[18px]", refreshing && "animate-spin")} />
+          <span className="sr-only">{refreshing ? "Refreshing prices" : "Refresh prices"}</span>
+        </button>
+        <ThemeToggle onPage />
+        <DataMenu onPage />
+        <LogPositionMenu variant="pill" />
       </div>
     </div>
   );

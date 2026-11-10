@@ -12,7 +12,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 /* Navy Stream buttons: pill-shaped, primary is the blue fade with its glow. */
 const variantClasses: Record<Variant, string> = {
   primary:
-    "bg-linear-to-r from-ns-ocean-400 to-ns-primary text-ns-on-primary shadow-ns-primary active:bg-ns-ocean-700 active:bg-none",
+    "bg-linear-to-r from-ns-ocean-400 to-ns-primary text-ns-on-primary shadow-ns-primary hover:brightness-106 active:bg-ns-ocean-700 active:bg-none",
   secondary: "bg-ns-primary-soft text-ns-primary-text hover:bg-ns-ocean-100",
   ghost: "bg-transparent text-ns-ink-muted hover:text-ns-ink hover:bg-ns-sunken",
   danger: "bg-ns-danger-soft text-ns-danger hover:brightness-95",
@@ -28,7 +28,7 @@ export function Button({ className, variant = "secondary", size = "md", ...props
     <button
       className={cn(
         "inline-flex cursor-pointer items-center justify-center rounded-full font-semibold transition-colors duration-150",
-        "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ns-primary",
+        "focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ns-ocean-100",
         "disabled:opacity-50 disabled:pointer-events-none",
         variantClasses[variant],
         sizeClasses[size],
