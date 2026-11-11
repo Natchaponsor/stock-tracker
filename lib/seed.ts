@@ -18,6 +18,7 @@ export function generateSeedStrategies(now: Date = new Date()): Strategy[] {
       entryRule: "50/200 EMA golden cross, with price reclaiming the 200-day after a pullback.",
       exitRule: "Death cross, or a 2-day close below the 200-EMA.",
       createdAt,
+      updatedAt: createdAt,
     },
     {
       id: STRATEGY_TREND_CONTINUATION,
@@ -25,6 +26,7 @@ export function generateSeedStrategies(now: Date = new Date()): Strategy[] {
       entryRule: "Add to a position already trending above the 200-EMA on a pullback to the 50-EMA.",
       exitRule: "Trail a stop below the most recent swing low; exit in full on a death cross.",
       createdAt,
+      updatedAt: createdAt,
     },
   ];
 }
@@ -133,5 +135,5 @@ export function generateSeedWatchlist(now: Date = new Date()): WatchlistItem[] {
     { symbol: "NVDA", addedAt: daysAgo(now, 60) },
     { symbol: "PLTR", addedAt: daysAgo(now, 60) },
     { symbol: "COST", addedAt: daysAgo(now, 22), note: "Watching for a first pullback to the 50-EMA." },
-  ];
+  ].map((w) => ({ ...w, updatedAt: w.addedAt }));
 }

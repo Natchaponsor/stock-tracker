@@ -94,7 +94,9 @@ describe("validateImportPayload", () => {
   });
 
   it("round-trips custom sectors", () => {
-    const sectors = [{ id: "s1", name: "AI chips", swatch: "cat-fun" as const, symbols: ["NVDA", "AMD"] }];
+    const sectors = [
+      { id: "s1", name: "AI chips", swatch: "cat-fun" as const, symbols: ["NVDA", "AMD"], updatedAt: "2026-01-01T00:00:00.000Z" },
+    ];
     const exported = buildExportPayload(100, [], [], [], sectors);
     const result = validateImportPayload(JSON.parse(JSON.stringify(exported)));
     expect(result.ok).toBe(true);

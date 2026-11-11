@@ -1,5 +1,14 @@
 @AGENTS.md
 
+## Device sync
+
+The book can sync between devices, encrypted on the device (`lib/sync/`). Synced data is positions, strategies, watchlist (and its order), custom sectors and starting cash.
+
+- Change synced data only through the store actions in `store/usePositionStore.ts`: they stamp `updatedAt`, record tombstones in `deletions` on delete, and stamp `startingCashUpdatedAt` / `watchlistOrderUpdatedAt`. Setting these fields directly breaks merging.
+- A new synced field or collection needs a change time, a merge rule in `lib/sync/book.ts`, a place in `selectSyncBook`/`applySynced`, and a test in `lib/__tests__/syncBook.test.ts`.
+- Per-device settings (theme, hide amounts, backup dates) never go into `SyncBook`.
+- The sync code is the only secret. It lives in localStorage under `stock-tracker-sync`, never in the book, exports or URLs (a `#pair=` link is cleared from the address bar on open).
+
 ## Design system
 
 All UI uses **Navy Stream**. Its colors and styles live in `styles/navy-stream/tokens.css` (tokens) and `styles/navy-stream/bundle.css` (`oc-*` component classes), both loaded app-wide from `app/layout.tsx` along with the Inter font.

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { format } from "date-fns";
-import { ChevronDown, Download, FileSpreadsheet, RotateCcw, Smartphone, Trash2, Upload } from "lucide-react";
+import { ChevronDown, Download, FileSpreadsheet, RefreshCcw, RotateCcw, Smartphone, Trash2, Upload } from "lucide-react";
 import { usePositionStore } from "@/store/usePositionStore";
 import { buildExportPayload, downloadJson, downloadText, validateImportPayload } from "@/lib/exportData";
 import { buildLedgerCsv } from "@/lib/csv";
@@ -10,6 +10,9 @@ import { backupStatus } from "@/lib/backup";
 import { useNow } from "@/components/log/clock";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { promptInstall, useInstallApp } from "@/hooks/useInstallApp";
+import { useSyncStatus } from "@/hooks/useSync";
+import { useSyncDialog } from "@/hooks/useSyncDialog";
+import { describeSync } from "@/components/shell/SyncDialog";
 import { cn } from "@/lib/cn";
 import type { ExportPayload } from "@/lib/types";
 
@@ -27,6 +30,11 @@ export function DataMenu({ onPage = false }: { onPage?: boolean }) {
   // Offered when the browser can install it (Chrome, Edge, Android) or on iPhone/iPad,
   // where it's done by hand; hidden once running as the installed app.
   const canInstall = !install.installed && (install.canPrompt || install.isIos);
+  const sync = useSyncStatus();
+  const syncOn = sync.state !== "off";
+  const showSyncDialog = useSyncDialog((s) => s.show);
+  // With sync on, whole-book changes reach every paired device; say so before they happen.
+  const reachesDevices = syncOn ? " With sync on, this also happens on your paired devices." : "";
   const menuRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -106,14 +114,16 @@ export function DataMenu({ onPage = false }: { onPage?: boolean }) {
     erase: {
       title: "Erase all data?",
       description:
-        "This permanently deletes every position, strategy, watchlist symbol, and custom sector, and resets your cash balance to $0 — including the demo data. This cannot be undone.",
+        "This permanently deletes every position, strategy, watchlist symbol, and custom sector, and resets your cash balance to $0 — including the demo data. This cannot be undone." +
+        reachesDevices,
       confirmLabel: "Erase everything",
       tone: "danger",
     },
     reset: {
       title: "Reset to demo data?",
       description:
-        "This replaces everything currently in the app — positions, strategies, watchlist, custom sectors, and cash balance — with the sample dataset. This cannot be undone.",
+        "This replaces everything currently in the app — positions, strategies, watchlist, custom sectors, and cash balance — with the sample dataset. This cannot be undone." +
+        reachesDevices,
       confirmLabel: "Reset to demo",
       tone: "danger",
     },
@@ -123,7 +133,7 @@ export function DataMenu({ onPage = false }: { onPage?: boolean }) {
     pending === "import" && importPayload
       ? {
           title: "Import this file?",
-          description: `Found ${importPayload.positions.length} position${importPayload.positions.length === 1 ? "" : "s"}, ${importPayload.strategies.length} ${importPayload.strategies.length === 1 ? "strategy" : "strategies"}, ${importPayload.watchlist.length} watchlist symbol${importPayload.watchlist.length === 1 ? "" : "s"}, ${importPayload.customSectors.length} custom sector${importPayload.customSectors.length === 1 ? "" : "s"}, and a $${importPayload.startingCash.toLocaleString()} starting balance. This replaces everything currently in the app. This cannot be undone.`,
+          description: `Found ${importPayload.positions.length} position${importPayload.positions.length === 1 ? "" : "s"}, ${importPayload.strategies.length} ${importPayload.strategies.length === 1 ? "strategy" : "strategies"}, ${importPayload.watchlist.length} watchlist symbol${importPayload.watchlist.length === 1 ? "" : "s"}, ${importPayload.customSectors.length} custom sector${importPayload.customSectors.length === 1 ? "" : "s"}, and a $${importPayload.startingCash.toLocaleString()} starting balance. This replaces everything currently in the app. This cannot be undone.${reachesDevices}`,
           confirmLabel: "Import & replace",
           tone: "danger" as const,
         }
@@ -164,7 +174,9 @@ export function DataMenu({ onPage = false }: { onPage?: boolean }) {
           className="absolute right-0 z-30 mt-2 w-64 overflow-hidden rounded-ns-md border border-ns-line bg-ns-card shadow-ns-card"
         >
           <div className="border-b border-ns-line px-3 py-2">
-            <p className="ns-caption text-ns-ink-muted">Your data · this browser only</p>
+            <p className="ns-caption text-ns-ink-muted">
+              {syncOn ? `Your data · ${describeSync(sync, now)}` : "Your data · this browser only"}
+            </p>
             <p className={cn("ns-caption mt-0.5", backup.due ? "text-ns-warning" : "text-ns-ink-muted")}>
               {backup.label}
             </p>
@@ -234,6 +246,18 @@ export function DataMenu({ onPage = false }: { onPage?: boolean }) {
             <Trash2 className="h-3.5 w-3.5" />
             Erase all data
           </button>
+          <button
+            type="button"
+            onClick={() => {
+              setOpen(false);
+              showSyncDialog();
+            }}
+            role="menuitem"
+            className={cn(item, "border-t border-ns-line text-ns-primary-text")}
+          >
+            <RefreshCcw className="h-3.5 w-3.5" />
+            {syncOn ? "Sync devices" : "Sync with another device"}
+          </button>
           {canInstall && (
             <button
               type="button"
@@ -243,7 +267,7 @@ export function DataMenu({ onPage = false }: { onPage?: boolean }) {
                 else setIosInstallHelp(true);
               }}
               role="menuitem"
-              className={cn(item, "border-t border-ns-line text-ns-primary-text")}
+              className={cn(item, "text-ns-primary-text")}
             >
               <Smartphone className="h-3.5 w-3.5" />
               Install app

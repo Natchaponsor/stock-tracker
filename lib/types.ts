@@ -22,6 +22,8 @@ export interface Strategy {
   entryRule: string;
   exitRule: string;
   createdAt: string;
+  /** Last change, for device sync (newer wins). Back-filled from createdAt for old data. */
+  updatedAt: string;
 }
 
 /** As stored / user-editable. */
@@ -50,6 +52,8 @@ export interface Position {
 export interface WatchlistItem {
   symbol: string;
   addedAt: string;
+  /** Last change, for device sync (newer wins). Back-filled from addedAt for old data. */
+  updatedAt: string;
   note?: string;
 }
 
@@ -108,6 +112,8 @@ export interface CustomSector {
   name: string;
   swatch: SectorSwatch;
   symbols: string[];
+  /** Last change, for device sync (newer wins). */
+  updatedAt: string;
 }
 
 /** Full snapshot of user data, for export/backup — matches the store's persisted shape. */
