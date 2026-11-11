@@ -3,7 +3,7 @@ import { cn } from "@/lib/cn";
 
 /** A Navy Stream card: white on the gray page, large radius, barely-there shadow. */
 export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("rounded-ns-lg bg-ns-card p-4 shadow-ns-card sm:p-5", className)} {...props} />;
+  return <div className={cn("rounded-ns-lg bg-ns-card p-4 shadow-ns-card md:p-6", className)} {...props} />;
 }
 
 export function CardHeader({ className, ...props }: HTMLAttributes<HTMLDivElement>) {

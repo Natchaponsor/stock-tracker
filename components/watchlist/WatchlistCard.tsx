@@ -39,7 +39,7 @@ export function WatchlistCard({ item, handle }: { item: WatchlistItem; handle?: 
   const changePct = quote?.changePct ?? null;
 
   return (
-    <div className="flex items-center gap-2.5 py-3">
+    <div className="flex items-center gap-2.5 py-3 transition-colors md:-mx-2 md:rounded-ns-md md:px-2 md:hover:bg-ns-sunken">
       {handle}
       <SymbolMark symbol={symbol} />
 

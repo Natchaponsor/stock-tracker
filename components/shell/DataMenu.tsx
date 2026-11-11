@@ -15,7 +15,8 @@ import type { ExportPayload } from "@/lib/types";
 type SimpleAction = "export" | "erase" | "reset";
 type PendingAction = SimpleAction | "import" | null;
 
-export function DataMenu() {
+/** `onPage` gives the trigger the white, lifted look it needs on the gray page (web top bar). */
+export function DataMenu({ onPage = false }: { onPage?: boolean }) {
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState<PendingAction>(null);
   const [importPayload, setImportPayload] = useState<ExportPayload | null>(null);
@@ -134,7 +135,10 @@ export function DataMenu() {
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         aria-haspopup="menu"
-        className="ns-label flex h-9 cursor-pointer items-center gap-1 rounded-full bg-ns-sunken px-3.5 text-ns-ink-muted transition-colors hover:text-ns-ink"
+        className={cn(
+          "ns-label flex cursor-pointer items-center gap-1 rounded-full px-3.5 text-ns-ink-muted transition-colors hover:text-ns-ink",
+          onPage ? "h-10 bg-ns-card shadow-ns-card" : "h-9 bg-ns-sunken"
+        )}
       >
         Data
         {backup.due && (

@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import { Sun, Moon } from "lucide-react";
+import { cn } from "@/lib/cn";
 
 type Theme = "light" | "dark";
 
@@ -26,7 +27,8 @@ function setTheme(next: Theme) {
   listeners.forEach((listener) => listener());
 }
 
-export function ThemeToggle() {
+/** `onPage` gives it the white, lifted look it needs on the gray page (web top bar). */
+export function ThemeToggle({ onPage = false }: { onPage?: boolean }) {
   const theme = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   return (
@@ -35,7 +37,10 @@ export function ThemeToggle() {
       onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
       aria-pressed={theme === "light"}
       title={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
-      className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-ns-sunken text-ns-ink-muted transition-colors hover:text-ns-ink"
+      className={cn(
+        "flex cursor-pointer items-center justify-center rounded-full text-ns-ink-muted transition-colors hover:text-ns-ink",
+        onPage ? "h-10 w-10 bg-ns-card shadow-ns-card" : "h-9 w-9 bg-ns-sunken"
+      )}
     >
       {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
       <span className="sr-only">{theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}</span>

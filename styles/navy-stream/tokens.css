@@ -24,6 +24,10 @@
   --primary-text: #0a5bc4;
   --primary-soft: #eaf2fc;
   --on-primary: #ffffff;
+  --accent: #f72cb8;
+  --accent-text: #a0087a;
+  --accent-soft: #fde2f4;
+  --on-accent: #3a0029;
   --hero-glow: #6fa6e8;
   --hero-mid: #3a80d8;
   --hero-base: #0a5bc4;
@@ -34,7 +38,7 @@
   --cat-food: #ee7b1e;
   --cat-transport: #5b62e0;
   --cat-shopping: #22a55b;
-  --cat-fun: #e04fc4;
+  --cat-fun: #e0a400;
   --cat-bills: #8b5cf6;
   --cat-health: #14a3a3;
   --success: #14804a;
@@ -52,6 +56,7 @@
   --space-5: 20px;
   --space-6: 24px;
   --space-8: 32px;
+  --space-10: 40px;
 
   /* Radius */
   --radius-sm: 10px;
@@ -64,9 +69,19 @@
   --shadow-card: 0 1px 2px rgba(15, 27, 45, 0.04), 0 6px 18px rgba(15, 27, 45, 0.05);
   --shadow-primary: 0 8px 20px rgba(10, 91, 196, 0.32);
   --shadow-bar: 0 -4px 24px rgba(15, 27, 45, 0.06);
+  --shadow-accent: 0 8px 20px rgba(247, 44, 184, 0.30);
+
+  /* Layout (web only) */
+  --sidebar-width: 248px;
+  --sidebar-collapsed: 76px;
+  --content-max: 1440px;
+  --bp-tablet: 768px;
+  --bp-desktop: 1024px;
 
   /* Type */
   --font-sans: var(--font-inter, "Inter"), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --type-amount-web: 600 52px/60px var(--font-sans);
+  --type-amount-web-tracking: -0.02em;
   --type-amount-xl: 600 44px/52px var(--font-sans);
   --type-amount-xl-tracking: -0.02em;
   --type-amount-lg: 600 32px/38px var(--font-sans);
@@ -93,6 +108,8 @@
   --primary: #0a5bc4;
   --primary-text: #7fb0ee;
   --primary-soft: #10284a;
+  --accent-text: #ff7ad9;
+  --accent-soft: #3a0f33;
   --hero-glow: #4a86d4;
   --hero-mid: #2a6cc0;
   --hero-base: #094fab;

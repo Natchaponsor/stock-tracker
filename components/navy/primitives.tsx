@@ -47,7 +47,8 @@ export function NsCard({
   );
 
   return (
-    <section className={cn("oc-card min-w-0", className)}>
+    // Web cards are airier (Navy Stream oc-card-web: 24px padding).
+    <section className={cn("oc-card min-w-0 md:p-6!", className)}>
       {/* Wraps so a wide action drops under the heading on phones instead of squeezing it. */}
       <div className={cn("flex flex-wrap items-start justify-between gap-x-3 gap-y-2.5", shown && "mb-3")}>
         {collapsible ? (
