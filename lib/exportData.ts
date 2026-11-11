@@ -1,4 +1,5 @@
 import type { CustomSector, ExportPayload, Position, Strategy, WatchlistItem } from "./types";
+import { normalizeSector, normalizeStrategy, normalizeWatchItem } from "./sync/book";
 import { SECTOR_SWATCHES } from "./sectors";
 import { migratePositionShape } from "./migratePosition";
 
@@ -95,9 +96,10 @@ export function validateImportPayload(json: unknown): ImportResult {
       startingCash: p.startingCash,
       // Normalizes pre-multi-strategy exports (a bare `strategyId`) into strategyIds/customTags.
       positions: p.positions.map((pos) => migratePositionShape(pos as unknown as Record<string, unknown>)),
-      strategies: p.strategies,
-      watchlist: p.watchlist,
-      customSectors: (p.customSectors as CustomSector[] | undefined) ?? [],
+      // Files from before device sync have no updatedAt on these; fill it in.
+      strategies: p.strategies.map(normalizeStrategy),
+      watchlist: p.watchlist.map(normalizeWatchItem),
+      customSectors: ((p.customSectors as CustomSector[] | undefined) ?? []).map(normalizeSector),
     },
   };
 }

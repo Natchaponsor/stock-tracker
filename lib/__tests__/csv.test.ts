@@ -25,7 +25,14 @@ function makePosition(overrides: Partial<Position> = {}): Position {
   };
 }
 
-const strategy: Strategy = { id: "s1", name: "Breakout", entryRule: "", exitRule: "", createdAt: day(2026, 1, 1) };
+const strategy: Strategy = {
+  id: "s1",
+  name: "Breakout",
+  entryRule: "",
+  exitRule: "",
+  createdAt: day(2026, 1, 1),
+  updatedAt: day(2026, 1, 1),
+};
 
 describe("toCsv", () => {
   it("quotes fields with commas, quotes or line breaks", () => {

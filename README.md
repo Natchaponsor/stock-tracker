@@ -58,6 +58,15 @@ not dozens of same-day trades).
 - **Backup reminder**: your book lives only in this browser, so the Data menu
   shows when you last exported a JSON backup ("Last backup Nov 9 · 3 days ago").
   After 14 days without one, a dot appears on the Data button until you export.
+- **Sync devices** (optional): Data → Sync with another device. One device turns
+  sync on and shows a QR code and a sync code; the other scans it (in the app, so the
+  iPhone Home Screen app works too) or types the code. The book is encrypted on the
+  device (AES-GCM, key derived from the code) before it is stored as one blob on the
+  server, which can never read it; there are no accounts. Every device keeps its own
+  copy and works offline. Changes push about 2 s after an edit and pull on open, on
+  return to the app, on reconnect, every minute and on Refresh. Edits on two devices
+  merge item by item (newer wins; fills and journal notes are combined), and deletions
+  are remembered so they don't come back. Needs HTTPS (or localhost).
 - **Install as an app**: "Install app" in the Data menu (Chrome, Edge, Android),
   or Share → Add to Home Screen on iPhone. It opens full-screen as "Stocks" with
   its own icon, and a service worker (`app/sw.js/route.ts`) keeps the pages on the
@@ -168,6 +177,13 @@ Ticked items have shipped.
   with; the Strategies page tracks win rate and average return per strategy.
 - **Cash** — a starting balance you set, netted automatically against every fill
   across every position; shown as its own slice in the portfolio allocation chart.
+- **Sync bookkeeping** — positions, strategies, watchlist items and custom sectors
+  carry `updatedAt`; starting cash and the watchlist order carry their own change
+  time; deletions are kept as dated tombstones (`deletions`, pruned after 90 days).
+  `SyncBook` and `mergeBooks` live in `lib/sync/book.ts`; the engine in
+  `lib/sync/engine.ts`, the encryption in `lib/sync/crypto.ts`, and the server side in
+  `app/api/sync/[id]/route.ts` + `lib/server/syncStore.ts`. Theme, hide amounts and
+  backup dates are per device and never sync.
 
 ## Design system: Navy Stream
 
@@ -240,6 +256,7 @@ Zustand (`persist`), SWR, Framer Motion, lucide-react, date-fns, Vitest.
 ```bash
 npm install
 cp .env.local.example .env.local   # then fill in FINNHUB_API_KEY — free at finnhub.io/register
+                                   # (device sync works locally without Redis: dev uses an in-memory store)
 npm run dev      # dev server on :3001
 npm run test      # unit tests for indicators, position metrics, and the data core
 npm run build     # production build
@@ -256,6 +273,11 @@ Requires a Node/Edge runtime for the two proxy routes (`/api/quote`, `/api/logo`
 so it deploys to **Vercel**, not a static export. Live at
 <https://stock-tracker-phi-lyart.vercel.app/>, deployed from `main`. Add `FINNHUB_API_KEY` as an environment variable in
 the Vercel project settings — it's read server-side only and never reaches the client.
+
+Device sync needs **Upstash Redis** (free tier): Vercel → Storage → Create database →
+Upstash Redis, connected to this project, which sets `KV_REST_API_URL` and
+`KV_REST_API_TOKEN` (`UPSTASH_REDIS_REST_URL` / `_TOKEN` also work). Without them the
+production sync endpoint answers 503 and the app reports "Sync isn't set up".
 
 ## License
 
