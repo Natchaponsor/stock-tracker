@@ -58,6 +58,13 @@ not dozens of same-day trades).
 - **Backup reminder**: your book lives only in this browser, so the Data menu
   shows when you last exported a JSON backup ("Last backup Nov 9 · 3 days ago").
   After 14 days without one, a dot appears on the Data button until you export.
+- **Install as an app**: "Install app" in the Data menu (Chrome, Edge, Android),
+  or Share → Add to Home Screen on iPhone. It opens full-screen as "Stocks" with
+  its own icon, and a service worker (`app/sw.js/route.ts`) keeps the pages on the
+  device so it opens offline; prices fall back to the last ones fetched, still
+  labelled with their age. Each deploy ships a new worker, and the app offers
+  "A new version is available · Reload". Needs HTTPS (or localhost); the worker
+  only registers in production builds.
 - **Company logos**: fetched through the app's own `/api/logo` route and cached
   for about a month. A symbol with no logo (or a non-US listing) falls back to
   its first letter on the sector colour.

@@ -11,6 +11,8 @@ interface ConfirmDialogProps {
   tone?: "default" | "danger";
   onConfirm: () => void;
   onCancel: () => void;
+  /** For dialogs that only inform: one button, no Cancel. */
+  hideCancel?: boolean;
 }
 
 export function ConfirmDialog({
@@ -21,6 +23,7 @@ export function ConfirmDialog({
   tone = "default",
   onConfirm,
   onCancel,
+  hideCancel = false,
 }: ConfirmDialogProps) {
   return (
     <AnimatePresence>
@@ -48,9 +51,11 @@ export function ConfirmDialog({
             </h2>
             <p className="ns-body mt-2 text-ns-ink-muted">{description}</p>
             <div className="mt-5 flex justify-end gap-2">
-              <Button variant="ghost" size="sm" onClick={onCancel}>
-                Cancel
-              </Button>
+              {!hideCancel && (
+                <Button variant="ghost" size="sm" onClick={onCancel}>
+                  Cancel
+                </Button>
+              )}
               <Button variant={tone === "danger" ? "danger" : "primary"} size="sm" onClick={onConfirm}>
                 {confirmLabel}
               </Button>
