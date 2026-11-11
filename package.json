@@ -1,7 +1,7 @@
 {
   "name": "stock-tracker",
   "version": "0.1.0",
-  "description": "A client-side swing-trading journal: outstanding shares with live P&L, FIFO buy/sell, and a position journal — all stored locally in your browser.",
+  "description": "A swing-trading journal with live P&L, FIFO buy/sell and a position journal. Your data stays on your device; pair as many devices as you like with encrypted sync.",
   "license": "MIT",
   "private": true,
   "scripts": {
@@ -18,7 +18,7 @@
     "framer-motion": "^12.42.2",
     "jsqr": "^1.4.0",
     "lucide-react": "^1.25.0",
-    "next": "16.2.11",
+    "next": "16.4.1",
     "qrcode": "^1.5.4",
     "react": "19.2.4",
     "react-dom": "19.2.4",
@@ -34,7 +34,7 @@
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^6.0.4",
     "eslint": "^9",
-    "eslint-config-next": "16.2.11",
+    "eslint-config-next": "16.4.1",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vite-tsconfig-paths": "^6.1.1",

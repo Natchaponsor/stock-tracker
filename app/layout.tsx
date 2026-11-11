@@ -18,7 +18,8 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "Stock Tracker",
-  description: "A client-side swing-trading journal: outstanding shares with live P&L, FIFO buy/sell, and a position journal — all stored locally in your browser.",
+  description:
+    "A swing-trading journal with live P&L, FIFO buy/sell and a position journal. Your data stays on your device; pair as many devices as you like with encrypted sync.",
   // Opened from the iPhone home screen: full-screen, named "Stocks" under the icon.
   appleWebApp: { capable: true, title: "Stocks", statusBarStyle: "default" },
 };
