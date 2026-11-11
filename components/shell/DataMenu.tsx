@@ -2,13 +2,14 @@
 
 import { useEffect, useRef, useState } from "react";
 import { format } from "date-fns";
-import { ChevronDown, Download, FileSpreadsheet, RotateCcw, Trash2, Upload } from "lucide-react";
+import { ChevronDown, Download, FileSpreadsheet, RotateCcw, Smartphone, Trash2, Upload } from "lucide-react";
 import { usePositionStore } from "@/store/usePositionStore";
 import { buildExportPayload, downloadJson, downloadText, validateImportPayload } from "@/lib/exportData";
 import { buildLedgerCsv } from "@/lib/csv";
 import { backupStatus } from "@/lib/backup";
 import { useNow } from "@/components/log/clock";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { promptInstall, useInstallApp } from "@/hooks/useInstallApp";
 import { cn } from "@/lib/cn";
 import type { ExportPayload } from "@/lib/types";
 
@@ -21,6 +22,11 @@ export function DataMenu({ onPage = false }: { onPage?: boolean }) {
   const [pending, setPending] = useState<PendingAction>(null);
   const [importPayload, setImportPayload] = useState<ExportPayload | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
+  const [iosInstallHelp, setIosInstallHelp] = useState(false);
+  const install = useInstallApp();
+  // Offered when the browser can install it (Chrome, Edge, Android) or on iPhone/iPad,
+  // where it's done by hand; hidden once running as the installed app.
+  const canInstall = !install.installed && (install.canPrompt || install.isIos);
   const menuRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -228,8 +234,33 @@ export function DataMenu({ onPage = false }: { onPage?: boolean }) {
             <Trash2 className="h-3.5 w-3.5" />
             Erase all data
           </button>
+          {canInstall && (
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                if (install.canPrompt) void promptInstall();
+                else setIosInstallHelp(true);
+              }}
+              role="menuitem"
+              className={cn(item, "border-t border-ns-line text-ns-primary-text")}
+            >
+              <Smartphone className="h-3.5 w-3.5" />
+              Install app
+            </button>
+          )}
         </div>
       )}
+
+      <ConfirmDialog
+        open={iosInstallHelp}
+        title="Add Stock Tracker to your Home Screen"
+        description="Tap the Share button in Safari's toolbar, then choose Add to Home Screen. It opens full-screen with its own icon, and your data stays on this device."
+        confirmLabel="Got it"
+        hideCancel
+        onConfirm={() => setIosInstallHelp(false)}
+        onCancel={() => setIosInstallHelp(false)}
+      />
 
       <ConfirmDialog
         open={dialog !== null}

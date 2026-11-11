@@ -1,6 +1,6 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { Sun, Moon } from "lucide-react";
 import { cn } from "@/lib/cn";
 
@@ -21,6 +21,16 @@ function subscribe(listener: () => void) {
   return () => listeners.delete(listener);
 }
 
+/**
+ * Points the browser's theme-color (the phone status bar, the installed app's
+ * title bar) at the current header colour, read from the live --surface-card token.
+ */
+function syncThemeColor() {
+  const meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
+  const color = getComputedStyle(document.documentElement).getPropertyValue("--surface-card").trim();
+  if (meta && color) meta.content = color;
+}
+
 function setTheme(next: Theme) {
   document.documentElement.dataset.theme = next;
   localStorage.setItem("theme", next);
@@ -30,6 +40,7 @@ function setTheme(next: Theme) {
 /** `onPage` gives it the white, lifted look it needs on the gray page (web top bar). */
 export function ThemeToggle({ onPage = false }: { onPage?: boolean }) {
   const theme = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  useEffect(syncThemeColor, [theme]);
 
   return (
     <button

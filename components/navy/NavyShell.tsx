@@ -75,7 +75,7 @@ export function NavyShell({ children }: { children: React.ReactNode }) {
 
       <div className="flex min-w-0 flex-col">
         {showPhone && (
-          <header className="sticky top-0 z-40 border-b border-ns-line bg-ns-card md:hidden">
+          <header className="sticky top-0 z-40 border-b border-ns-line bg-ns-card pt-[env(safe-area-inset-top)] md:hidden">
             <div className="flex h-14 items-center gap-3 px-4">
               <Link href="/" className="flex shrink-0 items-center gap-2.5" aria-label="Stock Tracker — dashboard">
                 <span aria-hidden="true" className="oc-silk h-7 w-7 rounded-ns-sm" />
