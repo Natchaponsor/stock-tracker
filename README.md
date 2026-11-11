@@ -5,10 +5,16 @@ real-time unrealized P&L, and a position journal. Built as a sibling to a separa
 day-trading journal, for a different rhythm (a handful of positions held for weeks,
 not dozens of same-day trades).
 
-- **Almost entirely client-side.** Positions, strategies, cash balance, and your
-  watchlist are seeded on first load and persisted only in `localStorage`. No login,
-  no accounts.
-- **Two server touchpoints, both stateless proxies to [Finnhub](https://finnhub.io)** —
+- **Your data stays on your device.** Positions, strategies, cash balance, custom
+  sectors and your watchlist live in the browser's `localStorage` on each device.
+  Nothing about your book is ever stored anywhere in readable form. No login, no
+  accounts, and the app keeps working offline.
+- **Pair as many devices as you like.** Optional sync keeps your phone, laptop and
+  any other device in step: pair each one by scanning a QR code or typing a sync
+  code. The book is encrypted on the device before it leaves, so the server only
+  relays a copy it can't read. Every device still holds its own full copy, and you
+  can turn sync off on any device whenever you like.
+- **Price lookups go through two stateless proxies to [Finnhub](https://finnhub.io)** —
   `app/api/quote/route.ts` relays a public current price + day change, and
   `app/api/logo/route.ts` serves each company's logo (looked up about once a month and
   cached), so your browser never talks to Finnhub directly. Neither sees or stores
@@ -17,8 +23,8 @@ not dozens of same-day trades).
   prices are fetched once on page load and again only when you click "Refresh
   prices," to keep API call volume low and predictable.
 - **Light theme by default, dark on request.** The toggle is remembered across
-  visits. On phones a bottom tab bar (with a raised Log button) replaces the top
-  menu.
+  visits. Wide screens get a sidebar; on phones a bottom tab bar (with a raised Log
+  button) takes its place.
 
 ## What works right now
 
@@ -55,12 +61,14 @@ not dozens of same-day trades).
   Erase all data. Every option that replaces data sits behind its own
   confirmation dialog. Erasing stays erased across reloads; it won't silently
   reseed the demo dataset.
-- **Backup reminder**: your book lives only in this browser, so the Data menu
+- **Backup reminder**: your book lives on your own devices, and sync is not a
+  backup (erasing on one paired device erases on all of them), so the Data menu
   shows when you last exported a JSON backup ("Last backup Nov 9 · 3 days ago").
   After 14 days without one, a dot appears on the Data button until you export.
 - **Sync devices** (optional): Data → Sync with another device. One device turns
-  sync on and shows a QR code and a sync code; the other scans it (in the app, so the
-  iPhone Home Screen app works too) or types the code. The book is encrypted on the
+  sync on and shows a QR code and a sync code; every other device you want in step
+  scans it (in the app, so the iPhone Home Screen app works too) or types the code.
+  There's no limit on how many devices share one book. The book is encrypted on the
   device (AES-GCM, key derived from the code) before it is stored as one blob on the
   server, which can never read it; there are no accounts. Every device keeps its own
   copy and works offline. Changes push about 2 s after an edit and pull on open, on
@@ -247,9 +255,16 @@ Two cascade gotchas:
 
 ## Stack
 
-Next.js 16 (App Router, Turbopack) + React 19 + TypeScript, Tailwind CSS v4,
+Next.js 16.4 (App Router, Turbopack) + React 19 + TypeScript, Tailwind CSS v4,
 Navy Stream (vendored CSS tokens/components), Inter via `next/font`, Recharts,
-Zustand (`persist`), SWR, Framer Motion, lucide-react, date-fns, Vitest.
+Zustand (`persist`), SWR, Framer Motion, lucide-react, date-fns, Vitest. Sync uses
+the browser's WebCrypto (AES-GCM + HKDF), Upstash Redis as the relay, and
+`qrcode` / `jsqr` for pairing.
+
+Dependencies are kept clear of critical and high `npm audit` advisories. Next.js
+went from 16.2 to 16.4.1 for that, because no 16.2.x release patches its critical
+advisories. What's left is one moderate, lint-time-only advisory (minimatch, via
+typescript-eslint), which can't be cleared without a major override.
 
 ## Getting started
 
@@ -269,7 +284,7 @@ quote proxy fails soft on a missing key, same as any other upstream error).
 
 ## Deploy
 
-Requires a Node/Edge runtime for the two proxy routes (`/api/quote`, `/api/logo`),
+Requires a Node/Edge runtime for its server routes (`/api/quote`, `/api/logo`, `/api/sync`),
 so it deploys to **Vercel**, not a static export. Live at
 <https://stock-tracker-phi-lyart.vercel.app/>, deployed from `main`. Add `FINNHUB_API_KEY` as an environment variable in
 the Vercel project settings — it's read server-side only and never reaches the client.
