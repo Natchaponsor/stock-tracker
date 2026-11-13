@@ -1,4 +1,15 @@
-import type { CustomSector, Fill, JournalNote, Position, Strategy, WatchlistItem } from "../types";
+import type {
+  CashDeposit,
+  CustomSector,
+  Fill,
+  FxAlert,
+  FxWatchItem,
+  JournalNote,
+  Position,
+  Strategy,
+  SyncDevice,
+  WatchlistItem,
+} from "../types";
 
 /**
  * The part of the store that device sync carries. Per-device settings (theme,
@@ -17,11 +28,21 @@ export interface SyncBook {
   startingCashUpdatedAt: string | null;
   /** When the watchlist was last reordered; the newer order wins in a merge. */
   watchlistOrderUpdatedAt: string | null;
-  /** `kind:key` → when it was deleted. Keys: position/strategy/sector ids, watch symbols. */
+  /** FX pairs, in display order. */
+  fxWatchlist: FxWatchItem[];
+  /** When the FX watchlist was last reordered; the newer order wins in a merge. */
+  fxWatchlistOrderUpdatedAt: string | null;
+  fxAlerts: FxAlert[];
+  /** Cash put into the book, in any currency. */
+  cashDeposits: CashDeposit[];
+  /** The devices sharing this book. Each one keeps its own entry fresh. */
+  devices: SyncDevice[];
+  /** `kind:key` → when it was deleted. Keys: position/strategy/sector/FX alert/deposit/
+   * device ids, watch symbols, FX pairs. */
   deletions: Record<string, string>;
 }
 
-export type DeletionKind = "position" | "strategy" | "watch" | "sector";
+export type DeletionKind = "position" | "strategy" | "watch" | "sector" | "fxwatch" | "fxalert" | "deposit" | "device";
 
 export const deletionKey = (kind: DeletionKind, key: string) => `${kind}:${key}`;
 
@@ -46,6 +67,19 @@ export function normalizeWatchItem(raw: WatchlistItem | Omit<WatchlistItem, "upd
 export function normalizeSector(raw: CustomSector | Omit<CustomSector, "updatedAt">): CustomSector {
   const c = raw as CustomSector;
   return { ...c, updatedAt: c.updatedAt ?? EPOCH };
+}
+
+/** Fills in collections a book from before FX, cash deposits or the device list doesn't have. */
+export function normalizeSyncBook(book: SyncBook): SyncBook {
+  const b = book as Partial<SyncBook> & SyncBook;
+  return {
+    ...b,
+    fxWatchlist: Array.isArray(b.fxWatchlist) ? b.fxWatchlist : [],
+    fxWatchlistOrderUpdatedAt: b.fxWatchlistOrderUpdatedAt ?? null,
+    fxAlerts: Array.isArray(b.fxAlerts) ? b.fxAlerts.map((a) => ({ ...a, seen: a.seen ?? true })) : [],
+    cashDeposits: Array.isArray(b.cashDeposits) ? b.cashDeposits : [],
+    devices: Array.isArray(b.devices) ? b.devices : [],
+  };
 }
 
 // ── Merge ────────────────────────────────────────────────────────────────────
@@ -110,20 +144,41 @@ function mergeDeletions(a: Record<string, string>, b: Record<string, string>, no
   return merged;
 }
 
-/** Puts merged watchlist items in the order of whichever side reordered last; newcomers go last. */
-function orderWatchlist(items: WatchlistItem[], preferred: WatchlistItem[], other: WatchlistItem[]): WatchlistItem[] {
-  const bySymbol = new Map(items.map((w) => [w.symbol, w]));
-  const ordered: WatchlistItem[] = [];
+/** Puts merged list items in the order of whichever side reordered last; newcomers go last. */
+function orderList<T>(items: T[], preferred: T[], other: T[], keyOf: (item: T) => string): T[] {
+  const byKey = new Map(items.map((w) => [keyOf(w), w]));
+  const ordered: T[] = [];
   for (const source of [preferred, other]) {
     for (const w of source) {
-      const item = bySymbol.get(w.symbol);
+      const item = byKey.get(keyOf(w));
       if (item) {
         ordered.push(item);
-        bySymbol.delete(w.symbol);
+        byKey.delete(keyOf(w));
       }
     }
   }
   return ordered;
+}
+
+/**
+ * Merges an ordered list: items merge one by one, then take the order of the side
+ * whose `orderUpdatedAt` is newer (ties broken the same way on every device).
+ */
+function mergeOrdered<T extends { updatedAt: string }>(
+  a: T[],
+  b: T[],
+  aOrderAt: string | null,
+  bOrderAt: string | null,
+  keyOf: (item: T) => string,
+  kind: DeletionKind,
+  deletions: Record<string, string>
+): T[] {
+  const aOrderNewer =
+    (aOrderAt ?? "") !== (bOrderAt ?? "")
+      ? (aOrderAt ?? "") > (bOrderAt ?? "")
+      : JSON.stringify(a.map(keyOf)) >= JSON.stringify(b.map(keyOf));
+  const items = mergeList(a, b, keyOf, kind, deletions);
+  return aOrderNewer ? orderList(items, a, b, keyOf) : orderList(items, b, a, keyOf);
 }
 
 function laterOf(a: string | null, b: string | null): string | null {
@@ -136,14 +191,11 @@ function laterOf(a: string | null, b: string | null): string | null {
  * Merges two copies of the book into one. Symmetric: merging A into B gives the
  * same result as B into A, so every device converges on the same book.
  */
-export function mergeBooks(a: SyncBook, b: SyncBook, now: number = Date.now()): SyncBook {
+export function mergeBooks(rawA: SyncBook, rawB: SyncBook, now: number = Date.now()): SyncBook {
+  // Either side may come from a device that predates FX.
+  const a = normalizeSyncBook(rawA);
+  const b = normalizeSyncBook(rawB);
   const deletions = mergeDeletions(a.deletions, b.deletions, now);
-
-  const aOrderNewer =
-    (a.watchlistOrderUpdatedAt ?? "") !== (b.watchlistOrderUpdatedAt ?? "")
-      ? (a.watchlistOrderUpdatedAt ?? "") > (b.watchlistOrderUpdatedAt ?? "")
-      : JSON.stringify(a.watchlist.map((w) => w.symbol)) >= JSON.stringify(b.watchlist.map((w) => w.symbol));
-  const watchItems = mergeList(a.watchlist, b.watchlist, (w) => w.symbol, "watch", deletions);
 
   const cashFromA =
     (a.startingCashUpdatedAt ?? "") !== (b.startingCashUpdatedAt ?? "")
@@ -153,15 +205,31 @@ export function mergeBooks(a: SyncBook, b: SyncBook, now: number = Date.now()): 
   return {
     positions: mergeList(a.positions, b.positions, (p) => p.id, "position", deletions, mergePosition),
     strategies: mergeList(a.strategies, b.strategies, (s) => s.id, "strategy", deletions),
-    watchlist: aOrderNewer ? orderWatchlist(watchItems, a.watchlist, b.watchlist) : orderWatchlist(watchItems, b.watchlist, a.watchlist),
+    watchlist: mergeOrdered<WatchlistItem>(
+      a.watchlist, b.watchlist, a.watchlistOrderUpdatedAt, b.watchlistOrderUpdatedAt, (w) => w.symbol, "watch", deletions
+    ),
     customSectors: exclusiveSectorSymbols(
       mergeList(a.customSectors, b.customSectors, (c) => c.id, "sector", deletions)
     ),
     startingCash: cashFromA ? a.startingCash : b.startingCash,
     startingCashUpdatedAt: laterOf(a.startingCashUpdatedAt, b.startingCashUpdatedAt),
     watchlistOrderUpdatedAt: laterOf(a.watchlistOrderUpdatedAt, b.watchlistOrderUpdatedAt),
+    fxWatchlist: mergeOrdered<FxWatchItem>(
+      a.fxWatchlist, b.fxWatchlist, a.fxWatchlistOrderUpdatedAt, b.fxWatchlistOrderUpdatedAt, (w) => w.pair, "fxwatch", deletions
+    ),
+    fxWatchlistOrderUpdatedAt: laterOf(a.fxWatchlistOrderUpdatedAt, b.fxWatchlistOrderUpdatedAt),
+    fxAlerts: mergeList(a.fxAlerts, b.fxAlerts, (x) => x.id, "fxalert", deletions),
+    cashDeposits: sortByDate(mergeList(a.cashDeposits, b.cashDeposits, (d) => d.id, "deposit", deletions)),
+    devices: mergeList(a.devices, b.devices, (d) => d.id, "device", deletions).sort((x, y) =>
+      x.addedAt === y.addedAt ? x.id.localeCompare(y.id) : x.addedAt.localeCompare(y.addedAt)
+    ),
     deletions,
   };
+}
+
+/** Oldest first, ties by id, so both devices list deposits in the same order. */
+function sortByDate<T extends { id: string; date: string }>(items: T[]): T[] {
+  return items.sort((x, y) => (x.date === y.date ? x.id.localeCompare(y.id) : x.date.localeCompare(y.date)));
 }
 
 /**

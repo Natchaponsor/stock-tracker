@@ -86,3 +86,113 @@ describe("migratePersistedBook", () => {
     expect(migrated.customSectors?.[0].updatedAt).toBeDefined();
   });
 });
+
+describe("FX store actions", () => {
+  beforeEach(() => {
+    store.getState().eraseAll();
+    store.setState({ deletions: {}, homeCurrency: "USD" });
+  });
+
+  it("seeds the FX watchlist the first time a non-USD home currency is picked", () => {
+    store.getState().setHomeCurrency("THB");
+    expect(store.getState().fxWatchlist.map((w) => w.pair)).toEqual(["USD/THB", "EUR/THB", "JPY/THB", "GBP/THB"]);
+    // Per-device: the home currency never travels with the book.
+    expect(selectSyncBook(store.getState())).not.toHaveProperty("homeCurrency");
+  });
+
+  it("removes a pair with its alerts and tombstones both", () => {
+    store.getState().addFxPair("USD/THB", "base-to-quote");
+    store.getState().addFxAlert({ id: "a1", pair: "USD/THB", condition: { kind: "below", level: 33.5 }, repeat: "once" });
+    store.getState().removeFxPair("USD/THB");
+    const { fxWatchlist, fxAlerts, deletions } = store.getState();
+    expect(fxWatchlist).toEqual([]);
+    expect(fxAlerts).toEqual([]);
+    expect(Object.keys(deletions).sort()).toEqual(["fxalert:a1", "fxwatch:USD/THB"]);
+  });
+
+  it("fires, dismisses and re-arms an alert", () => {
+    store.getState().addFxAlert({ id: "a1", pair: "USD/THB", condition: { kind: "below", level: 33.5 }, repeat: "rearm" });
+    store.getState().applyFxAlertTransitions([{ id: "a1", pair: "USD/THB", to: "fired", rate: 33.4, date: "2026-11-12" }]);
+    expect(store.getState().fxAlerts[0]).toMatchObject({ state: "fired", firedRate: 33.4, seen: false });
+    store.getState().dismissFxAlert("a1");
+    expect(store.getState().fxAlerts[0].seen).toBe(true);
+    store.getState().updateFxAlert("a1", { condition: { kind: "below", level: 33 } });
+    expect(store.getState().fxAlerts[0]).toMatchObject({ state: "armed", firedAt: null, firedRate: null });
+  });
+});
+
+describe("cash deposits and devices in the store", () => {
+  beforeEach(() => {
+    store.getState().eraseAll();
+    store.setState({ deletions: {}, devices: [], cashDeposits: [] });
+  });
+
+  const deposit = {
+    id: "c1",
+    date: "2026-11-08T00:00:00.000Z",
+    currency: "THB",
+    amount: 33_515,
+    rate: 33.515,
+    rateSource: "reference" as const,
+    rateDate: "2026-11-08",
+  };
+
+  it("stamps a deposit, travels with the sync book, and tombstones it on delete", () => {
+    store.getState().addCashDeposit(deposit);
+    const saved = store.getState().cashDeposits[0];
+    expect(saved.updatedAt).toBeDefined();
+    expect(selectSyncBook(store.getState()).cashDeposits).toEqual([saved]);
+
+    store.getState().deleteCashDeposit("c1");
+    expect(store.getState().cashDeposits).toEqual([]);
+    expect(store.getState().deletions["deposit:c1"]).toBeDefined();
+  });
+
+  it("tombstones deposits an erase removes, and imports deposits from a file", () => {
+    store.getState().addCashDeposit(deposit);
+    store.getState().eraseAll();
+    expect(store.getState().deletions["deposit:c1"]).toBeDefined();
+
+    const now = new Date().toISOString();
+    store.getState().importData({
+      exportedAt: now,
+      version: 4,
+      startingCash: 0,
+      positions: [],
+      strategies: [],
+      watchlist: [],
+      customSectors: [],
+      fxWatchlist: [],
+      fxAlerts: [],
+      cashDeposits: [{ ...deposit, createdAt: now, updatedAt: now }],
+    });
+    expect(store.getState().cashDeposits.map((d) => d.id)).toEqual(["c1"]);
+    expect(store.getState().deletions["deposit:c1"]).toBeUndefined();
+  });
+
+  it("adds this device once and leaves a fresh entry alone, so syncing settles", () => {
+    store.getState().touchDevice({ id: "dev1", name: "Mac · Safari" });
+    const first = store.getState().devices;
+    expect(first.map((d) => d.name)).toEqual(["Mac · Safari"]);
+
+    store.getState().touchDevice({ id: "dev1", name: "Mac · Safari" });
+    expect(store.getState().devices).toBe(first);
+
+    store.getState().touchDevice({ id: "dev1", name: "Work Mac" });
+    expect(store.getState().devices[0].name).toBe("Work Mac");
+  });
+
+  it("forgets every other device after a code change", () => {
+    store.getState().touchDevice({ id: "me", name: "Mac" });
+    store.getState().touchDevice({ id: "lost", name: "Old phone" });
+    store.getState().forgetOtherDevices("me");
+    expect(store.getState().devices.map((d) => d.id)).toEqual(["me"]);
+    expect(store.getState().deletions["device:lost"]).toBeDefined();
+  });
+
+  it("never puts the display currency in the sync book", () => {
+    store.getState().setDisplayCurrency("home");
+    expect(Object.keys(selectSyncBook(store.getState()))).not.toContain("displayCurrency");
+    store.getState().setDisplayCurrency("USD");
+  });
+});

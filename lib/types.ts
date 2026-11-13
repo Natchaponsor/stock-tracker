@@ -116,14 +116,111 @@ export interface CustomSector {
   updatedAt: string;
 }
 
+/**
+ * Cash the user put into the book, in any currency. Counts as capital, never as
+ * a gain. Keyed by `id`.
+ */
+export interface CashDeposit {
+  id: string;
+  /** When the cash went in (ISO, local midnight of the picked day). */
+  date: string;
+  /** What was deposited, e.g. "THB". */
+  currency: string;
+  /** In `currency`, always above 0. */
+  amount: number;
+  /** Units of `currency` per 1 USD (the USD/XXX rate); 1 for USD. Dollars = amount / rate. */
+  rate: number;
+  /** "entered": typed by the user. "reference": the daily reference rate fetched for
+   * the day. null for a USD deposit, which needs no rate. */
+  rateSource: "entered" | "reference" | null;
+  /** The day of the reference fix used (YYYY-MM-DD), for "reference" rates. */
+  rateDate: string | null;
+  note?: string;
+  createdAt: string;
+  /** Last change, for device sync (newer wins). */
+  updatedAt: string;
+}
+
+/** A device paired through sync, listed under Settings → Devices. Keyed by `id`. */
+export interface SyncDevice {
+  id: string;
+  name: string;
+  /** When the device first joined. */
+  addedAt: string;
+  /** Last time it finished a sync (refreshed at most every few hours). */
+  lastSeenAt: string;
+  /** Last change, for device sync (newer wins). */
+  updatedAt: string;
+}
+
 /** Full snapshot of user data, for export/backup — matches the store's persisted shape. */
 export interface ExportPayload {
   exportedAt: string;
-  /** v2 added customSectors; v1 files still import, with no custom sectors. */
-  version: 2;
+  /** v2 added customSectors, v3 the FX watchlist and alerts, v4 cash deposits; older files still import. */
+  version: 4;
   startingCash: number;
   positions: Position[];
   strategies: Strategy[];
   watchlist: WatchlistItem[];
   customSectors: CustomSector[];
+  fxWatchlist: FxWatchItem[];
+  fxAlerts: FxAlert[];
+  cashDeposits: CashDeposit[];
+}
+
+// ── FX ───────────────────────────────────────────────────────────────────────
+
+/** "USD/THB" = how many THB one USD buys. Upper case, base/quote. */
+export type FxPair = `${string}/${string}`;
+
+/** Which way the user usually converts on a pair. Decides what "a better rate" means. */
+export type FxDirection = "base-to-quote" | "quote-to-base";
+
+/** A currency pair on the FX watchlist. Keyed by `pair`. */
+export interface FxWatchItem {
+  pair: FxPair;
+  direction: FxDirection;
+  addedAt: string;
+  /** Last change, for device sync (newer wins). */
+  updatedAt: string;
+  note?: string;
+}
+
+export type FxAlertCondition = { kind: "above"; level: number } | { kind: "below"; level: number };
+
+/** A rate alert on a pair. Keyed by `id`. */
+export interface FxAlert {
+  id: string;
+  pair: FxPair;
+  condition: FxAlertCondition;
+  /** "once" disarms after it fires; "rearm" arms again once the rate is back past
+   * the level by FX_REARM_GAP, so a rate sitting on the level can't fire every day. */
+  repeat: "once" | "rearm";
+  state: "armed" | "fired" | "paused";
+  /** Date of the rate that fired it (YYYY-MM-DD). */
+  firedAt: string | null;
+  firedRate: number | null;
+  /** False from the moment it fires until the user dismisses the call-out. */
+  seen: boolean;
+  note?: string;
+  createdAt: string;
+  /** Last change, for device sync (newer wins). */
+  updatedAt: string;
+}
+
+/** One day's reference rate for a pair. Never persisted. */
+export interface FxBar {
+  date: string; // YYYY-MM-DD
+  rate: number;
+}
+
+/** A forex headline matched to a currency by keyword. */
+export interface FxNewsItem {
+  headline: string;
+  source: string;
+  url: string;
+  /** ISO time. */
+  datetime: string;
+  /** The currency the headline matched. */
+  currency: string;
 }

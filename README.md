@@ -53,19 +53,40 @@ not dozens of same-day trades).
   reflection), each snapshotting the price at the time.
 - **Strategies** — define named rule sets (entry rule / exit rule) and see how each
   is actually performing across the positions tagged to it.
-- **Data menu**: Export data (a JSON backup of everything, format v2, which
-  includes watchlist order and custom sectors), Export recorded log (CSV, one row
-  per buy or sell with date, shares, price, amount, realized P&L and Strategy
-  Notes, ready for a spreadsheet), Import (restore from a JSON backup, with a
-  preview of what it contains; v1 files still import), Reset to demo data, and
-  Erase all data. Every option that replaces data sits behind its own
-  confirmation dialog. Erasing stays erased across reloads; it won't silently
-  reseed the demo dataset.
+- **Cash deposits**: Log entry → Add cash records money you put into the
+  portfolio, in any currency. A non-dollar amount converts at the rate you enter
+  ("1 USD = 33.50 THB"), or, left blank, at the daily reference rate for the day
+  you added it (`/api/fx/rate`, the last fix on or before that day). The rate is
+  saved with the deposit, so its dollar value never moves. Deposits add to cash
+  and to the capital "Since start" is measured against, so they never show as a
+  gain, and they appear in the recorded log and its CSV.
+- **Totals in your currency**: the USD | THB switch on the dashboard header (and
+  in Settings) shows the portfolio value, cash, positions and change in your home
+  currency at the latest daily reference rate. Per device; prices, fills and P&L
+  stay in dollars.
+- **Data menu** (header, next to the theme toggle): quick Export (JSON and CSV),
+  Import, Reset to demo data, Erase all data, Sync devices, Manage devices and
+  Install app, plus a link to all settings. Same actions, same confirmations as
+  Settings.
+- **Settings** (sidebar, or the gear on phones):
+  - *Currency*: which currency the totals show in, and your second (home) currency.
+  - *Your data*: Export data (a JSON backup of everything, format v4, which
+    includes cash deposits, watchlist order, custom sectors and FX), Export
+    recorded log (CSV, one row per buy, sell or cash deposit with date, shares,
+    price, amount, realized P&L and Strategy Notes, ready for a spreadsheet),
+    Import (restore from a JSON backup, with a preview of what it contains; older
+    files still import), Reset to demo data, and Erase all data. Every option that
+    replaces data sits behind its own confirmation dialog. Erasing stays erased
+    across reloads; it won't silently reseed the demo dataset.
+  - *Devices & sync*: name this device, see every paired device and when it last
+    synced, pair another, sync now, change the sync code, turn off, delete the
+    synced copy, and install the app.
 - **Backup reminder**: your book lives on your own devices, and sync is not a
-  backup (erasing on one paired device erases on all of them), so the Data menu
-  shows when you last exported a JSON backup ("Last backup Nov 9 · 3 days ago").
-  After 14 days without one, a dot appears on the Data button until you export.
-- **Sync devices** (optional): Data → Sync with another device. One device turns
+  backup (erasing on one paired device erases on all of them), so Settings shows
+  when you last exported a JSON backup ("Last backup Nov 9 · 3 days ago"). After
+  14 days without one, a dot appears on the Data button (and the sidebar's
+  Settings link) until you export.
+- **Sync devices** (optional): Settings → Devices & sync. One device turns
   sync on and shows a QR code and a sync code; every other device you want in step
   scans it (in the app, so the iPhone Home Screen app works too) or types the code.
   There's no limit on how many devices share one book. The book is encrypted on the
@@ -75,7 +96,10 @@ not dozens of same-day trades).
   return to the app, on reconnect, every minute and on Refresh. Edits on two devices
   merge item by item (newer wins; fills and journal notes are combined), and deletions
   are remembered so they don't come back. Needs HTTPS (or localhost).
-- **Install as an app**: "Install app" in the Data menu (Chrome, Edge, Android),
+  The device list lives inside the encrypted book. Removing a device only tidies
+  the list (it reappears if it syncs again); to lock out a lost device, change the
+  sync code, which starts a new synced copy that every device must pair with again.
+- **Install as an app**: "Install app" in Settings → Devices & sync (Chrome, Edge, Android),
   or Share → Add to Home Screen on iPhone. It opens full-screen as "Stocks" with
   its own icon, and a service worker (`app/sw.js/route.ts`) keeps the pages on the
   device so it opens offline; prices fall back to the last ones fetched, still
@@ -110,8 +134,8 @@ Ticked items have shipped.
 
 ### Now: harden what exists (about 1–2 weeks)
 
-- [x] **Backup reminder.** Last-backup date in the Data menu; a dot on the Data
-  button after 14 days without a JSON export.
+- [x] **Backup reminder.** Last-backup date in Settings; a dot on the Settings
+  link after 14 days without a JSON export.
 - [x] **One price-age wording.** "as of 1:00 PM · 9 hr ago" everywhere, from one
   helper (`formatPriceAge` in `lib/priceTime.ts`).
 - [ ] **Stop dead API calls.** Every position page calls `/api/history`, which asks
@@ -278,7 +302,7 @@ npm run build     # production build
 ```
 
 Open [http://localhost:3001](http://localhost:3001). Data seeds itself on first load —
-use the Data menu's "Reset to demo data" to regenerate it. Without `FINNHUB_API_KEY`
+use Settings → "Reset to demo data" to regenerate it. Without `FINNHUB_API_KEY`
 set, the app still runs — prices just show "unavailable" instead of crashing (the
 quote proxy fails soft on a missing key, same as any other upstream error).
 

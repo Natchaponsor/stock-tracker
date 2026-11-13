@@ -1,6 +1,7 @@
 "use client";
 
 import { SyncEngine } from "./engine";
+import { getLocalDevice } from "./device";
 import { selectSyncBook, usePositionStore } from "@/store/usePositionStore";
 
 /**
@@ -10,6 +11,11 @@ import { selectSyncBook, usePositionStore } from "@/store/usePositionStore";
 
 /** Store fields that travel with sync; a change to any of them schedules a push. */
 const SYNCED_FIELDS = [
+  "fxWatchlist",
+  "fxWatchlistOrderUpdatedAt",
+  "fxAlerts",
+  "cashDeposits",
+  "devices",
   "positions",
   "strategies",
   "watchlist",
@@ -70,6 +76,12 @@ export function attachSync() {
       clearTimeout(pushTimer);
       pushTimer = setTimeout(() => void e.sync(), PUSH_DELAY_MS);
     }
+  });
+
+  // Keep this device on the synced device list. touchDevice only changes the
+  // book when the entry is missing, renamed or hours old, so this settles.
+  e.subscribe(() => {
+    if (e.getStatus().state === "synced") usePositionStore.getState().touchDevice(getLocalDevice());
   });
 
   document.addEventListener("visibilitychange", syncSoon);

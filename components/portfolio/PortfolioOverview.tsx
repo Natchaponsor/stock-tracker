@@ -3,12 +3,14 @@
 import { useState } from "react";
 import { Eye, EyeOff, Pencil, RefreshCw } from "lucide-react";
 import { usePositionStore } from "@/store/usePositionStore";
-import { formatCurrency, formatPct, glyph, splitCents } from "@/lib/format";
+import { formatPct, glyph } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { useRefreshPrices } from "@/hooks/useRefreshPrices";
 import { usePriceAge } from "@/hooks/usePriceAge";
 import { usePortfolioSummary } from "@/hooks/usePortfolioSummary";
 import { StartingCashForm } from "@/components/portfolio/StartingCashForm";
+import { CurrencyFlip, displayRateLine } from "@/components/portfolio/CurrencyFlip";
+import { useDisplayCurrency } from "@/hooks/useDisplayCurrency";
 
 /**
  * The dashboard's silk header. The portfolio total is the one hero number;
@@ -22,11 +24,13 @@ export function PortfolioOverview() {
   const { refresh, refreshing } = useRefreshPrices();
   const priceAge = usePriceAge();
   const summary = usePortfolioSummary();
-  const { total, startingCash, openCount, changeFromCapital, changePct, fixToken } = summary;
+  const { total, startingCash, capital, depositCount, openCount, changeFromCapital, changePct, fixToken } = summary;
   const [editing, setEditing] = useState(false);
+  const money = useDisplayCurrency();
+  const rateLine = displayRateLine(money);
 
-  const display = (v: number) => (hidePnl ? "••••••" : formatCurrency(v));
-  const [whole, cents] = splitCents(total);
+  const display = (v: number) => (hidePnl ? "••••••" : money.money(v));
+  const [whole, cents] = money.split(total);
 
   const contextLine = [
     `${openCount} open ${openCount === 1 ? "position" : "positions"}`,
@@ -73,9 +77,12 @@ export function PortfolioOverview() {
       </div>
 
       <div className="mt-6 text-center">
-        <h2 id="portfolio-heading" className="ns-label text-ns-on-hero-muted">
-          Portfolio value
-        </h2>
+        <div className="flex items-center justify-center gap-2">
+          <h2 id="portfolio-heading" className="ns-label text-ns-on-hero-muted">
+            Portfolio value
+          </h2>
+          <CurrencyFlip display={money} />
+        </div>
         <p key={fixToken} className="ns-amount-xl oc-num animate-fix-stamp mt-1 md:text-[56px] md:leading-[64px]">
           {hidePnl ? (
             "••••••"
@@ -87,6 +94,7 @@ export function PortfolioOverview() {
           )}
         </p>
         <p className="ns-caption mt-1 text-ns-on-hero-muted">Cash + open positions · {contextLine}</p>
+        {rateLine && <p className="ns-caption mt-0.5 font-normal text-ns-on-hero-muted">{rateLine.full}</p>}
       </div>
 
       <dl className="oc-glass oc-num mx-auto mt-5 grid max-w-2xl grid-cols-3 py-3 text-center">
@@ -105,7 +113,7 @@ export function PortfolioOverview() {
           </dt>
           <dd className="mt-0.5 truncate text-[16px] leading-[22px] font-semibold sm:text-[18px] sm:leading-6 md:text-[20px] md:leading-[26px]">{display(summary.cash)}</dd>
           <dd className="ns-caption truncate font-normal text-ns-on-hero-muted">
-            {formatCurrency(startingCash)} start
+            {depositCount > 0 ? `${money.money(capital)} put in` : `${money.money(startingCash)} start`}
           </dd>
         </div>
 
@@ -123,7 +131,8 @@ export function PortfolioOverview() {
             <span aria-hidden="true" className="mr-1 text-[0.7em] align-[0.1em]">
               {glyph(changeFromCapital)}
             </span>
-            {hidePnl ? "••••" : formatCurrency(changeFromCapital, { signed: true })}
+            {/* Compact past 10,000: the glyph and sign leave this cell the least room. */}
+            {hidePnl ? "••••" : money.money(changeFromCapital, { signed: true, compact: true })}
           </dd>
           <dd className="ns-caption truncate font-normal text-ns-on-hero-muted">
             {changePct !== null

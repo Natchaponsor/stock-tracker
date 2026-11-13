@@ -68,3 +68,25 @@ describe("buildLedgerCsv", () => {
     expect(buildLedgerCsv([], []).trimEnd().split("\r\n")).toHaveLength(1);
   });
 });
+
+describe("cash deposits in the CSV", () => {
+  it("adds a deposit row in dollars, with the original currency in the notes, in date order", () => {
+    const csv = buildLedgerCsv([makePosition()], [], [
+      {
+        id: "c1",
+        date: day(2026, 1, 3),
+        currency: "THB",
+        amount: 33500,
+        rate: 33.5,
+        rateSource: "entered",
+        rateDate: null,
+        note: "Top-up",
+        createdAt: day(2026, 1, 3),
+        updatedAt: day(2026, 1, 3),
+      },
+    ]);
+    const lines = csv.trim().split("\r\n");
+    expect(lines[1].startsWith("2026-01-05,AAPL,Buy")).toBe(true);
+    expect(lines[2]).toBe("2026-01-03,,Cash deposit,,,1000,,33500 THB at 33.500 THB/USD; Top-up,");
+  });
+});

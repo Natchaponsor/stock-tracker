@@ -1,6 +1,6 @@
 import { formatAgo } from "./priceTime";
 
-/** Days without a JSON export before the Data menu nudges for a backup. */
+/** Days without a JSON export before the Data menu and Settings nudge for a backup. */
 export const BACKUP_REMINDER_DAYS = 14;
 
 const DAY_MS = 24 * 60 * 60_000;

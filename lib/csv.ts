@@ -1,6 +1,8 @@
 import { format } from "date-fns";
 import { buildLedger } from "./ledger";
-import type { Position, Strategy } from "./types";
+import { depositUsd } from "./cash";
+import { formatRate } from "./fx";
+import type { CashDeposit, Position, Strategy } from "./types";
 
 type Cell = string | number | null;
 
@@ -36,16 +38,17 @@ export const LEDGER_CSV_HEADER = [
 ];
 
 /**
- * The recorded log as CSV, newest first, one row per buy or sell. Realized P&L
- * is filled on sells only (average-cost, matching the app). Unrealized P&L is
- * left out on purpose: it depends on a live price, so it would be stale the
- * moment the file is saved.
+ * The recorded log as CSV, newest first, one row per buy, sell or cash deposit.
+ * Realized P&L is filled on sells only (average-cost, matching the app).
+ * Unrealized P&L is left out on purpose: it depends on a live price, so it
+ * would be stale the moment the file is saved. A deposit's amount is in
+ * dollars at its logged rate; the original currency goes in the notes.
  */
-export function buildLedgerCsv(positions: Position[], strategies: Strategy[]): string {
+export function buildLedgerCsv(positions: Position[], strategies: Strategy[], deposits: CashDeposit[] = []): string {
   const strategyName = new Map(strategies.map((s) => [s.id, s.name]));
   const byId = new Map(positions.map((p) => [p.id, p]));
 
-  const rows: Cell[][] = buildLedger(positions, new Map()).map((row) => {
+  const tradeRows: { date: string; cells: Cell[] }[] = buildLedger(positions, new Map()).map((row) => {
     const position = byId.get(row.positionId);
     const notes = position
       ? [
@@ -53,18 +56,43 @@ export function buildLedgerCsv(positions: Position[], strategies: Strategy[]): s
           ...position.customTags,
         ].join("; ")
       : "";
-    return [
-      format(new Date(row.date), "yyyy-MM-dd"),
-      row.symbol,
-      row.kind === "buy" ? "Buy" : "Sell",
-      row.qty,
-      row.price,
-      round2(row.qty * row.price),
-      row.kind === "sell" && row.pnl !== null ? round2(row.pnl) : null,
-      notes,
-      position?.status === "closed" ? "Closed" : "Open",
-    ];
+    return {
+      date: row.date,
+      cells: [
+        format(new Date(row.date), "yyyy-MM-dd"),
+        row.symbol,
+        row.kind === "buy" ? "Buy" : "Sell",
+        row.qty,
+        row.price,
+        round2(row.qty * row.price),
+        row.kind === "sell" && row.pnl !== null ? round2(row.pnl) : null,
+        notes,
+        position?.status === "closed" ? "Closed" : "Open",
+      ],
+    };
   });
 
+  const depositRows = deposits.map((d) => ({
+    date: d.date,
+    cells: [
+      format(new Date(d.date), "yyyy-MM-dd"),
+      null,
+      "Cash deposit",
+      null,
+      null,
+      round2(depositUsd(d)),
+      null,
+      [
+        d.currency === "USD" ? null : `${d.amount} ${d.currency} at ${formatRate(d.rate)} ${d.currency}/USD`,
+        d.note ?? null,
+      ]
+        .filter(Boolean)
+        .join("; "),
+      null,
+    ] as Cell[],
+  }));
+
+  // Newest first; a stable sort keeps the ledger's own order within a day.
+  const rows = [...tradeRows, ...depositRows].sort((a, b) => Date.parse(b.date) - Date.parse(a.date)).map((r) => r.cells);
   return toCsv([LEDGER_CSV_HEADER, ...rows]);
 }

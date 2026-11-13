@@ -1,4 +1,4 @@
-import { mergeBooks, sameBook, type SyncBook } from "./book";
+import { mergeBooks, normalizeSyncBook, sameBook, type SyncBook } from "./book";
 import { decryptBook, deriveSyncKeys, encryptBook, generateSyncCode, normalizeSyncCode, type SyncKeys } from "./crypto";
 
 /**
@@ -192,7 +192,8 @@ export class SyncEngine {
     if (envelope?.schema !== 1 || !isSyncBook(envelope.book)) {
       throw new SyncError("The synced book is from a newer version of the app. Reload to update.");
     }
-    return envelope.book;
+    // A book written by a device that predates FX has no FX collections yet.
+    return normalizeSyncBook(envelope.book);
   }
 
   /** Writes `book` on top of `baseVersion`. Returns the new version, or the newer server copy on a conflict. */

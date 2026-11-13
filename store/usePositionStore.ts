@@ -10,11 +10,34 @@ import {
   deletionKey,
   normalizeSector,
   normalizeStrategy,
+  normalizeSyncBook,
   normalizeWatchItem,
   type DeletionKind,
   type SyncBook,
 } from "@/lib/sync/book";
-import type { CustomSector, ExportPayload, Fill, JournalNote, Position, Strategy, WatchlistItem } from "@/lib/types";
+import { defaultPairsFor } from "@/lib/fx";
+import type { FxAlertTransition } from "@/lib/fxAlerts";
+import type {
+  CashDeposit,
+  CustomSector,
+  ExportPayload,
+  Fill,
+  FxAlert,
+  FxDirection,
+  FxPair,
+  FxWatchItem,
+  JournalNote,
+  Position,
+  Strategy,
+  SyncDevice,
+  WatchlistItem,
+} from "@/lib/types";
+
+/** Where the dashboard totals show: dollars, or the home currency (THB unless set). */
+export type DisplayCurrency = "USD" | "home";
+
+/** A device refreshes its "last seen" in the synced device list at most this often. */
+const DEVICE_SEEN_REFRESH_MS = 6 * 60 * 60_000;
 
 interface PositionState {
   positions: Position[];
@@ -28,6 +51,19 @@ interface PositionState {
   startingCashUpdatedAt: string | null;
   watchlistOrderUpdatedAt: string | null;
   deletions: Record<string, string>;
+  /** FX pairs the user follows, in display order (synced). */
+  fxWatchlist: FxWatchItem[];
+  fxWatchlistOrderUpdatedAt: string | null;
+  /** FX rate alerts (synced). */
+  fxAlerts: FxAlert[];
+  /** Cash put into the book, oldest first (synced). */
+  cashDeposits: CashDeposit[];
+  /** Devices sharing the book through sync (synced). */
+  devices: SyncDevice[];
+  /** Which currency the dashboard totals show in. Per device, never synced. */
+  displayCurrency: DisplayCurrency;
+  /** The currency the user lives in. Per device, never synced. "USD" hides FX extras. */
+  homeCurrency: string;
   hidePnl: boolean;
   hasHydrated: boolean;
   /** True once the store has ever been seeded or explicitly erased — guards against
@@ -73,6 +109,33 @@ interface PositionState {
   deleteCustomSector: (id: string) => void;
 
   toggleHidePnl: () => void;
+
+  /** Sets this device's home currency; the first non-USD pick seeds an empty FX watchlist. */
+  setHomeCurrency: (code: string) => void;
+  addFxPair: (pair: FxPair, direction: FxDirection) => void;
+  /** Removes a pair and the alerts set on it. */
+  removeFxPair: (pair: FxPair) => void;
+  reorderFxWatchlist: (pairs: FxPair[]) => void;
+  setFxDirection: (pair: FxPair, direction: FxDirection) => void;
+  addFxAlert: (alert: Pick<FxAlert, "id" | "pair" | "condition" | "repeat" | "note">) => void;
+  updateFxAlert: (id: string, patch: Partial<Pick<FxAlert, "condition" | "repeat" | "note" | "state">>) => void;
+  removeFxAlert: (id: string) => void;
+  /** Applies what evaluateFxAlerts found: fires alerts, or arms "rearm" ones again. */
+  applyFxAlertTransitions: (transitions: FxAlertTransition[]) => void;
+  /** Hides a fired alert's call-out. */
+  dismissFxAlert: (id: string) => void;
+
+  addCashDeposit: (deposit: Omit<CashDeposit, "createdAt" | "updatedAt">) => void;
+  deleteCashDeposit: (id: string) => void;
+  setDisplayCurrency: (currency: DisplayCurrency) => void;
+
+  /** Adds or refreshes this device in the synced device list. Does nothing when the
+   * entry is current, so a sync doesn't cause another sync. */
+  touchDevice: (device: Pick<SyncDevice, "id" | "name">) => void;
+  /** Takes a device off the list. It comes back if it syncs again. */
+  removeDevice: (id: string) => void;
+  /** Takes every device but `keepId` off the list (after a new sync code). */
+  forgetOtherDevices: (keepId: string) => void;
 }
 
 /** Brings a saved book of any older version up to the current shape. Exported for tests. */
@@ -114,8 +177,12 @@ function withoutTombstone(deletions: Record<string, string>, kind: DeletionKind,
  */
 function replaceBook(
   state: PositionState,
-  next: Pick<PositionState, "positions" | "strategies" | "watchlist" | "customSectors" | "startingCash">
+  next: Pick<PositionState, "positions" | "strategies" | "watchlist" | "customSectors" | "startingCash"> &
+    Partial<Pick<PositionState, "fxWatchlist" | "fxAlerts" | "cashDeposits">>
 ): Partial<PositionState> {
+  const fxWatchlist = next.fxWatchlist ?? [];
+  const fxAlerts = next.fxAlerts ?? [];
+  const cashDeposits = next.cashDeposits ?? [];
   const at = nowIso();
   const deletions = { ...state.deletions };
   const swap = <T,>(kind: DeletionKind, before: T[], after: T[], keyOf: (item: T) => string) => {
@@ -127,6 +194,9 @@ function replaceBook(
   swap("strategy", state.strategies, next.strategies, (s) => s.id);
   swap("watch", state.watchlist, next.watchlist, (w) => w.symbol);
   swap("sector", state.customSectors, next.customSectors, (c) => c.id);
+  swap("fxwatch", state.fxWatchlist, fxWatchlist, (w) => w.pair);
+  swap("fxalert", state.fxAlerts, fxAlerts, (a) => a.id);
+  swap("deposit", state.cashDeposits, cashDeposits, (d) => d.id);
   return {
     positions: next.positions.map((p) => ({ ...p, updatedAt: at })),
     strategies: next.strategies.map((s) => ({ ...s, updatedAt: at })),
@@ -135,6 +205,10 @@ function replaceBook(
     startingCash: next.startingCash,
     startingCashUpdatedAt: at,
     watchlistOrderUpdatedAt: at,
+    fxWatchlist: fxWatchlist.map((w) => ({ ...w, updatedAt: at })),
+    fxWatchlistOrderUpdatedAt: at,
+    fxAlerts: fxAlerts.map((a) => ({ ...a, updatedAt: at })),
+    cashDeposits: cashDeposits.map((d) => ({ ...d, updatedAt: at })),
     deletions,
   };
 }
@@ -150,6 +224,13 @@ export const usePositionStore = create<PositionState>()(
       startingCashUpdatedAt: null,
       watchlistOrderUpdatedAt: null,
       deletions: {},
+      fxWatchlist: [],
+      fxWatchlistOrderUpdatedAt: null,
+      fxAlerts: [],
+      cashDeposits: [],
+      devices: [],
+      displayCurrency: "USD",
+      homeCurrency: "USD",
       hidePnl: false,
       hasHydrated: false,
       initialized: false,
@@ -195,12 +276,16 @@ export const usePositionStore = create<PositionState>()(
             watchlist: payload.watchlist,
             customSectors: payload.customSectors,
             startingCash: payload.startingCash,
+            fxWatchlist: payload.fxWatchlist,
+            fxAlerts: payload.fxAlerts,
+            cashDeposits: payload.cashDeposits,
           }),
           initialized: true,
           bookStartedAt: nowIso(),
         })),
 
-      applySynced: (book) =>
+      applySynced: (synced) => {
+        const book = normalizeSyncBook(synced);
         set({
           positions: book.positions,
           strategies: book.strategies,
@@ -209,10 +294,16 @@ export const usePositionStore = create<PositionState>()(
           startingCash: book.startingCash,
           startingCashUpdatedAt: book.startingCashUpdatedAt,
           watchlistOrderUpdatedAt: book.watchlistOrderUpdatedAt,
+          fxWatchlist: book.fxWatchlist,
+          fxWatchlistOrderUpdatedAt: book.fxWatchlistOrderUpdatedAt,
+          fxAlerts: book.fxAlerts,
+          cashDeposits: book.cashDeposits,
+          devices: book.devices,
           deletions: book.deletions,
           // A synced book is a real book: never reseed demo data over it.
           initialized: true,
-        }),
+        });
+      },
 
       setStartingCash: (amount) => set({ startingCash: amount, startingCashUpdatedAt: nowIso() }),
 
@@ -326,6 +417,156 @@ export const usePositionStore = create<PositionState>()(
         })),
 
       toggleHidePnl: () => set({ hidePnl: !get().hidePnl }),
+
+      setHomeCurrency: (code) =>
+        set((state) => {
+          const home = code.toUpperCase();
+          if (home === "USD" || state.fxWatchlist.length > 0) return { homeCurrency: home };
+          const at = nowIso();
+          const pairs = defaultPairsFor(home);
+          let deletions = state.deletions;
+          for (const pair of pairs) deletions = withoutTombstone(deletions, "fxwatch", pair);
+          return {
+            homeCurrency: home,
+            // Someone living in THB mostly converts dollars into baht.
+            fxWatchlist: pairs.map((pair) => ({ pair, direction: "base-to-quote" as const, addedAt: at, updatedAt: at })),
+            fxWatchlistOrderUpdatedAt: at,
+            deletions,
+          };
+        }),
+
+      addFxPair: (pair, direction) =>
+        set((state) => {
+          if (state.fxWatchlist.some((w) => w.pair === pair)) return state;
+          const at = nowIso();
+          return {
+            fxWatchlist: [...state.fxWatchlist, { pair, direction, addedAt: at, updatedAt: at }],
+            deletions: withoutTombstone(state.deletions, "fxwatch", pair),
+          };
+        }),
+
+      removeFxPair: (pair) =>
+        set((state) => {
+          let deletions = tombstone(state.deletions, "fxwatch", pair);
+          for (const alert of state.fxAlerts) {
+            if (alert.pair === pair) deletions = tombstone(deletions, "fxalert", alert.id);
+          }
+          return {
+            fxWatchlist: state.fxWatchlist.filter((w) => w.pair !== pair),
+            fxAlerts: state.fxAlerts.filter((a) => a.pair !== pair),
+            deletions,
+          };
+        }),
+
+      reorderFxWatchlist: (pairs) =>
+        set((state) => ({
+          fxWatchlist: orderByKeys(state.fxWatchlist, pairs, (w) => w.pair),
+          fxWatchlistOrderUpdatedAt: nowIso(),
+        })),
+
+      setFxDirection: (pair, direction) =>
+        set((state) => ({
+          fxWatchlist: state.fxWatchlist.map((w) => (w.pair === pair ? { ...w, direction, updatedAt: nowIso() } : w)),
+        })),
+
+      addFxAlert: (alert) =>
+        set((state) => {
+          const at = nowIso();
+          return {
+            fxAlerts: [
+              ...state.fxAlerts,
+              { ...alert, state: "armed", firedAt: null, firedRate: null, seen: true, createdAt: at, updatedAt: at },
+            ],
+            deletions: withoutTombstone(state.deletions, "fxalert", alert.id),
+          };
+        }),
+
+      updateFxAlert: (id, patch) =>
+        set((state) => ({
+          fxAlerts: state.fxAlerts.map((a) => {
+            if (a.id !== id) return a;
+            const next = { ...a, ...patch, updatedAt: nowIso() };
+            // A new level, or arming by hand, starts the alert over.
+            if (patch.condition || patch.state === "armed") {
+              return { ...next, state: patch.state ?? "armed", firedAt: null, firedRate: null, seen: true };
+            }
+            return next;
+          }),
+        })),
+
+      removeFxAlert: (id) =>
+        set((state) => ({
+          fxAlerts: state.fxAlerts.filter((a) => a.id !== id),
+          deletions: tombstone(state.deletions, "fxalert", id),
+        })),
+
+      applyFxAlertTransitions: (transitions) =>
+        set((state) => {
+          if (transitions.length === 0) return state;
+          const byId = new Map(transitions.map((t) => [t.id, t]));
+          const at = nowIso();
+          return {
+            fxAlerts: state.fxAlerts.map((a) => {
+              const t = byId.get(a.id);
+              if (!t) return a;
+              return t.to === "fired"
+                ? { ...a, state: "fired", firedAt: t.date, firedRate: t.rate, seen: false, updatedAt: at }
+                : { ...a, state: "armed", seen: true, updatedAt: at };
+            }),
+          };
+        }),
+
+      dismissFxAlert: (id) =>
+        set((state) => ({
+          fxAlerts: state.fxAlerts.map((a) => (a.id === id ? { ...a, seen: true, updatedAt: nowIso() } : a)),
+        })),
+
+      addCashDeposit: (deposit) =>
+        set((state) => {
+          const at = nowIso();
+          const next = [...state.cashDeposits.filter((d) => d.id !== deposit.id), { ...deposit, createdAt: at, updatedAt: at }];
+          next.sort((x, y) => (x.date === y.date ? x.id.localeCompare(y.id) : x.date.localeCompare(y.date)));
+          return { cashDeposits: next, deletions: withoutTombstone(state.deletions, "deposit", deposit.id) };
+        }),
+
+      deleteCashDeposit: (id) =>
+        set((state) => ({
+          cashDeposits: state.cashDeposits.filter((d) => d.id !== id),
+          deletions: tombstone(state.deletions, "deposit", id),
+        })),
+
+      setDisplayCurrency: (currency) => set({ displayCurrency: currency }),
+
+      touchDevice: ({ id, name }) =>
+        set((state) => {
+          const now = Date.now();
+          const at = new Date(now).toISOString();
+          const existing = state.devices.find((d) => d.id === id);
+          if (existing) {
+            const fresh = now - new Date(existing.lastSeenAt).getTime() < DEVICE_SEEN_REFRESH_MS;
+            if (existing.name === name && fresh) return state;
+            return {
+              devices: state.devices.map((d) => (d.id === id ? { ...d, name, lastSeenAt: at, updatedAt: at } : d)),
+            };
+          }
+          return {
+            devices: [...state.devices, { id, name, addedAt: at, lastSeenAt: at, updatedAt: at }],
+            deletions: withoutTombstone(state.deletions, "device", id),
+          };
+        }),
+
+      removeDevice: (id) =>
+        set((state) => ({
+          devices: state.devices.filter((d) => d.id !== id),
+          deletions: tombstone(state.deletions, "device", id),
+        })),
+
+      forgetOtherDevices: (keepId) =>
+        set((state) => {
+          let deletions = state.deletions;
+          for (const d of state.devices) if (d.id !== keepId) deletions = tombstone(deletions, "device", d.id);
+          return { devices: state.devices.filter((d) => d.id === keepId), deletions };
+        }),
     }),
     {
       name: "stock-tracker-store",
@@ -342,6 +583,13 @@ export const usePositionStore = create<PositionState>()(
         startingCashUpdatedAt: state.startingCashUpdatedAt,
         watchlistOrderUpdatedAt: state.watchlistOrderUpdatedAt,
         deletions: state.deletions,
+        fxWatchlist: state.fxWatchlist,
+        fxWatchlistOrderUpdatedAt: state.fxWatchlistOrderUpdatedAt,
+        fxAlerts: state.fxAlerts,
+        cashDeposits: state.cashDeposits,
+        devices: state.devices,
+        displayCurrency: state.displayCurrency,
+        homeCurrency: state.homeCurrency,
         hidePnl: state.hidePnl,
         initialized: state.initialized,
         lastExportedAt: state.lastExportedAt,
@@ -367,6 +615,11 @@ export function selectSyncBook(state: PositionState): SyncBook {
     startingCash: state.startingCash,
     startingCashUpdatedAt: state.startingCashUpdatedAt,
     watchlistOrderUpdatedAt: state.watchlistOrderUpdatedAt,
+    fxWatchlist: state.fxWatchlist,
+    fxWatchlistOrderUpdatedAt: state.fxWatchlistOrderUpdatedAt,
+    fxAlerts: state.fxAlerts,
+    cashDeposits: state.cashDeposits,
+    devices: state.devices,
     deletions: state.deletions,
   };
 }

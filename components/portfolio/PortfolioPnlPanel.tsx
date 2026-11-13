@@ -67,6 +67,7 @@ const ROW_COLUMNS = "grid-cols-[minmax(0,1fr)_5.75rem_5.75rem] @lg:grid-cols-[mi
 export function PortfolioPnlPanel() {
   const positions = usePositionStore((s) => s.positions);
   const startingCash = usePositionStore((s) => s.startingCash);
+  const cashDeposits = usePositionStore((s) => s.cashDeposits);
   const customSectors = usePositionStore((s) => s.customSectors);
   // Open by default: the per-stock split is the reading most people come here for.
   const [expanded, setExpanded] = useState(true);
@@ -78,7 +79,10 @@ export function PortfolioPnlPanel() {
   const { quotes } = useQuotes(openSymbols);
   const summary = useMemo(() => computePnlSummary(positions, quotes), [positions, quotes]);
   const breakdown = useMemo(() => computeSymbolPnlBreakdown(positions, quotes), [positions, quotes]);
-  const cash = useMemo(() => computeCashSummary(startingCash, positions).cash, [startingCash, positions]);
+  const cash = useMemo(
+    () => computeCashSummary(startingCash, positions, cashDeposits).cash,
+    [startingCash, positions, cashDeposits]
+  );
   // The same total the header shows: cash plus every open share at its live price.
   const portfolioTotal = cash + breakdown.reduce((sum, s) => sum + s.marketValue, 0);
   // Unrealized moves with the fix, so it re-stamps with it.
