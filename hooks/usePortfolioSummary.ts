@@ -16,6 +16,7 @@ import { latestFixToken } from "@/components/log/fix";
 export function usePortfolioSummary() {
   const startingCash = usePositionStore((s) => s.startingCash);
   const positions = usePositionStore((s) => s.positions);
+  const cashDeposits = usePositionStore((s) => s.cashDeposits);
 
   const openSymbols = useMemo(
     () => Array.from(new Set(positions.filter((p) => p.status === "open").map((p) => p.symbol))),
@@ -24,26 +25,30 @@ export function usePortfolioSummary() {
   const { quotes } = useQuotes(openSymbols);
 
   return useMemo(() => {
-    const cash = computeCashSummary(startingCash, positions).cash;
+    const { cash, capital, totalDeposited } = computeCashSummary(startingCash, positions, cashDeposits);
     const portfolio = computePositionsValue(positions, quotes);
     const total = cash + portfolio.positionsValue;
-    // Change from capital: today's balance against the cash you started with.
-    // That difference is everything realized plus everything still open.
-    const changeFromCapital = total - startingCash;
+    // Change from capital: today's balance against everything put in (starting
+    // cash plus deposits). That difference is everything realized plus
+    // everything still open; a deposit is never counted as a gain.
+    const changeFromCapital = total - capital;
     return {
       startingCash,
+      capital,
+      totalDeposited,
+      depositCount: cashDeposits.length,
       cash,
       total,
       positionsValue: portfolio.positionsValue,
       positionsWithoutPrice: portfolio.positionsWithoutPrice,
       openCount: positions.filter((p) => p.status === "open").length,
       changeFromCapital,
-      changePct: startingCash > 0 ? changeFromCapital / startingCash : null,
+      changePct: capital > 0 ? changeFromCapital / capital : null,
       day: computeDayChange(positions, quotes),
       best: bestMover(quotes),
       alerts: computeAlerts(positions, quotes),
       // Re-stamps figures when a new fix lands.
       fixToken: latestFixToken(quotes),
     };
-  }, [startingCash, positions, quotes]);
+  }, [startingCash, positions, cashDeposits, quotes]);
 }

@@ -4,9 +4,11 @@ import { useState } from "react";
 import { Pencil } from "lucide-react";
 import { usePositionStore } from "@/store/usePositionStore";
 import { usePortfolioSummary } from "@/hooks/usePortfolioSummary";
-import { formatCurrency, formatPct, glyph, splitCents } from "@/lib/format";
+import { formatPct, glyph } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { StartingCashForm } from "@/components/portfolio/StartingCashForm";
+import { CurrencyFlip, displayRateLine } from "@/components/portfolio/CurrencyFlip";
+import { useDisplayCurrency } from "@/hooks/useDisplayCurrency";
 
 const STAT_LABEL = "text-[12px] leading-4 font-medium text-ns-on-hero-muted";
 const STAT_VALUE = "my-1 truncate text-[22px] leading-7 font-semibold";
@@ -21,18 +23,37 @@ const STAT_SUB = "truncate text-[12px] leading-4 text-ns-on-hero-muted";
 export function SummaryBanner({ className }: { className?: string }) {
   const hidePnl = usePositionStore((s) => s.hidePnl);
   const summary = usePortfolioSummary();
-  const { total, cash, startingCash, positionsValue, openCount, changeFromCapital, changePct, day, best, alerts, fixToken } =
-    summary;
+  const {
+    total,
+    cash,
+    startingCash,
+    capital,
+    depositCount,
+    positionsValue,
+    openCount,
+    changeFromCapital,
+    changePct,
+    day,
+    best,
+    alerts,
+    fixToken,
+  } = summary;
   const [editing, setEditing] = useState(false);
-  const [whole, cents] = splitCents(total);
+  const money = useDisplayCurrency();
+  const formatCurrency = money.money;
+  const rateLine = displayRateLine(money);
+  const [whole, cents] = money.split(total);
   const hide = (text: string) => (hidePnl ? "••••" : text);
 
   return (
     <section aria-labelledby="banner-heading" className={cn("oc-silk oc-banner", className)}>
       <div className="min-w-0">
-        <h2 id="banner-heading" className="text-[15px] leading-5 font-medium text-ns-on-hero-muted">
-          Portfolio value
-        </h2>
+        <div className="flex flex-wrap items-center gap-2.5">
+          <h2 id="banner-heading" className="text-[15px] leading-5 font-medium text-ns-on-hero-muted">
+            Portfolio value
+          </h2>
+          <CurrencyFlip display={money} />
+        </div>
         <p key={fixToken} className="ns-amount-web oc-num animate-fix-stamp mt-1.5 mb-2.5">
           {hidePnl ? (
             "••••••"
@@ -59,6 +80,11 @@ export function SummaryBanner({ className }: { className?: string }) {
           ) : (
             <span className="oc-banner-chip">Cash + open positions</span>
           )}
+          {rateLine && (
+            <span className="oc-banner-chip font-medium" title={rateLine.full}>
+              {rateLine.short}
+            </span>
+          )}
           {alerts.length > 0 && (
             <a href="#needs-attention" className="oc-banner-chip text-ns-on-primary no-underline">
               <span className="oc-dot" aria-hidden="true" />
@@ -83,7 +109,7 @@ export function SummaryBanner({ className }: { className?: string }) {
             </button>
           </dt>
           <dd className={STAT_VALUE}>{hide(formatCurrency(cash))}</dd>
-          <dd className={STAT_SUB}>{total > 0 ? `${((cash / total) * 100).toFixed(0)}% of total` : `${formatCurrency(startingCash)} start`}</dd>
+          <dd className={STAT_SUB}>{total > 0 ? `${((cash / total) * 100).toFixed(0)}% of total` : depositCount > 0 ? `${formatCurrency(capital)} put in` : `${formatCurrency(startingCash)} start`}</dd>
         </div>
         <div className="min-w-0 px-2">
           <dt className={STAT_LABEL}>Positions</dt>

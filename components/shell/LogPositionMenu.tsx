@@ -2,11 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Plus, TrendingUp, TrendingDown } from "lucide-react";
+import { Plus, TrendingUp, TrendingDown, Wallet } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 /**
- * Log position: a buy/sell menu. `variant` picks the trigger: the primary pill
+ * Log entry: a buy / sell / add cash menu. `variant` picks the trigger: the primary pill
  * for the wide-screen top menu, or the raised add button in the phone tab bar,
  * where the menu opens upward.
  */
@@ -53,7 +53,7 @@ export function LogPositionMenu({
           className="oc-btn oc-btn-primary px-4! py-2.5! text-[14px]!"
         >
           <Plus className="h-4 w-4" strokeWidth={2} />
-          Log position
+          Log entry
         </button>
       ) : (
         <button
@@ -62,7 +62,7 @@ export function LogPositionMenu({
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
           aria-haspopup="menu"
-          aria-label="Log position"
+          aria-label="Log a buy, sell or cash deposit"
           className="oc-fab"
         >
           <Plus className="h-6 w-6" strokeWidth={2} />
@@ -84,6 +84,15 @@ export function LogPositionMenu({
           <Link href="/positions/new?mode=sell" role="menuitem" onClick={() => setOpen(false)} className={itemClass}>
             <TrendingDown className="h-3.5 w-3.5 text-ns-danger" />
             Sell
+          </Link>
+          <Link
+            href="/cash/new"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            className={cn(itemClass, "border-t border-ns-line")}
+          >
+            <Wallet className="h-3.5 w-3.5 text-ns-primary-text" />
+            Add cash
           </Link>
         </div>
       )}

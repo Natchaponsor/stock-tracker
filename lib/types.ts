@@ -116,11 +116,48 @@ export interface CustomSector {
   updatedAt: string;
 }
 
+/**
+ * Cash the user put into the book, in any currency. Counts as capital, never as
+ * a gain. Keyed by `id`.
+ */
+export interface CashDeposit {
+  id: string;
+  /** When the cash went in (ISO, local midnight of the picked day). */
+  date: string;
+  /** What was deposited, e.g. "THB". */
+  currency: string;
+  /** In `currency`, always above 0. */
+  amount: number;
+  /** Units of `currency` per 1 USD (the USD/XXX rate); 1 for USD. Dollars = amount / rate. */
+  rate: number;
+  /** "entered": typed by the user. "reference": the daily reference rate fetched for
+   * the day. null for a USD deposit, which needs no rate. */
+  rateSource: "entered" | "reference" | null;
+  /** The day of the reference fix used (YYYY-MM-DD), for "reference" rates. */
+  rateDate: string | null;
+  note?: string;
+  createdAt: string;
+  /** Last change, for device sync (newer wins). */
+  updatedAt: string;
+}
+
+/** A device paired through sync, listed under Settings → Devices. Keyed by `id`. */
+export interface SyncDevice {
+  id: string;
+  name: string;
+  /** When the device first joined. */
+  addedAt: string;
+  /** Last time it finished a sync (refreshed at most every few hours). */
+  lastSeenAt: string;
+  /** Last change, for device sync (newer wins). */
+  updatedAt: string;
+}
+
 /** Full snapshot of user data, for export/backup — matches the store's persisted shape. */
 export interface ExportPayload {
   exportedAt: string;
-  /** v2 added customSectors, v3 the FX watchlist and alerts; older files still import. */
-  version: 3;
+  /** v2 added customSectors, v3 the FX watchlist and alerts, v4 cash deposits; older files still import. */
+  version: 4;
   startingCash: number;
   positions: Position[];
   strategies: Strategy[];
@@ -128,6 +165,7 @@ export interface ExportPayload {
   customSectors: CustomSector[];
   fxWatchlist: FxWatchItem[];
   fxAlerts: FxAlert[];
+  cashDeposits: CashDeposit[];
 }
 
 // ── FX ───────────────────────────────────────────────────────────────────────

@@ -166,3 +166,44 @@ describe("FX in exports", () => {
     expect(validateImportPayload(bad).ok).toBe(false);
   });
 });
+
+describe("cash deposits in exports", () => {
+  const deposit = {
+    id: "c1",
+    date: "2026-11-08T00:00:00.000Z",
+    currency: "THB",
+    amount: 33_515,
+    rate: 33.515,
+    rateSource: "reference" as const,
+    rateDate: "2026-11-08",
+    note: "Top-up",
+    createdAt: "2026-11-08T03:00:00.000Z",
+    updatedAt: "2026-11-08T03:00:00.000Z",
+  };
+
+  it("round-trips deposits as a version 4 file", () => {
+    const payload = buildExportPayload(1_000, [], [], [], [], [], [], [deposit]);
+    expect(payload.version).toBe(4);
+    const result = validateImportPayload(JSON.parse(JSON.stringify(payload)));
+    expect(result.ok && result.payload.cashDeposits).toEqual([deposit]);
+  });
+
+  it("imports a v3 file with no deposits", () => {
+    const v3 = { version: 3, startingCash: 1, positions: [], strategies: [], watchlist: [], fxWatchlist: [], fxAlerts: [] };
+    const result = validateImportPayload(v3);
+    expect(result.ok && result.payload.cashDeposits).toEqual([]);
+  });
+
+  it("rejects a deposit with no amount or a zero rate", () => {
+    const base = { startingCash: 1, positions: [], strategies: [], watchlist: [] };
+    expect(validateImportPayload({ ...base, cashDeposits: [{ ...deposit, amount: 0 }] }).ok).toBe(false);
+    expect(validateImportPayload({ ...base, cashDeposits: [{ ...deposit, rate: 0 }] }).ok).toBe(false);
+    expect(validateImportPayload({ ...base, cashDeposits: [{ ...deposit, currency: "baht" }] }).ok).toBe(false);
+  });
+
+  it("pins a dollar deposit to a rate of 1", () => {
+    const base = { startingCash: 1, positions: [], strategies: [], watchlist: [] };
+    const result = validateImportPayload({ ...base, cashDeposits: [{ ...deposit, currency: "USD", rate: 2 }] });
+    expect(result.ok && result.payload.cashDeposits[0]).toMatchObject({ rate: 1, rateSource: null });
+  });
+});

@@ -61,3 +61,25 @@ export function useFxLatest(pairs: FxPair[]) {
   const { data, error, isLoading } = useSWR<LatestResponse>(key, fetcher<LatestResponse>, SWR_OPTIONS);
   return { rates: data?.rates ?? null, isLoading, hasError: Boolean(error) };
 }
+
+interface RateOnResponse {
+  pair: string;
+  date: string | null;
+  rate: number | null;
+  error?: string;
+}
+
+/**
+ * The daily reference rate for `pair` on `date` (YYYY-MM-DD), or the last fix
+ * before it. `fix.date` is the day of the fix actually used.
+ */
+export function useFxRateOn(pair: FxPair | null, date: string | null) {
+  const key = pair && date ? `/api/fx/rate?pair=${encodeURIComponent(pair)}&date=${date}` : null;
+  const { data, error, isLoading } = useSWR<RateOnResponse>(key, fetcher<RateOnResponse>, {
+    ...SWR_OPTIONS,
+    // A missing rate is an answer, not a blip: don't keep asking.
+    shouldRetryOnError: false,
+  });
+  const fix = data && data.rate !== null && data.date !== null ? { rate: data.rate, date: data.date } : null;
+  return { fix, isLoading, hasError: Boolean(error) || Boolean(data?.error) };
+}

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { mergeBooks, normalizeStrategy, normalizeSyncBook, normalizeWatchItem, TOMBSTONE_TTL_DAYS, type SyncBook } from "../sync/book";
-import type { CustomSector, FxAlert, FxPair, FxWatchItem, Position, Strategy, WatchlistItem } from "../types";
+import type { CashDeposit, CustomSector, FxAlert, FxPair, FxWatchItem, Position, Strategy, SyncDevice, WatchlistItem } from "../types";
 
 const T = (day: number) => new Date(Date.UTC(2026, 10, day)).toISOString();
 const NOW = Date.UTC(2026, 10, 20);
@@ -54,6 +54,8 @@ function book(overrides: Partial<SyncBook> = {}): SyncBook {
     fxWatchlist: [],
     fxWatchlistOrderUpdatedAt: null,
     fxAlerts: [],
+    cashDeposits: [],
+    devices: [],
     deletions: {},
     ...overrides,
   };
@@ -259,5 +261,74 @@ describe("FX in the synced book", () => {
     expect(merged.fxAlerts.map((a) => a.id)).toEqual(["a1"]);
     expect(mergeBooks(current, legacy, NOW)).toEqual(merged);
     expect(normalizeSyncBook(legacy).fxAlerts).toEqual([]);
+  });
+});
+
+describe("cash deposits and devices in sync", () => {
+  const deposit = (id: string, date: string, updatedAt = date): CashDeposit => ({
+    id,
+    date,
+    currency: "THB",
+    amount: 33_500,
+    rate: 33.5,
+    rateSource: "reference",
+    rateDate: date.slice(0, 10),
+    createdAt: date,
+    updatedAt,
+  });
+  const device = (id: string, lastSeenAt: string, name = id): SyncDevice => ({
+    id,
+    name,
+    addedAt: T(1),
+    lastSeenAt,
+    updatedAt: lastSeenAt,
+  });
+
+  it("keeps deposits made on two devices, oldest first", () => {
+    const merged = mergeBooks(
+      book({ cashDeposits: [deposit("d2", T(5))] }),
+      book({ cashDeposits: [deposit("d1", T(3))] }),
+      NOW
+    );
+    expect(merged.cashDeposits.map((d) => d.id)).toEqual(["d1", "d2"]);
+  });
+
+  it("drops a deposit removed on the other device", () => {
+    const merged = mergeBooks(
+      book({ cashDeposits: [deposit("d1", T(3))] }),
+      book({ deletions: { "deposit:d1": T(4) } }),
+      NOW
+    );
+    expect(merged.cashDeposits).toEqual([]);
+  });
+
+  it("takes the newest entry for a device and keeps a removed one gone until it syncs again", () => {
+    const renamed = mergeBooks(
+      book({ devices: [device("phone", T(3), "Old name")] }),
+      book({ devices: [device("phone", T(6), "Top's iPhone")] }),
+      NOW
+    );
+    expect(renamed.devices).toEqual([device("phone", T(6), "Top's iPhone")]);
+
+    const removed = mergeBooks(book({ devices: [device("lost", T(3))] }), book({ deletions: { "device:lost": T(4) } }), NOW);
+    expect(removed.devices).toEqual([]);
+
+    const back = mergeBooks(book({ devices: [device("lost", T(5))] }), book({ deletions: { "device:lost": T(4) } }), NOW);
+    expect(back.devices.map((d) => d.id)).toEqual(["lost"]);
+  });
+
+  it("merges symmetrically with deposits and devices", () => {
+    const a = book({ cashDeposits: [deposit("d1", T(2))], devices: [device("mac", T(3))] });
+    const b = book({ cashDeposits: [deposit("d2", T(2))], devices: [device("phone", T(4))] });
+    expect(mergeBooks(a, b, NOW)).toEqual(mergeBooks(b, a, NOW));
+  });
+
+  it("reads a book from before deposits and devices existed", () => {
+    const legacy = book();
+    delete (legacy as Partial<SyncBook>).cashDeposits;
+    delete (legacy as Partial<SyncBook>).devices;
+    const merged = mergeBooks(legacy, book({ cashDeposits: [deposit("d1", T(2))] }), NOW);
+    expect(merged.cashDeposits.map((d) => d.id)).toEqual(["d1"]);
+    expect(normalizeSyncBook(legacy).devices).toEqual([]);
   });
 });

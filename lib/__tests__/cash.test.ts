@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { computeCashSummary } from "../cash";
-import type { Position } from "../types";
+import { computeCashSummary, depositUsd } from "../cash";
+import type { CashDeposit, Position } from "../types";
 
 function makePosition(entries: Position["entries"], exits: Position["exits"] = []): Position {
   return {
@@ -53,5 +53,34 @@ describe("computeCashSummary", () => {
     const summary = computeCashSummary(5000, [a, b]);
     expect(summary.totalBought).toBe(1200);
     expect(summary.cash).toBe(3800);
+  });
+});
+
+describe("cash deposits", () => {
+  const deposit = (currency: string, amount: number, rate: number): CashDeposit => ({
+    id: `${currency}-${amount}`,
+    date: "2026-11-08T00:00:00.000Z",
+    currency,
+    amount,
+    rate,
+    rateSource: currency === "USD" ? null : "entered",
+    rateDate: null,
+    createdAt: "2026-11-08T00:00:00.000Z",
+    updatedAt: "2026-11-08T00:00:00.000Z",
+  });
+
+  it("converts a deposit to dollars at its own rate", () => {
+    expect(depositUsd(deposit("THB", 33_500, 33.5))).toBeCloseTo(1_000);
+    expect(depositUsd(deposit("USD", 250, 1))).toBe(250);
+  });
+
+  it("adds deposits to cash and to the capital gains are measured against", () => {
+    const summary = computeCashSummary(10_000, [makePosition([{ id: "e", date: "2026-01-02", price: 100, qty: 10 }])], [
+      deposit("THB", 33_500, 33.5),
+      deposit("USD", 500, 1),
+    ]);
+    expect(summary.totalDeposited).toBeCloseTo(1_500);
+    expect(summary.capital).toBeCloseTo(11_500);
+    expect(summary.cash).toBeCloseTo(10_500);
   });
 });

@@ -1,4 +1,15 @@
-import type { CustomSector, Fill, FxAlert, FxWatchItem, JournalNote, Position, Strategy, WatchlistItem } from "../types";
+import type {
+  CashDeposit,
+  CustomSector,
+  Fill,
+  FxAlert,
+  FxWatchItem,
+  JournalNote,
+  Position,
+  Strategy,
+  SyncDevice,
+  WatchlistItem,
+} from "../types";
 
 /**
  * The part of the store that device sync carries. Per-device settings (theme,
@@ -22,12 +33,16 @@ export interface SyncBook {
   /** When the FX watchlist was last reordered; the newer order wins in a merge. */
   fxWatchlistOrderUpdatedAt: string | null;
   fxAlerts: FxAlert[];
-  /** `kind:key` → when it was deleted. Keys: position/strategy/sector/FX alert ids,
-   * watch symbols, FX pairs. */
+  /** Cash put into the book, in any currency. */
+  cashDeposits: CashDeposit[];
+  /** The devices sharing this book. Each one keeps its own entry fresh. */
+  devices: SyncDevice[];
+  /** `kind:key` → when it was deleted. Keys: position/strategy/sector/FX alert/deposit/
+   * device ids, watch symbols, FX pairs. */
   deletions: Record<string, string>;
 }
 
-export type DeletionKind = "position" | "strategy" | "watch" | "sector" | "fxwatch" | "fxalert";
+export type DeletionKind = "position" | "strategy" | "watch" | "sector" | "fxwatch" | "fxalert" | "deposit" | "device";
 
 export const deletionKey = (kind: DeletionKind, key: string) => `${kind}:${key}`;
 
@@ -54,7 +69,7 @@ export function normalizeSector(raw: CustomSector | Omit<CustomSector, "updatedA
   return { ...c, updatedAt: c.updatedAt ?? EPOCH };
 }
 
-/** Fills in collections a book from before FX existed doesn't have. */
+/** Fills in collections a book from before FX, cash deposits or the device list doesn't have. */
 export function normalizeSyncBook(book: SyncBook): SyncBook {
   const b = book as Partial<SyncBook> & SyncBook;
   return {
@@ -62,6 +77,8 @@ export function normalizeSyncBook(book: SyncBook): SyncBook {
     fxWatchlist: Array.isArray(b.fxWatchlist) ? b.fxWatchlist : [],
     fxWatchlistOrderUpdatedAt: b.fxWatchlistOrderUpdatedAt ?? null,
     fxAlerts: Array.isArray(b.fxAlerts) ? b.fxAlerts.map((a) => ({ ...a, seen: a.seen ?? true })) : [],
+    cashDeposits: Array.isArray(b.cashDeposits) ? b.cashDeposits : [],
+    devices: Array.isArray(b.devices) ? b.devices : [],
   };
 }
 
@@ -202,8 +219,17 @@ export function mergeBooks(rawA: SyncBook, rawB: SyncBook, now: number = Date.no
     ),
     fxWatchlistOrderUpdatedAt: laterOf(a.fxWatchlistOrderUpdatedAt, b.fxWatchlistOrderUpdatedAt),
     fxAlerts: mergeList(a.fxAlerts, b.fxAlerts, (x) => x.id, "fxalert", deletions),
+    cashDeposits: sortByDate(mergeList(a.cashDeposits, b.cashDeposits, (d) => d.id, "deposit", deletions)),
+    devices: mergeList(a.devices, b.devices, (d) => d.id, "device", deletions).sort((x, y) =>
+      x.addedAt === y.addedAt ? x.id.localeCompare(y.id) : x.addedAt.localeCompare(y.addedAt)
+    ),
     deletions,
   };
+}
+
+/** Oldest first, ties by id, so both devices list deposits in the same order. */
+function sortByDate<T extends { id: string; date: string }>(items: T[]): T[] {
+  return items.sort((x, y) => (x.date === y.date ? x.id.localeCompare(y.id) : x.date.localeCompare(y.date)));
 }
 
 /**

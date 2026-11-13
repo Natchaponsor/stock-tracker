@@ -41,6 +41,7 @@ interface Row {
  */
 export function AllocationChart() {
   const startingCash = usePositionStore((s) => s.startingCash);
+  const cashDeposits = usePositionStore((s) => s.cashDeposits);
   const positions = usePositionStore((s) => s.positions);
   const hidePnl = usePositionStore((s) => s.hidePnl);
   const customSectors = usePositionStore((s) => s.customSectors);
@@ -52,7 +53,10 @@ export function AllocationChart() {
   );
   const { quotes } = useQuotes(openSymbols);
 
-  const cash = useMemo(() => computeCashSummary(startingCash, positions).cash, [startingCash, positions]);
+  const cash = useMemo(
+    () => computeCashSummary(startingCash, positions, cashDeposits).cash,
+    [startingCash, positions, cashDeposits]
+  );
 
   const rows = useMemo(() => {
     const slices = computeAllocation(cash, positions, quotes);

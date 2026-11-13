@@ -132,7 +132,7 @@ export interface BuildSignalsOptions {
   today: string;
   /** Trailing window, in days. Defaults to a year. */
   windowDays?: number;
-  /** The reader's book, from a Data menu export, to mark held/watched symbols. */
+  /** The reader's book, from a Settings export, to mark held/watched symbols. */
   book?: { symbol: string; relation: BookRelation }[];
   /** Timestamp to stamp the file with; injectable so tests are deterministic. */
   generatedAt?: string;
@@ -225,7 +225,7 @@ export function buildSignalFile(dataset: DisclosureDataset, options: BuildSignal
 }
 
 /**
- * Reads held and watched symbols out of a Data menu export. Only the fields
+ * Reads held and watched symbols out of a Settings export. Only the fields
  * it needs are checked — the full import validator lives with the store.
  */
 export function bookFromExport(raw: unknown): { symbol: string; relation: BookRelation }[] {

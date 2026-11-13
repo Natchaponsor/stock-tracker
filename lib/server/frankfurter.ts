@@ -79,3 +79,22 @@ export async function fetchLatest(pairs: FxPair[]): Promise<Map<FxPair, { rate: 
   );
   return out;
 }
+
+/**
+ * The reference fix for `pair` on `date` (YYYY-MM-DD), or the last one before it
+ * when that day has none (weekends, holidays). Null when there is no fix in the
+ * ten days up to the date.
+ */
+export async function fetchRateOn(pair: FxPair, date: string): Promise<FxBar | null> {
+  const [base, quote] = splitPair(pair);
+  const from = new Date(Date.parse(`${date}T00:00:00Z`) - 10 * 86_400_000).toISOString().slice(0, 10);
+  const params = new URLSearchParams({ base: base.toLowerCase(), quotes: quote.toLowerCase(), from, to: date });
+  const rows = (await getJson(`${API}/rates?${params}`)) as FrankfurterRow[];
+  if (!Array.isArray(rows)) throw new FrankfurterError("unexpected response", 502);
+  let best: FxBar | null = null;
+  for (const r of rows) {
+    if (r.quote !== quote || typeof r.rate !== "number" || r.date > date) continue;
+    if (!best || r.date > best.date) best = { date: r.date, rate: r.rate };
+  }
+  return best;
+}

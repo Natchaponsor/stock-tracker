@@ -1,10 +1,20 @@
-export function formatCurrency(value: number, opts: { signed?: boolean } = {}): string {
-  const { signed = false } = opts;
+/**
+ * Money in `currency` (US dollars unless given), with its narrow symbol: $1,240,
+ * ฿41,600. `compact` shortens large amounts for tight cells: ฿75.4K, $1.2M.
+ */
+export function formatCurrency(
+  value: number,
+  opts: { signed?: boolean; currency?: string; compact?: boolean } = {}
+): string {
+  const { signed = false, currency = "USD", compact = false } = opts;
   const abs = Math.abs(value);
   const formatted = abs.toLocaleString("en-US", {
     style: "currency",
-    currency: "USD",
-    maximumFractionDigits: abs >= 1000 ? 0 : 2,
+    currency,
+    currencyDisplay: "narrowSymbol",
+    ...(compact && abs >= 10_000
+      ? { notation: "compact", maximumFractionDigits: 1 }
+      : { maximumFractionDigits: abs >= 1000 ? 0 : 2 }),
   });
   if (!signed) return value < 0 ? `-${formatted}` : formatted;
   if (value > 0) return `+${formatted}`;
@@ -50,12 +60,11 @@ export function capitalize(text: string): string {
 }
 
 /** "$12,480.25" → ["$12,480", ".25"], so the cents can fade back on the silk. */
-export function splitCents(value: number): [string, string] {
+export function splitCents(value: number, currency = "USD"): [string, string] {
   const text = value.toLocaleString("en-US", {
     style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    currency,
+    currencyDisplay: "narrowSymbol",
   });
   const dot = text.lastIndexOf(".");
   return dot === -1 ? [text, ""] : [text.slice(0, dot), text.slice(dot)];

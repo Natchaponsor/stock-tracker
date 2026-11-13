@@ -2,10 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowLeftRight, ChartLine, Eye, EyeOff, FileText, LayoutDashboard, ListChecks, RefreshCw } from "lucide-react";
+import { ArrowLeftRight, ChartLine, Eye, EyeOff, FileText, LayoutDashboard, ListChecks, RefreshCw, Settings } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { LogPositionMenu } from "@/components/shell/LogPositionMenu";
-import { DataMenu } from "@/components/shell/DataMenu";
 import { ThemeToggle } from "@/components/shell/ThemeToggle";
 import { Footer } from "@/components/shell/Footer";
 import { useRefreshPrices } from "@/hooks/useRefreshPrices";
@@ -14,6 +13,7 @@ import { usePositionStore } from "@/store/usePositionStore";
 import { useNow } from "@/components/log/clock";
 import { usePlatform } from "@/hooks/usePlatform";
 import { FxAlertWatcher } from "@/components/fx/FxAlertWatcher";
+import { useBackupStatus } from "@/hooks/useBackupStatus";
 
 const NAV_ITEMS = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -45,6 +45,8 @@ export function NavyShell({ children }: { children: React.ReactNode }) {
   const platform = usePlatform();
   const showWeb = platform !== "phone";
   const showPhone = platform !== "web";
+  const backupDue = useBackupStatus().due;
+  const settingsLabel = backupDue ? "Settings (backup due)" : "Settings";
 
   return (
     <div className="oc-app bg-ns-page text-ns-ink">
@@ -76,6 +78,18 @@ export function NavyShell({ children }: { children: React.ReactNode }) {
               );
             })}
           </nav>
+          <Link
+            href="/settings"
+            aria-current={isActive("/settings") ? "page" : undefined}
+            aria-label={settingsLabel}
+            title={settingsLabel}
+            className="oc-nav mt-auto w-full"
+          >
+            <Settings strokeWidth={1.8} aria-hidden="true" />
+            <span>Settings</span>
+            {/* A div: bundle.css hides spans in .oc-nav when the sidebar collapses. */}
+            {backupDue && <div aria-hidden="true" className="ml-auto h-2 w-2 shrink-0 rounded-full bg-ns-warning" />}
+          </Link>
         </aside>
       )}
 
@@ -89,7 +103,18 @@ export function NavyShell({ children }: { children: React.ReactNode }) {
               </Link>
               <div className="ml-auto flex shrink-0 items-center gap-2">
                 <ThemeToggle />
-                <DataMenu />
+                <Link
+                  href="/settings"
+                  aria-current={isActive("/settings") ? "page" : undefined}
+                  aria-label={settingsLabel}
+                  title={settingsLabel}
+                  className="relative flex h-9 w-9 items-center justify-center rounded-full bg-ns-sunken text-ns-ink-muted transition-colors hover:text-ns-ink aria-[current=page]:bg-ns-primary-soft aria-[current=page]:text-ns-primary-text"
+                >
+                  <Settings className="h-[18px] w-[18px]" strokeWidth={1.8} aria-hidden="true" />
+                  {backupDue && (
+                    <span aria-hidden="true" className="absolute top-1 right-1 h-2 w-2 rounded-full bg-ns-warning" />
+                  )}
+                </Link>
               </div>
             </div>
           </header>
@@ -191,7 +216,6 @@ function TopBar({ isDashboard }: { isDashboard: boolean }) {
           <span className="sr-only">{refreshing ? "Refreshing prices" : "Refresh prices"}</span>
         </button>
         <ThemeToggle onPage />
-        <DataMenu onPage />
         <LogPositionMenu variant="pill" />
       </div>
     </div>

@@ -23,7 +23,7 @@ function codeFromScan(text: string): string | null {
   return normalizeSyncCode(match ? match[1] : text);
 }
 
-/** "Synced 2 min ago", "Waiting to sync", … for the dialog and the Data menu. */
+/** "Synced 2 min ago", "Waiting to sync", … for the dialog and Settings. */
 export function describeSync(status: SyncStatus, now: number | null): string {
   switch (status.state) {
     case "off":
@@ -53,16 +53,28 @@ type View = "intro" | "pair";
  * The panel mounts fresh on every open, so it always starts from a clean state.
  */
 export function SyncDialog() {
-  const { open, prefillCode, hide } = useSyncDialog();
-  return <AnimatePresence>{open && <SyncPanel key="sync" prefillCode={prefillCode} onClose={hide} />}</AnimatePresence>;
+  const { open, prefillCode, startOnPair, hide } = useSyncDialog();
+  return (
+    <AnimatePresence>
+      {open && <SyncPanel key="sync" prefillCode={prefillCode} startOnPair={startOnPair} onClose={hide} />}
+    </AnimatePresence>
+  );
 }
 
-function SyncPanel({ prefillCode, onClose }: { prefillCode: string | null; onClose: () => void }) {
+function SyncPanel({
+  prefillCode,
+  startOnPair,
+  onClose,
+}: {
+  prefillCode: string | null;
+  startOnPair: boolean;
+  onClose: () => void;
+}) {
   const hide = onClose;
   const status = useSyncStatus();
   const now = useNow();
   // A scanned `#pair=` link opens straight onto the pairing form.
-  const [view, setView] = useState<View>(prefillCode ? "pair" : "intro");
+  const [view, setView] = useState<View>(prefillCode || startOnPair ? "pair" : "intro");
   const [codeInput, setCodeInput] = useState(prefillCode ?? "");
   const [mode, setMode] = useState<PairMode>("replace");
   const [scanning, setScanning] = useState(false);
@@ -157,8 +169,8 @@ function SyncPanel({ prefillCode, onClose }: { prefillCode: string | null; onClo
               {status.state === "removed" ? (
                 <div className="flex flex-col gap-2">
                   <p className="ns-body text-ns-ink-muted">
-                    Your book is still on this device. Turn sync on again to start a new synced copy and pair your
-                    other devices with the new code.
+                    Your book is still on this device. If you changed the sync code on another device, turn off
+                    sync here and pair with the new code. Otherwise turn sync on again to start a new synced copy.
                   </p>
                   <Button variant="primary" disabled={busy} onClick={() => run(() => engine!.enable())}>
                     Turn on sync again
@@ -172,7 +184,7 @@ function SyncPanel({ prefillCode, onClose }: { prefillCode: string | null; onClo
                   <div className="flex flex-col items-center gap-3 rounded-ns-md bg-ns-sunken p-4 text-center">
                     <QrCode value={pairLink} label="QR code for pairing another device" />
                     <p className="ns-label font-normal text-ns-ink-muted">
-                      On your other device open Stock Tracker, then <b className="text-ns-ink">Data → Sync devices →
+                      On your other device open Stock Tracker, then <b className="text-ns-ink">Settings → Devices &amp; sync →
                       I have a code</b>, and scan this or type the code.
                     </p>
                     <div className="flex w-full items-center gap-2">

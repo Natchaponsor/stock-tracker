@@ -1,4 +1,4 @@
-import type { CustomSector, ExportPayload, FxAlert, FxWatchItem, Position, Strategy, WatchlistItem } from "./types";
+import type { CashDeposit, CustomSector, ExportPayload, FxAlert, FxWatchItem, Position, Strategy, WatchlistItem } from "./types";
 import { normalizeSector, normalizeStrategy, normalizeWatchItem } from "./sync/book";
 import { SECTOR_SWATCHES } from "./sectors";
 import { migratePositionShape } from "./migratePosition";
@@ -10,11 +10,12 @@ export function buildExportPayload(
   watchlist: WatchlistItem[],
   customSectors: CustomSector[] = [],
   fxWatchlist: FxWatchItem[] = [],
-  fxAlerts: FxAlert[] = []
+  fxAlerts: FxAlert[] = [],
+  cashDeposits: CashDeposit[] = []
 ): ExportPayload {
   return {
     exportedAt: new Date().toISOString(),
-    version: 3,
+    version: 4,
     startingCash,
     positions,
     strategies,
@@ -22,6 +23,7 @@ export function buildExportPayload(
     customSectors,
     fxWatchlist,
     fxAlerts,
+    cashDeposits,
   };
 }
 
@@ -97,6 +99,23 @@ function isFxAlert(v: unknown): v is FxAlert {
   );
 }
 
+const CURRENCY_RE = /^[A-Z]{3}$/;
+const positive = (v: unknown) => typeof v === "number" && Number.isFinite(v) && v > 0;
+
+function isCashDeposit(v: unknown): v is CashDeposit {
+  if (typeof v !== "object" || v === null) return false;
+  const d = v as Record<string, unknown>;
+  return (
+    typeof d.id === "string" &&
+    typeof d.date === "string" &&
+    !Number.isNaN(Date.parse(d.date)) &&
+    typeof d.currency === "string" &&
+    CURRENCY_RE.test(d.currency) &&
+    positive(d.amount) &&
+    positive(d.rate)
+  );
+}
+
 /** Validates a parsed JSON blob against the export shape before it ever touches the store. */
 export function validateImportPayload(json: unknown): ImportResult {
   if (typeof json !== "object" || json === null) {
@@ -130,13 +149,17 @@ export function validateImportPayload(json: unknown): ImportResult {
   if (p.fxAlerts !== undefined && (!Array.isArray(p.fxAlerts) || !p.fxAlerts.every(isFxAlert))) {
     return { ok: false, error: "Invalid \"fxAlerts\" field." };
   }
+  // Version 4 added cash deposits.
+  if (p.cashDeposits !== undefined && (!Array.isArray(p.cashDeposits) || !p.cashDeposits.every(isCashDeposit))) {
+    return { ok: false, error: "Invalid \"cashDeposits\" field." };
+  }
   const at = new Date().toISOString();
 
   return {
     ok: true,
     payload: {
       exportedAt: typeof p.exportedAt === "string" ? p.exportedAt : new Date().toISOString(),
-      version: 3,
+      version: 4,
       startingCash: p.startingCash,
       // Normalizes pre-multi-strategy exports (a bare `strategyId`) into strategyIds/customTags.
       positions: p.positions.map((pos) => migratePositionShape(pos as unknown as Record<string, unknown>)),
@@ -163,6 +186,19 @@ export function validateImportPayload(json: unknown): ImportResult {
         createdAt: typeof a.createdAt === "string" ? a.createdAt : at,
         updatedAt: typeof a.updatedAt === "string" ? a.updatedAt : at,
         ...(typeof a.note === "string" ? { note: a.note } : {}),
+      })),
+      cashDeposits: ((p.cashDeposits as CashDeposit[] | undefined) ?? []).map((d) => ({
+        id: d.id,
+        date: d.date,
+        currency: d.currency,
+        amount: d.amount,
+        // A dollar deposit is always at 1, whatever the file says.
+        rate: d.currency === "USD" ? 1 : d.rate,
+        rateSource: d.currency === "USD" ? null : d.rateSource === "reference" ? "reference" : "entered",
+        rateDate: typeof d.rateDate === "string" ? d.rateDate : null,
+        createdAt: typeof d.createdAt === "string" ? d.createdAt : at,
+        updatedAt: typeof d.updatedAt === "string" ? d.updatedAt : at,
+        ...(typeof d.note === "string" ? { note: d.note } : {}),
       })),
     },
   };

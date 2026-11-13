@@ -1,16 +1,117 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
+import { Trash2, Wallet } from "lucide-react";
 import { NsCard, NsEmpty, NsPnl, SymbolMark } from "@/components/navy/primitives";
 import { useQuotes } from "@/hooks/useQuotes";
 import { usePositionStore } from "@/store/usePositionStore";
 import { buildLedger, type LedgerRow } from "@/lib/ledger";
 import { formatCurrency, formatPct } from "@/lib/format";
+import { depositUsd } from "@/lib/cash";
+import { formatRate, formatRateDate } from "@/lib/fx";
 import { cn } from "@/lib/cn";
 import { usePlatform } from "@/hooks/usePlatform";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import type { CashDeposit } from "@/lib/types";
+
+/** One line of the log: a trade from the ledger, or a cash deposit. */
+type LogItem = { type: "trade"; key: string; date: string; row: LedgerRow } | { type: "cash"; key: string; date: string; deposit: CashDeposit };
+
+/** Trades and deposits, newest first; on the same instant a trade reads first. */
+function mergeLog(rows: LedgerRow[], deposits: CashDeposit[]): LogItem[] {
+  const items: LogItem[] = [
+    ...rows.map((row) => ({ type: "trade" as const, key: row.key, date: row.date, row })),
+    ...deposits.map((deposit) => ({ type: "cash" as const, key: `cash:${deposit.id}`, date: deposit.date, deposit })),
+  ];
+  // Array.prototype.sort is stable, so the ledger's own order holds within a day.
+  return items.sort((a, b) => Date.parse(b.date) - Date.parse(a.date) || (a.type === b.type ? 0 : a.type === "trade" ? -1 : 1));
+}
+
+/** "at 33.515 THB/USD · reference rate", or "US dollars". The fix's own day is in the tooltip. */
+function depositRateLine(d: CashDeposit): string {
+  if (d.currency === "USD") return "US dollars";
+  return `at ${formatRate(d.rate)} ${d.currency}/USD · ${d.rateSource === "reference" ? "reference rate" : "your rate"}`;
+}
+
+function depositRateTitle(d: CashDeposit): string | undefined {
+  return d.rateSource === "reference" && d.rateDate ? `Daily reference rate fixed ${formatRateDate(d.rateDate)}` : undefined;
+}
+
+function CashMark({ size = 32 }: { size?: number }) {
+  return (
+    <span
+      aria-hidden="true"
+      style={{ width: size, height: size }}
+      className="flex shrink-0 items-center justify-center rounded-full bg-ns-primary-soft text-ns-primary-text"
+    >
+      <Wallet className="h-4 w-4" />
+    </span>
+  );
+}
+
+function RemoveDepositButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick();
+      }}
+      title="Remove this deposit"
+      className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full text-ns-ink-subtle transition-colors hover:bg-ns-danger-soft hover:text-ns-danger"
+    >
+      <Trash2 className="h-3.5 w-3.5" />
+      <span className="sr-only">Remove this deposit</span>
+    </button>
+  );
+}
+
+/** A deposit is capital, not a gain: its amount reads in ink, never green. */
+function CashEntry({ deposit, onRemove }: { deposit: CashDeposit; onRemove: () => void }) {
+  const usd = depositUsd(deposit);
+  return (
+    <div className="-mx-2 px-2 py-3">
+      <div className={cn("grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1", COLUMNS)}>
+        <div className="flex min-w-0 items-center gap-3">
+          <CashMark />
+          <div className="min-w-0">
+            <p className="flex items-center gap-2">
+              <span className="ns-body font-semibold text-ns-ink">Cash</span>
+              <span className="oc-badge bg-ns-sunken text-ns-ink-muted">Deposit</span>
+            </p>
+            <p className="ns-caption mt-0.5 truncate font-normal text-ns-ink-subtle">
+              {format(new Date(deposit.date), "MMM d, yyyy")}
+              <span className="sm:hidden">
+                {deposit.currency !== "USD" && ` · ${formatCurrency(deposit.amount, { currency: deposit.currency })}`}
+              </span>
+              {deposit.note && ` · ${deposit.note}`}
+            </p>
+          </div>
+        </div>
+
+        <p className="ns-label oc-num hidden font-normal text-ns-ink-subtle sm:block">—</p>
+
+        <div className="hidden min-w-0 sm:block">
+          <p className="ns-label oc-num truncate text-ns-ink">{formatCurrency(deposit.amount, { currency: deposit.currency })}</p>
+          <p className="ns-caption truncate font-normal text-ns-ink-subtle" title={depositRateTitle(deposit)}>
+            {depositRateLine(deposit)}
+          </p>
+        </div>
+
+        <div className="flex items-center justify-end gap-1 sm:justify-start">
+          <div className="text-right sm:text-left">
+            <p className="ns-body oc-num font-semibold text-ns-ink">{formatCurrency(usd, { signed: true })}</p>
+            <p className="ns-caption font-normal text-ns-ink-subtle">Added to cash</p>
+          </div>
+          <RemoveDepositButton onClick={onRemove} />
+        </div>
+      </div>
+    </div>
+  );
+}
 
 const COLUMNS = "sm:grid-cols-[minmax(0,1fr)_7rem_8rem_9rem]";
 
@@ -90,13 +191,15 @@ function LogEntry({ row, tags, fix }: { row: LedgerRow; tags: string[]; fix: str
  * position; the symbol is the row's link so keyboard users can reach it too.
  */
 function LogTable({
-  rows,
+  items,
   tagsByPosition,
   fixFor,
+  onRemoveDeposit,
 }: {
-  rows: LedgerRow[];
+  items: LogItem[];
   tagsByPosition: Map<string, string[]>;
   fixFor: (symbol: string) => string;
+  onRemoveDeposit: (deposit: CashDeposit) => void;
 }) {
   const router = useRouter();
   return (
@@ -111,7 +214,44 @@ function LogTable({
         </tr>
       </thead>
       <tbody>
-        {rows.map((row) => {
+        {items.map((item) => {
+          if (item.type === "cash") {
+            const d = item.deposit;
+            return (
+              <tr key={item.key}>
+                <td>
+                  <div className="oc-ticker">
+                    <CashMark size={34} />
+                    <div className="min-w-0">
+                      <span className="flex items-center gap-2">
+                        <span className="text-ns-ink">Cash</span>
+                        <span className="oc-badge bg-ns-sunken text-ns-ink-muted">Deposit</span>
+                      </span>
+                      {d.note && <div className="oc-sub truncate font-normal">{d.note}</div>}
+                    </div>
+                  </div>
+                </td>
+                <td className="text-ns-ink-muted">{format(new Date(d.date), "MMM d, yyyy")}</td>
+                <td className="oc-optional text-ns-ink-subtle">—</td>
+                <td>
+                  {formatCurrency(d.amount, { currency: d.currency })}
+                  <div className="oc-sub" title={depositRateTitle(d)}>
+                    {depositRateLine(d)}
+                  </div>
+                </td>
+                <td className="oc-right">
+                  <div className="flex items-center justify-end gap-1">
+                    <div>
+                      <span className="font-semibold text-ns-ink">{formatCurrency(depositUsd(d), { signed: true })}</span>
+                      <div className="oc-sub">Added to cash</div>
+                    </div>
+                    <RemoveDepositButton onClick={() => onRemoveDeposit(d)} />
+                  </div>
+                </td>
+              </tr>
+            );
+          }
+          const row = item.row;
           const isBuy = row.kind === "buy";
           const tags = isBuy ? (tagsByPosition.get(row.positionId) ?? []) : [];
           return (
@@ -181,14 +321,18 @@ function LogTable({
 }
 
 /**
- * Every buy and sell on the book, newest first. A buy reports what its shares
- * are worth against its entry price now (unrealized); a sell reports what the
- * sale locked in (realized). Both reconcile with the Profit & Loss band above.
+ * Every buy, sell and cash deposit on the book, newest first. A buy reports
+ * what its shares are worth against its entry price now (unrealized); a sell
+ * reports what the sale locked in (realized). Both reconcile with the Profit &
+ * Loss band above. A deposit shows what it added to cash, never as a gain.
  */
 export function RecordedLog({ className, defaultOpen = true }: { className?: string; defaultOpen?: boolean }) {
   const platform = usePlatform();
   const positions = usePositionStore((s) => s.positions);
   const strategies = usePositionStore((s) => s.strategies);
+  const cashDeposits = usePositionStore((s) => s.cashDeposits);
+  const deleteCashDeposit = usePositionStore((s) => s.deleteCashDeposit);
+  const [removing, setRemoving] = useState<CashDeposit | null>(null);
 
   const openSymbols = useMemo(
     () => Array.from(new Set(positions.filter((p) => p.status === "open").map((p) => p.symbol))),
@@ -201,6 +345,7 @@ export function RecordedLog({ className, defaultOpen = true }: { className?: str
     for (const [symbol, quote] of quotes) prices.set(symbol, quote.price);
     return buildLedger(positions, prices);
   }, [positions, quotes]);
+  const items = useMemo(() => mergeLog(rows, cashDeposits), [rows, cashDeposits]);
 
   const tagsByPosition = useMemo(() => {
     const map = new Map<string, string[]>();
@@ -216,23 +361,24 @@ export function RecordedLog({ className, defaultOpen = true }: { className?: str
   return (
     <NsCard
       title="Recorded log"
-      meta={`${rows.length} ${rows.length === 1 ? "entry" : "entries"} · newest first`}
+      meta={`${items.length} ${items.length === 1 ? "entry" : "entries"} · newest first`}
       className={className}
       collapsible
       defaultOpen={defaultOpen}
     >
-      {rows.length === 0 ? (
+      {items.length === 0 ? (
         <NsEmpty
           title="Nothing recorded"
-          description="Log a buy or a sell and it shows up here, with its price, date, and what it has made."
+          description="Log a buy, a sell or a cash deposit and it shows up here, with its price, date, and what it has made."
         />
       ) : (
         <div>
           {platform !== "phone" && (
             <LogTable
-              rows={rows}
+              items={items}
               tagsByPosition={tagsByPosition}
               fixFor={(symbol) => quotes.get(symbol)?.asOf ?? "no-fix"}
+              onRemoveDeposit={setRemoving}
             />
           )}
           {/* Phones keep the list rows. */}
@@ -250,22 +396,45 @@ export function RecordedLog({ className, defaultOpen = true }: { className?: str
                 <span>P&amp;L</span>
               </div>
               <div className="divide-y divide-ns-line md:hidden">
-                {rows.map((row) => (
-                  <LogEntry
-                    key={row.key}
-                    row={row}
-                    tags={tagsByPosition.get(row.positionId) ?? []}
-                    fix={quotes.get(row.symbol)?.asOf ?? "no-fix"}
-                  />
-                ))}
+                {items.map((item) =>
+                  item.type === "cash" ? (
+                    <CashEntry key={item.key} deposit={item.deposit} onRemove={() => setRemoving(item.deposit)} />
+                  ) : (
+                    <LogEntry
+                      key={item.key}
+                      row={item.row}
+                      tags={tagsByPosition.get(item.row.positionId) ?? []}
+                      fix={quotes.get(item.row.symbol)?.asOf ?? "no-fix"}
+                    />
+                  )
+                )}
               </div>
             </>
           )}
           <p className="ns-caption mt-3 font-normal text-ns-ink-subtle">
             P&amp;L uses each position&apos;s average entry price, so these rows add up to the Profit &amp; loss card.
+            {cashDeposits.length > 0 && " Deposits are capital, so they never count as profit."}
           </p>
         </div>
       )}
+      <ConfirmDialog
+        open={removing !== null}
+        title="Remove this deposit?"
+        description={
+          removing
+            ? `This takes ${formatCurrency(depositUsd(removing))}${
+                removing.currency !== "USD" ? ` (${formatCurrency(removing.amount, { currency: removing.currency })})` : ""
+              } from ${format(new Date(removing.date), "MMM d, yyyy")} out of your cash balance and the log.`
+            : ""
+        }
+        confirmLabel="Remove deposit"
+        tone="danger"
+        onConfirm={() => {
+          if (removing) deleteCashDeposit(removing.id);
+          setRemoving(null);
+        }}
+        onCancel={() => setRemoving(null)}
+      />
     </NsCard>
   );
 }
