@@ -28,7 +28,8 @@ export default function SettingsPage() {
             <CurrencySettings />
             <DataSettings />
           </div>
-          <div className="min-w-0">
+          {/* The Data menu's "Manage devices" lands here. */}
+          <div id="devices" className="min-w-0 scroll-mt-20">
             <DeviceSettings />
           </div>
         </div>

@@ -64,6 +64,10 @@ not dozens of same-day trades).
   in Settings) shows the portfolio value, cash, positions and change in your home
   currency at the latest daily reference rate. Per device; prices, fills and P&L
   stay in dollars.
+- **Data menu** (header, next to the theme toggle): quick Export (JSON and CSV),
+  Import, Reset to demo data, Erase all data, Sync devices, Manage devices and
+  Install app, plus a link to all settings. Same actions, same confirmations as
+  Settings.
 - **Settings** (sidebar, or the gear on phones):
   - *Currency*: which currency the totals show in, and your second (home) currency.
   - *Your data*: Export data (a JSON backup of everything, format v4, which
@@ -80,7 +84,8 @@ not dozens of same-day trades).
 - **Backup reminder**: your book lives on your own devices, and sync is not a
   backup (erasing on one paired device erases on all of them), so Settings shows
   when you last exported a JSON backup ("Last backup Nov 9 · 3 days ago"). After
-  14 days without one, a dot appears on the Settings link until you export.
+  14 days without one, a dot appears on the Data button (and the sidebar's
+  Settings link) until you export.
 - **Sync devices** (optional): Settings → Devices & sync. One device turns
   sync on and shows a QR code and a sync code; every other device you want in step
   scans it (in the app, so the iPhone Home Screen app works too) or types the code.
