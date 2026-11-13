@@ -12,13 +12,16 @@
  *   still carry their own "as of" time, so the page stays honest about their age.
  * - /api/logo: cache first (logos rarely change).
  * - Everything else under /api: network only.
+ *
+ * Push: FX rate alerts (opt-in, app/api/cron/fx-alerts) arrive as a push with
+ * { title, body, pair }; tapping the notification opens that pair's page.
  */
 export const dynamic = "force-static";
 
 const VERSION = process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 12) ?? `local-${Date.now()}`;
 
 // Pages fetched at install, so the app opens offline even on routes not visited yet.
-const SHELL = ["/", "/strategies", "/analysis", "/disclosures", "/positions/new"];
+const SHELL = ["/", "/strategies", "/analysis", "/fx", "/disclosures", "/positions/new"];
 
 const script = `
 const VERSION = ${JSON.stringify(VERSION)};
@@ -48,6 +51,42 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("message", (event) => {
   if (event.data === "SKIP_WAITING") self.skipWaiting();
+});
+
+self.addEventListener("push", (event) => {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch (error) {
+    data = { title: "FX alert", body: event.data ? event.data.text() : "" };
+  }
+  const pair = typeof data.pair === "string" ? data.pair : null;
+  const url = pair ? "/fx/" + pair.replace("/", "-").toLowerCase() : "/fx";
+  event.waitUntil(
+    self.registration.showNotification(data.title || "FX alert", {
+      body: data.body || "",
+      tag: data.alertId ? "fx-" + data.alertId : undefined,
+      icon: "/app-icons/icon-192.png",
+      badge: "/app-icons/icon-192.png",
+      data: { url },
+    })
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = (event.notification.data && event.notification.data.url) || "/fx";
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((windows) => {
+      for (const client of windows) {
+        if ("focus" in client) {
+          client.navigate(url);
+          return client.focus();
+        }
+      }
+      return self.clients.openWindow(url);
+    })
+  );
 });
 
 async function cacheFirst(request, cacheName) {

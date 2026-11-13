@@ -1,4 +1,4 @@
-import type { CustomSector, ExportPayload, Position, Strategy, WatchlistItem } from "./types";
+import type { CustomSector, ExportPayload, FxAlert, FxWatchItem, Position, Strategy, WatchlistItem } from "./types";
 import { normalizeSector, normalizeStrategy, normalizeWatchItem } from "./sync/book";
 import { SECTOR_SWATCHES } from "./sectors";
 import { migratePositionShape } from "./migratePosition";
@@ -8,16 +8,20 @@ export function buildExportPayload(
   positions: Position[],
   strategies: Strategy[],
   watchlist: WatchlistItem[],
-  customSectors: CustomSector[] = []
+  customSectors: CustomSector[] = [],
+  fxWatchlist: FxWatchItem[] = [],
+  fxAlerts: FxAlert[] = []
 ): ExportPayload {
   return {
     exportedAt: new Date().toISOString(),
-    version: 2,
+    version: 3,
     startingCash,
     positions,
     strategies,
     watchlist,
     customSectors,
+    fxWatchlist,
+    fxAlerts,
   };
 }
 
@@ -62,6 +66,37 @@ function isCustomSector(v: unknown): v is CustomSector {
   );
 }
 
+const PAIR_RE = /^[A-Z]{3}\/[A-Z]{3}$/;
+
+function isFxWatchItem(v: unknown): v is FxWatchItem {
+  if (typeof v !== "object" || v === null) return false;
+  const w = v as Record<string, unknown>;
+  return (
+    typeof w.pair === "string" &&
+    PAIR_RE.test(w.pair) &&
+    (w.direction === "base-to-quote" || w.direction === "quote-to-base") &&
+    typeof w.addedAt === "string"
+  );
+}
+
+function isFxAlert(v: unknown): v is FxAlert {
+  if (typeof v !== "object" || v === null) return false;
+  const a = v as Record<string, unknown>;
+  const c = a.condition as Record<string, unknown> | null;
+  return (
+    typeof a.id === "string" &&
+    typeof a.pair === "string" &&
+    PAIR_RE.test(a.pair) &&
+    typeof c === "object" &&
+    c !== null &&
+    (c.kind === "above" || c.kind === "below") &&
+    typeof c.level === "number" &&
+    Number.isFinite(c.level) &&
+    (a.repeat === "once" || a.repeat === "rearm") &&
+    (a.state === "armed" || a.state === "fired" || a.state === "paused")
+  );
+}
+
 /** Validates a parsed JSON blob against the export shape before it ever touches the store. */
 export function validateImportPayload(json: unknown): ImportResult {
   if (typeof json !== "object" || json === null) {
@@ -88,11 +123,20 @@ export function validateImportPayload(json: unknown): ImportResult {
     return { ok: false, error: "Invalid \"customSectors\" field." };
   }
 
+  // Version 3 added FX; older files have none.
+  if (p.fxWatchlist !== undefined && (!Array.isArray(p.fxWatchlist) || !p.fxWatchlist.every(isFxWatchItem))) {
+    return { ok: false, error: "Invalid \"fxWatchlist\" field." };
+  }
+  if (p.fxAlerts !== undefined && (!Array.isArray(p.fxAlerts) || !p.fxAlerts.every(isFxAlert))) {
+    return { ok: false, error: "Invalid \"fxAlerts\" field." };
+  }
+  const at = new Date().toISOString();
+
   return {
     ok: true,
     payload: {
       exportedAt: typeof p.exportedAt === "string" ? p.exportedAt : new Date().toISOString(),
-      version: 2,
+      version: 3,
       startingCash: p.startingCash,
       // Normalizes pre-multi-strategy exports (a bare `strategyId`) into strategyIds/customTags.
       positions: p.positions.map((pos) => migratePositionShape(pos as unknown as Record<string, unknown>)),
@@ -100,6 +144,26 @@ export function validateImportPayload(json: unknown): ImportResult {
       strategies: p.strategies.map(normalizeStrategy),
       watchlist: p.watchlist.map(normalizeWatchItem),
       customSectors: ((p.customSectors as CustomSector[] | undefined) ?? []).map(normalizeSector),
+      fxWatchlist: ((p.fxWatchlist as FxWatchItem[] | undefined) ?? []).map((w) => ({
+        pair: w.pair,
+        direction: w.direction,
+        addedAt: w.addedAt,
+        updatedAt: w.updatedAt ?? at,
+        ...(typeof w.note === "string" ? { note: w.note } : {}),
+      })),
+      fxAlerts: ((p.fxAlerts as FxAlert[] | undefined) ?? []).map((a) => ({
+        id: a.id,
+        pair: a.pair,
+        condition: { kind: a.condition.kind, level: a.condition.level },
+        repeat: a.repeat,
+        state: a.state,
+        firedAt: typeof a.firedAt === "string" ? a.firedAt : null,
+        firedRate: typeof a.firedRate === "number" ? a.firedRate : null,
+        seen: true,
+        createdAt: typeof a.createdAt === "string" ? a.createdAt : at,
+        updatedAt: typeof a.updatedAt === "string" ? a.updatedAt : at,
+        ...(typeof a.note === "string" ? { note: a.note } : {}),
+      })),
     },
   };
 }

@@ -1,0 +1,24 @@
+{
+  "_comment": "Policy-rate decision dates, copied by hand from the official schedules. Update once a year. Fed dates are the second day of each FOMC meeting; 2027 Fed dates are tentative until confirmed at the meeting before; the 26-27 Oct 2027 meeting is a strategy meeting with no rate vote, so it is left out.",
+  "updated": "2026-11-12",
+  "banks": [
+    {
+      "currency": "USD",
+      "name": "Fed FOMC",
+      "source": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
+      "decisions": [
+        "2026-01-28", "2026-03-18", "2026-04-29", "2026-06-17", "2026-07-29", "2026-09-16", "2026-10-28", "2026-12-09",
+        "2027-01-27", "2027-03-17", "2027-04-28", "2027-06-09", "2027-07-28", "2027-09-15", "2027-11-17"
+      ]
+    },
+    {
+      "currency": "THB",
+      "name": "BoT MPC",
+      "source": "https://www.bot.or.th/en/our-roles/monetary-policy/mpc-meeting.html",
+      "decisions": [
+        "2026-02-25", "2026-04-29", "2026-06-24", "2026-08-26", "2026-10-28", "2026-12-23",
+        "2027-03-03", "2027-04-28", "2027-06-23", "2027-08-25", "2027-10-27", "2027-12-22"
+      ]
+    }
+  ]
+}

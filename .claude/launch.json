@@ -19,6 +19,15 @@
       ],
       "port": 3012,
       "autoPort": false
+    },
+    {
+      "name": "stock-tracker-dev-webpack",
+      "runtimeExecutable": "/bin/bash",
+      "runtimeArgs": [
+        "-c",
+        "export PATH=/opt/homebrew/bin:$PATH && npx next dev --webpack -p 3002"
+      ],
+      "port": 3002
     }
   ]
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { mergeBooks, normalizeStrategy, normalizeWatchItem, TOMBSTONE_TTL_DAYS, type SyncBook } from "../sync/book";
-import type { CustomSector, Position, Strategy, WatchlistItem } from "../types";
+import { mergeBooks, normalizeStrategy, normalizeSyncBook, normalizeWatchItem, TOMBSTONE_TTL_DAYS, type SyncBook } from "../sync/book";
+import type { CustomSector, FxAlert, FxPair, FxWatchItem, Position, Strategy, WatchlistItem } from "../types";
 
 const T = (day: number) => new Date(Date.UTC(2026, 10, day)).toISOString();
 const NOW = Date.UTC(2026, 10, 20);
@@ -51,6 +51,9 @@ function book(overrides: Partial<SyncBook> = {}): SyncBook {
     startingCash: 10_000,
     startingCashUpdatedAt: null,
     watchlistOrderUpdatedAt: null,
+    fxWatchlist: [],
+    fxWatchlistOrderUpdatedAt: null,
+    fxAlerts: [],
     deletions: {},
     ...overrides,
   };
@@ -178,5 +181,83 @@ describe("back-fill for data saved before sync", () => {
     const legacyStrategy = { id: "s", name: "S", entryRule: "", exitRule: "", createdAt: T(2) };
     expect(normalizeStrategy(legacyStrategy).updatedAt).toBe(T(2));
     expect(normalizeWatchItem({ symbol: "AAPL", addedAt: T(3) }).updatedAt).toBe(T(3));
+  });
+});
+
+describe("FX in the synced book", () => {
+  const fxWatch = (pair: FxPair, updatedAt = T(1), direction: FxWatchItem["direction"] = "base-to-quote"): FxWatchItem => ({
+    pair,
+    direction,
+    addedAt: T(1),
+    updatedAt,
+  });
+  const fxAlert = (id: string, updatedAt: string, overrides: Partial<FxAlert> = {}): FxAlert => ({
+    id,
+    pair: "USD/THB",
+    condition: { kind: "below", level: 33.5 },
+    repeat: "once",
+    state: "armed",
+    firedAt: null,
+    firedRate: null,
+    seen: true,
+    createdAt: T(1),
+    updatedAt,
+    ...overrides,
+  });
+
+  it("keeps pairs from both devices, in the order of whichever reordered last", () => {
+    const merged = mergeBooks(
+      book({ fxWatchlist: [fxWatch("USD/THB"), fxWatch("EUR/THB")], fxWatchlistOrderUpdatedAt: T(5) }),
+      book({ fxWatchlist: [fxWatch("EUR/THB"), fxWatch("JPY/THB")], fxWatchlistOrderUpdatedAt: T(3) }),
+      NOW
+    );
+    expect(merged.fxWatchlist.map((w) => w.pair)).toEqual(["USD/THB", "EUR/THB", "JPY/THB"]);
+    expect(merged.fxWatchlistOrderUpdatedAt).toBe(T(5));
+  });
+
+  it("takes the newer conversion direction for a pair edited on both devices", () => {
+    const merged = mergeBooks(
+      book({ fxWatchlist: [fxWatch("USD/THB", T(2), "base-to-quote")] }),
+      book({ fxWatchlist: [fxWatch("USD/THB", T(4), "quote-to-base")] }),
+      NOW
+    );
+    expect(merged.fxWatchlist).toEqual([fxWatch("USD/THB", T(4), "quote-to-base")]);
+  });
+
+  it("drops a pair removed on one device and not changed since", () => {
+    const merged = mergeBooks(
+      book({ fxWatchlist: [fxWatch("USD/THB", T(2))] }),
+      book({ deletions: { "fxwatch:USD/THB": T(3) } }),
+      NOW
+    );
+    expect(merged.fxWatchlist).toEqual([]);
+  });
+
+  it("keeps an alert's newer side: fired on one device beats an older edit on the other", () => {
+    const fired = fxAlert("a1", T(6), { state: "fired", firedAt: "2026-11-06", firedRate: 33.4, seen: false });
+    const merged = mergeBooks(book({ fxAlerts: [fxAlert("a1", T(4), { note: "edited" })] }), book({ fxAlerts: [fired] }), NOW);
+    expect(merged.fxAlerts).toEqual([fired]);
+  });
+
+  it("drops a deleted alert, but keeps one edited after the deletion", () => {
+    const merged = mergeBooks(
+      book({ fxAlerts: [fxAlert("gone", T(2)), fxAlert("kept", T(8))] }),
+      book({ deletions: { "fxalert:gone": T(3), "fxalert:kept": T(5) } }),
+      NOW
+    );
+    expect(merged.fxAlerts.map((a) => a.id)).toEqual(["kept"]);
+  });
+
+  it("merges with a book from a device that predates FX without losing FX data", () => {
+    const legacy = book();
+    delete (legacy as Partial<SyncBook>).fxWatchlist;
+    delete (legacy as Partial<SyncBook>).fxAlerts;
+    delete (legacy as Partial<SyncBook>).fxWatchlistOrderUpdatedAt;
+    const current = book({ fxWatchlist: [fxWatch("USD/THB")], fxAlerts: [fxAlert("a1", T(2))] });
+    const merged = mergeBooks(legacy, current, NOW);
+    expect(merged.fxWatchlist.map((w) => w.pair)).toEqual(["USD/THB"]);
+    expect(merged.fxAlerts.map((a) => a.id)).toEqual(["a1"]);
+    expect(mergeBooks(current, legacy, NOW)).toEqual(merged);
+    expect(normalizeSyncBook(legacy).fxAlerts).toEqual([]);
   });
 });

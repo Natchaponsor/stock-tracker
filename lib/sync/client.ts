@@ -10,6 +10,9 @@ import { selectSyncBook, usePositionStore } from "@/store/usePositionStore";
 
 /** Store fields that travel with sync; a change to any of them schedules a push. */
 const SYNCED_FIELDS = [
+  "fxWatchlist",
+  "fxWatchlistOrderUpdatedAt",
+  "fxAlerts",
   "positions",
   "strategies",
   "watchlist",

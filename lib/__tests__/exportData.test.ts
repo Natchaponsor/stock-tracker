@@ -121,3 +121,48 @@ describe("validateImportPayload", () => {
     if (!result.ok) expect(result.error).toMatch(/customSectors/);
   });
 });
+
+describe("FX in exports", () => {
+  it("round-trips the FX watchlist and alerts", () => {
+    const exported = buildExportPayload(
+      0,
+      [],
+      [],
+      [],
+      [],
+      [{ pair: "USD/THB", direction: "base-to-quote", addedAt: "2026-11-01T00:00:00.000Z", updatedAt: "2026-11-01T00:00:00.000Z" }],
+      [
+        {
+          id: "a1",
+          pair: "USD/THB",
+          condition: { kind: "below", level: 33.5 },
+          repeat: "rearm",
+          state: "armed",
+          firedAt: null,
+          firedRate: null,
+          seen: true,
+          note: "Q1 top-up",
+          createdAt: "2026-11-01T00:00:00.000Z",
+          updatedAt: "2026-11-01T00:00:00.000Z",
+        },
+      ]
+    );
+    const result = validateImportPayload(JSON.parse(JSON.stringify(exported)));
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.payload.fxWatchlist).toEqual(exported.fxWatchlist);
+      expect(result.payload.fxAlerts).toEqual(exported.fxAlerts);
+    }
+  });
+
+  it("imports a v2 file with no FX", () => {
+    const v2 = { version: 2, startingCash: 1, positions: [], strategies: [], watchlist: [], customSectors: [] };
+    const result = validateImportPayload(v2);
+    expect(result.ok && result.payload.fxWatchlist).toEqual([]);
+  });
+
+  it("rejects a malformed FX alert", () => {
+    const bad = { startingCash: 1, positions: [], strategies: [], watchlist: [], fxAlerts: [{ id: "x", pair: "USDTHB" }] };
+    expect(validateImportPayload(bad).ok).toBe(false);
+  });
+});

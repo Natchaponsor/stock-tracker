@@ -86,3 +86,37 @@ describe("migratePersistedBook", () => {
     expect(migrated.customSectors?.[0].updatedAt).toBeDefined();
   });
 });
+
+describe("FX store actions", () => {
+  beforeEach(() => {
+    store.getState().eraseAll();
+    store.setState({ deletions: {}, homeCurrency: "USD" });
+  });
+
+  it("seeds the FX watchlist the first time a non-USD home currency is picked", () => {
+    store.getState().setHomeCurrency("THB");
+    expect(store.getState().fxWatchlist.map((w) => w.pair)).toEqual(["USD/THB", "EUR/THB", "JPY/THB", "GBP/THB"]);
+    // Per-device: the home currency never travels with the book.
+    expect(selectSyncBook(store.getState())).not.toHaveProperty("homeCurrency");
+  });
+
+  it("removes a pair with its alerts and tombstones both", () => {
+    store.getState().addFxPair("USD/THB", "base-to-quote");
+    store.getState().addFxAlert({ id: "a1", pair: "USD/THB", condition: { kind: "below", level: 33.5 }, repeat: "once" });
+    store.getState().removeFxPair("USD/THB");
+    const { fxWatchlist, fxAlerts, deletions } = store.getState();
+    expect(fxWatchlist).toEqual([]);
+    expect(fxAlerts).toEqual([]);
+    expect(Object.keys(deletions).sort()).toEqual(["fxalert:a1", "fxwatch:USD/THB"]);
+  });
+
+  it("fires, dismisses and re-arms an alert", () => {
+    store.getState().addFxAlert({ id: "a1", pair: "USD/THB", condition: { kind: "below", level: 33.5 }, repeat: "rearm" });
+    store.getState().applyFxAlertTransitions([{ id: "a1", pair: "USD/THB", to: "fired", rate: 33.4, date: "2026-11-12" }]);
+    expect(store.getState().fxAlerts[0]).toMatchObject({ state: "fired", firedRate: 33.4, seen: false });
+    store.getState().dismissFxAlert("a1");
+    expect(store.getState().fxAlerts[0].seen).toBe(true);
+    store.getState().updateFxAlert("a1", { condition: { kind: "below", level: 33 } });
+    expect(store.getState().fxAlerts[0]).toMatchObject({ state: "armed", firedAt: null, firedRate: null });
+  });
+});

@@ -43,6 +43,8 @@ export function DataMenu({ onPage = false }: { onPage?: boolean }) {
   const strategies = usePositionStore((s) => s.strategies);
   const watchlist = usePositionStore((s) => s.watchlist);
   const customSectors = usePositionStore((s) => s.customSectors);
+  const fxWatchlist = usePositionStore((s) => s.fxWatchlist);
+  const fxAlerts = usePositionStore((s) => s.fxAlerts);
   const eraseAll = usePositionStore((s) => s.eraseAll);
   const resetDemo = usePositionStore((s) => s.resetDemo);
   const importData = usePositionStore((s) => s.importData);
@@ -90,7 +92,15 @@ export function DataMenu({ onPage = false }: { onPage?: boolean }) {
 
   function runPendingAction() {
     if (pending === "export") {
-      const payload = buildExportPayload(startingCash, positions, strategies, watchlist, customSectors);
+      const payload = buildExportPayload(
+        startingCash,
+        positions,
+        strategies,
+        watchlist,
+        customSectors,
+        fxWatchlist,
+        fxAlerts
+      );
       downloadJson(`stock-tracker-export-${format(new Date(), "yyyy-MM-dd")}.json`, payload);
       markExported();
     } else if (pending === "erase") {
@@ -133,7 +143,7 @@ export function DataMenu({ onPage = false }: { onPage?: boolean }) {
     pending === "import" && importPayload
       ? {
           title: "Import this file?",
-          description: `Found ${importPayload.positions.length} position${importPayload.positions.length === 1 ? "" : "s"}, ${importPayload.strategies.length} ${importPayload.strategies.length === 1 ? "strategy" : "strategies"}, ${importPayload.watchlist.length} watchlist symbol${importPayload.watchlist.length === 1 ? "" : "s"}, ${importPayload.customSectors.length} custom sector${importPayload.customSectors.length === 1 ? "" : "s"}, and a $${importPayload.startingCash.toLocaleString()} starting balance. This replaces everything currently in the app. This cannot be undone.${reachesDevices}`,
+          description: `Found ${importPayload.positions.length} position${importPayload.positions.length === 1 ? "" : "s"}, ${importPayload.strategies.length} ${importPayload.strategies.length === 1 ? "strategy" : "strategies"}, ${importPayload.watchlist.length} watchlist symbol${importPayload.watchlist.length === 1 ? "" : "s"}, ${importPayload.customSectors.length} custom sector${importPayload.customSectors.length === 1 ? "" : "s"}, ${importPayload.fxWatchlist.length} FX pair${importPayload.fxWatchlist.length === 1 ? "" : "s"}, ${importPayload.fxAlerts.length} FX alert${importPayload.fxAlerts.length === 1 ? "" : "s"}, and a $${importPayload.startingCash.toLocaleString()} starting balance. This replaces everything currently in the app. This cannot be undone.${reachesDevices}`,
           confirmLabel: "Import & replace",
           tone: "danger" as const,
         }

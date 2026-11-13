@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChartLine, Eye, EyeOff, FileText, LayoutDashboard, ListChecks, RefreshCw } from "lucide-react";
+import { ArrowLeftRight, ChartLine, Eye, EyeOff, FileText, LayoutDashboard, ListChecks, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { LogPositionMenu } from "@/components/shell/LogPositionMenu";
 import { DataMenu } from "@/components/shell/DataMenu";
@@ -13,13 +13,18 @@ import { usePriceAge } from "@/hooks/usePriceAge";
 import { usePositionStore } from "@/store/usePositionStore";
 import { useNow } from "@/components/log/clock";
 import { usePlatform } from "@/hooks/usePlatform";
+import { FxAlertWatcher } from "@/components/fx/FxAlertWatcher";
 
 const NAV_ITEMS = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/strategies", label: "Strategies", icon: ListChecks },
   { href: "/analysis", label: "Analysis", icon: ChartLine },
+  { href: "/fx", label: "FX", icon: ArrowLeftRight },
   { href: "/disclosures", label: "Disclosures", icon: FileText },
 ];
+
+/** The phone tab bar has room for four tabs; FX lives inside Analysis there. */
+const TAB_ITEMS = NAV_ITEMS.filter((item) => item.href !== "/fx");
 
 const ROUND_BTN =
   "flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full bg-ns-card text-ns-ink-muted shadow-ns-card transition-colors hover:text-ns-ink disabled:opacity-60";
@@ -43,6 +48,7 @@ export function NavyShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="oc-app bg-ns-page text-ns-ink">
+      <FxAlertWatcher />
       {showWeb && (
         <aside className="oc-sidebar sticky top-0 h-screen self-start">
           <Link href="/" className="oc-brand text-ns-ink no-underline" aria-label="Stock Tracker — dashboard">
@@ -105,14 +111,18 @@ export function NavyShell({ children }: { children: React.ReactNode }) {
           {/* A slightly narrower add-button column and side padding than the
               stock tab bar, so "Disclosures" fits whole on a 360px phone. */}
           <nav className="oc-tabbar mx-auto max-w-[480px] grid-cols-[1fr_1fr_64px_1fr_1fr]! px-1!" aria-label="Sections">
-            {NAV_ITEMS.slice(0, 2).map((item) => (
+            {TAB_ITEMS.slice(0, 2).map((item) => (
               <TabLink key={item.href} item={item} active={isActive(item.href)} />
             ))}
             {/* The middle column holds the raised add button. Stretching it to
                 the bar's full height lets the button sit half above the bar. */}
             <LogPositionMenu variant="fab" className="-mt-3 self-stretch" />
-            {NAV_ITEMS.slice(2).map((item) => (
-              <TabLink key={item.href} item={item} active={isActive(item.href)} />
+            {TAB_ITEMS.slice(2).map((item) => (
+              <TabLink
+                key={item.href}
+                item={item}
+                active={isActive(item.href) || (item.href === "/analysis" && isActive("/fx"))}
+              />
             ))}
           </nav>
         </div>

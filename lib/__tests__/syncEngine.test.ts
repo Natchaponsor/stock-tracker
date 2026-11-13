@@ -48,6 +48,9 @@ function emptyBook(overrides: Partial<SyncBook> = {}): SyncBook {
     startingCash: 10_000,
     startingCashUpdatedAt: null,
     watchlistOrderUpdatedAt: null,
+    fxWatchlist: [],
+    fxWatchlistOrderUpdatedAt: null,
+    fxAlerts: [],
     deletions: {},
     ...overrides,
   };

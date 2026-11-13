@@ -119,11 +119,70 @@ export interface CustomSector {
 /** Full snapshot of user data, for export/backup — matches the store's persisted shape. */
 export interface ExportPayload {
   exportedAt: string;
-  /** v2 added customSectors; v1 files still import, with no custom sectors. */
-  version: 2;
+  /** v2 added customSectors, v3 the FX watchlist and alerts; older files still import. */
+  version: 3;
   startingCash: number;
   positions: Position[];
   strategies: Strategy[];
   watchlist: WatchlistItem[];
   customSectors: CustomSector[];
+  fxWatchlist: FxWatchItem[];
+  fxAlerts: FxAlert[];
+}
+
+// ── FX ───────────────────────────────────────────────────────────────────────
+
+/** "USD/THB" = how many THB one USD buys. Upper case, base/quote. */
+export type FxPair = `${string}/${string}`;
+
+/** Which way the user usually converts on a pair. Decides what "a better rate" means. */
+export type FxDirection = "base-to-quote" | "quote-to-base";
+
+/** A currency pair on the FX watchlist. Keyed by `pair`. */
+export interface FxWatchItem {
+  pair: FxPair;
+  direction: FxDirection;
+  addedAt: string;
+  /** Last change, for device sync (newer wins). */
+  updatedAt: string;
+  note?: string;
+}
+
+export type FxAlertCondition = { kind: "above"; level: number } | { kind: "below"; level: number };
+
+/** A rate alert on a pair. Keyed by `id`. */
+export interface FxAlert {
+  id: string;
+  pair: FxPair;
+  condition: FxAlertCondition;
+  /** "once" disarms after it fires; "rearm" arms again once the rate is back past
+   * the level by FX_REARM_GAP, so a rate sitting on the level can't fire every day. */
+  repeat: "once" | "rearm";
+  state: "armed" | "fired" | "paused";
+  /** Date of the rate that fired it (YYYY-MM-DD). */
+  firedAt: string | null;
+  firedRate: number | null;
+  /** False from the moment it fires until the user dismisses the call-out. */
+  seen: boolean;
+  note?: string;
+  createdAt: string;
+  /** Last change, for device sync (newer wins). */
+  updatedAt: string;
+}
+
+/** One day's reference rate for a pair. Never persisted. */
+export interface FxBar {
+  date: string; // YYYY-MM-DD
+  rate: number;
+}
+
+/** A forex headline matched to a currency by keyword. */
+export interface FxNewsItem {
+  headline: string;
+  source: string;
+  url: string;
+  /** ISO time. */
+  datetime: string;
+  /** The currency the headline matched. */
+  currency: string;
 }
