@@ -5,6 +5,7 @@
 The book can sync between devices, encrypted on the device (`lib/sync/`). Synced data is positions, strategies, watchlist (and its order), custom sectors, starting cash, cash deposits, the FX watchlist and alerts, and the device list.
 
 - Change synced data only through the store actions in `store/usePositionStore.ts`: they stamp `updatedAt`, record tombstones in `deletions` on delete, and stamp `startingCashUpdatedAt` / `watchlistOrderUpdatedAt`. Setting these fields directly breaks merging.
+- Device names change only through `renameDevice`, which stamps `nameUpdatedAt`; the newest rename wins in the merge. `touchDevice` adds or refreshes this device's entry and never changes an existing entry's name, and a device copies its synced name to its local name after each sync.
 - A new synced field or collection needs a change time, a merge rule in `lib/sync/book.ts`, a place in `selectSyncBook`/`applySynced`, and a test in `lib/__tests__/syncBook.test.ts`.
 - Per-device settings (theme, hide amounts, backup dates, home and display currency, this device's id and name) never go into `SyncBook`.
 - The sync code is the only secret. It lives in localStorage under `stock-tracker-sync`, never in the book, exports or URLs (a `#pair=` link is cleared from the address bar on open).
