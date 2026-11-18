@@ -1,7 +1,7 @@
 "use client";
 
 import { SyncEngine } from "./engine";
-import { getLocalDevice } from "./device";
+import { getLocalDevice, setLocalDeviceName } from "./device";
 import { selectSyncBook, usePositionStore } from "@/store/usePositionStore";
 
 /**
@@ -79,9 +79,16 @@ export function attachSync() {
   });
 
   // Keep this device on the synced device list. touchDevice only changes the
-  // book when the entry is missing, renamed or hours old, so this settles.
+  // book when the entry is missing or hours old, so this settles. The synced
+  // entry's name wins over the one kept here: if another device renamed this
+  // one, take that name, so it's also used should the entry be re-added.
   e.subscribe(() => {
-    if (e.getStatus().state === "synced") usePositionStore.getState().touchDevice(getLocalDevice());
+    if (e.getStatus().state !== "synced") return;
+    const store = usePositionStore.getState();
+    let local = getLocalDevice();
+    const entry = store.devices.find((d) => d.id === local.id);
+    if (entry && entry.name !== local.name) local = setLocalDeviceName(entry.name);
+    store.touchDevice(local);
   });
 
   document.addEventListener("visibilitychange", syncSoon);

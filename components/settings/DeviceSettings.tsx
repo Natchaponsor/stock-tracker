@@ -25,27 +25,82 @@ function DeviceIcon({ name, className }: { name: string; className?: string }) {
   return <Icon className={className} aria-hidden="true" />;
 }
 
+/** Inline name field for a device row: Save keeps it, Escape or ✕ backs out. */
+function RenameForm({
+  id,
+  initial,
+  onSave,
+  onCancel,
+}: {
+  id: string;
+  initial: string;
+  onSave: (name: string) => void;
+  onCancel: () => void;
+}) {
+  const [draft, setDraft] = useState(initial);
+  const inputId = `device-name-${id}`;
+  return (
+    <form
+      className="flex min-w-0 flex-1 items-center gap-2"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (draft.trim()) onSave(draft);
+      }}
+    >
+      <label htmlFor={inputId} className="sr-only">
+        Device name
+      </label>
+      <input
+        id={inputId}
+        value={draft}
+        maxLength={MAX_DEVICE_NAME}
+        onChange={(e) => setDraft(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") onCancel();
+        }}
+        autoFocus
+        onFocus={(e) => e.target.select()}
+        className={cn(fieldClass, "ns-body h-10 min-w-0 flex-1 px-3")}
+      />
+      <Button type="submit" size="sm" variant="primary" disabled={!draft.trim()}>
+        <Check className="h-4 w-4" />
+        Save
+      </Button>
+      <button
+        type="button"
+        onClick={onCancel}
+        className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full text-ns-ink-muted hover:bg-ns-sunken"
+      >
+        <X className="h-4 w-4" />
+        <span className="sr-only">Cancel</span>
+      </button>
+    </form>
+  );
+}
+
 /**
  * Devices & sync: this device's name, the devices sharing the book, and every
  * sync control (turn on, pair, sync now, change code, turn off, delete).
  *
  * Sync works by a shared code, so removing a device from the list only tidies
  * it; locking a device out means changing the code, which the copy says.
+ *
+ * Any device can rename any entry. The newest rename wins everywhere, and a
+ * device renamed elsewhere adopts that name (lib/sync/client.ts).
  */
 export function DeviceSettings() {
   const status = useSyncStatus();
   const now = useNow();
   const showSyncDialog = useSyncDialog((s) => s.show);
   const devices = usePositionStore((s) => s.devices);
-  const touchDevice = usePositionStore((s) => s.touchDevice);
+  const renameDevice = usePositionStore((s) => s.renameDevice);
   const removeDevice = usePositionStore((s) => s.removeDevice);
   const forgetOtherDevices = usePositionStore((s) => s.forgetOtherDevices);
   const install = useInstallApp();
   const canInstall = !install.installed && (install.canPrompt || install.isIos);
 
   const [local, setLocal] = useState<LocalDevice>(() => getLocalDevice());
-  const [renaming, setRenaming] = useState(false);
-  const [draft, setDraft] = useState(local.name);
+  const [renamingId, setRenamingId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<"rotate" | "delete" | "off" | { remove: SyncDevice } | null>(null);
@@ -54,6 +109,8 @@ export function DeviceSettings() {
   const isOn = status.state !== "off";
   const engine = getSyncEngine();
   const others = devices.filter((d) => d.id !== local.id);
+  // The synced entry's name wins: another device may have renamed this one.
+  const localName = devices.find((d) => d.id === local.id)?.name ?? local.name;
 
   async function run(action: () => Promise<unknown>) {
     setBusy(true);
@@ -67,12 +124,15 @@ export function DeviceSettings() {
     }
   }
 
-  function saveName() {
-    const saved = setLocalDeviceName(draft);
-    setLocal(saved);
-    setDraft(saved.name);
-    setRenaming(false);
-    if (engine.isOn()) touchDevice(saved);
+  function saveName(id: string, name: string) {
+    if (id === local.id) {
+      const saved = setLocalDeviceName(name);
+      setLocal(saved);
+      renameDevice(id, saved.name);
+    } else {
+      renameDevice(id, name);
+    }
+    setRenamingId(null);
   }
 
   const statusTone =
@@ -147,55 +207,22 @@ export function DeviceSettings() {
       {/* ── This device ── */}
       <div className="flex items-center gap-3 rounded-ns-md border border-ns-line p-3">
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-ns-primary-soft text-ns-primary-text">
-          <DeviceIcon name={local.name} className="h-5 w-5" />
+          <DeviceIcon name={localName} className="h-5 w-5" />
         </span>
-        {renaming ? (
-          <form
-            className="flex min-w-0 flex-1 items-center gap-2"
-            onSubmit={(e) => {
-              e.preventDefault();
-              saveName();
-            }}
-          >
-            <label htmlFor="device-name" className="sr-only">
-              Device name
-            </label>
-            <input
-              id="device-name"
-              value={draft}
-              maxLength={MAX_DEVICE_NAME}
-              onChange={(e) => setDraft(e.target.value)}
-              autoFocus
-              className={cn(fieldClass, "ns-body h-10 min-w-0 flex-1 px-3")}
-            />
-            <Button type="submit" size="sm" variant="primary" disabled={!draft.trim()}>
-              <Check className="h-4 w-4" />
-              Save
-            </Button>
-            <button
-              type="button"
-              onClick={() => {
-                setDraft(local.name);
-                setRenaming(false);
-              }}
-              className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full text-ns-ink-muted hover:bg-ns-sunken"
-            >
-              <X className="h-4 w-4" />
-              <span className="sr-only">Cancel</span>
-            </button>
-          </form>
+        {renamingId === local.id ? (
+          <RenameForm id="local" initial={localName} onSave={(name) => saveName(local.id, name)} onCancel={() => setRenamingId(null)} />
         ) : (
           <>
             <div className="min-w-0 flex-1">
               <p className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                <span className="ns-body min-w-0 break-words font-semibold text-ns-ink">{local.name}</span>
+                <span className="ns-body min-w-0 break-words font-semibold text-ns-ink">{localName}</span>
                 <span className="oc-badge oc-badge-info shrink-0">This device</span>
               </p>
               <p className="ns-caption mt-0.5 font-normal text-ns-ink-subtle">
                 {isOn ? "Shown by this name on your other devices" : "Name it so you can tell your devices apart"}
               </p>
             </div>
-            <Button size="sm" variant="ghost" onClick={() => setRenaming(true)}>
+            <Button size="sm" variant="ghost" onClick={() => setRenamingId(local.id)}>
               <Pencil className="h-3.5 w-3.5" />
               Rename
             </Button>
@@ -216,16 +243,31 @@ export function DeviceSettings() {
               {others.map((d) => (
                 <li key={d.id} className="flex items-center gap-3 px-3 py-2.5">
                   <DeviceIcon name={d.name} className="h-4 w-4 shrink-0 text-ns-ink-subtle" />
-                  <div className="min-w-0 flex-1">
-                    <p className="ns-body truncate text-ns-ink">{d.name}</p>
-                    <p className="ns-caption font-normal text-ns-ink-subtle">
-                      Last synced {now === null ? format(new Date(d.lastSeenAt), "MMM d") : formatAgo(now - Date.parse(d.lastSeenAt))}
-                      {" · "}joined {format(new Date(d.addedAt), "MMM d, yyyy")}
-                    </p>
-                  </div>
-                  <Button size="sm" variant="ghost" onClick={() => setConfirm({ remove: d })}>
-                    Remove
-                  </Button>
+                  {renamingId === d.id ? (
+                    <RenameForm id={d.id} initial={d.name} onSave={(name) => saveName(d.id, name)} onCancel={() => setRenamingId(null)} />
+                  ) : (
+                    <>
+                      <div className="min-w-0 flex-1">
+                        <p className="ns-body truncate text-ns-ink">{d.name}</p>
+                        <p className="ns-caption font-normal text-ns-ink-subtle">
+                          Last synced {now === null ? format(new Date(d.lastSeenAt), "MMM d") : formatAgo(now - Date.parse(d.lastSeenAt))}
+                          {" · "}joined {format(new Date(d.addedAt), "MMM d, yyyy")}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setRenamingId(d.id)}
+                        aria-label={`Rename ${d.name}`}
+                        title="Rename"
+                        className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full text-ns-ink-muted transition-colors duration-150 hover:bg-ns-sunken hover:text-ns-ink focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ns-ocean-100"
+                      >
+                        <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
+                      </button>
+                      <Button size="sm" variant="ghost" onClick={() => setConfirm({ remove: d })}>
+                        Remove
+                      </Button>
+                    </>
+                  )}
                 </li>
               ))}
             </ul>

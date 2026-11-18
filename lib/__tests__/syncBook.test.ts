@@ -317,6 +317,25 @@ describe("cash deposits and devices in sync", () => {
     expect(back.devices.map((d) => d.id)).toEqual(["lost"]);
   });
 
+  it("keeps a rename made on another device over the renamed device's own later refresh", () => {
+    // The phone refreshed its own entry at T(6) without having seen the rename yet.
+    const own = device("phone", T(6), "iPhone · Safari");
+    const renamedElsewhere: SyncDevice = { ...device("phone", T(3), "Top's iPhone"), nameUpdatedAt: T(4), updatedAt: T(4) };
+    const a = book({ devices: [own] });
+    const b = book({ devices: [renamedElsewhere] });
+    const merged = mergeBooks(a, b, NOW);
+    expect(merged.devices).toEqual([{ ...own, name: "Top's iPhone", nameUpdatedAt: T(4) }]);
+    expect(mergeBooks(b, a, NOW)).toEqual(merged);
+  });
+
+  it("takes the newer of two renames, whichever entry is newer otherwise", () => {
+    const first: SyncDevice = { ...device("mac", T(8), "Mac"), nameUpdatedAt: T(4) };
+    const second: SyncDevice = { ...device("mac", T(5), "Work Mac"), nameUpdatedAt: T(5) };
+    const merged = mergeBooks(book({ devices: [first] }), book({ devices: [second] }), NOW);
+    expect(merged.devices[0]).toMatchObject({ name: "Work Mac", nameUpdatedAt: T(5), lastSeenAt: T(8), updatedAt: T(8) });
+    expect(mergeBooks(book({ devices: [second] }), book({ devices: [first] }), NOW)).toEqual(merged);
+  });
+
   it("merges symmetrically with deposits and devices", () => {
     const a = book({ cashDeposits: [deposit("d1", T(2))], devices: [device("mac", T(3))] });
     const b = book({ cashDeposits: [deposit("d2", T(2))], devices: [device("phone", T(4))] });

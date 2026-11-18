@@ -35,7 +35,8 @@ export interface SyncBook {
   fxAlerts: FxAlert[];
   /** Cash put into the book, in any currency. */
   cashDeposits: CashDeposit[];
-  /** The devices sharing this book. Each one keeps its own entry fresh. */
+  /** The devices sharing this book. Each one keeps its own entry fresh; any device
+   * may rename any entry. */
   devices: SyncDevice[];
   /** `kind:key` → when it was deleted. Keys: position/strategy/sector/FX alert/deposit/
    * device ids, watch symbols, FX pairs. */
@@ -105,6 +106,23 @@ function mergePosition(a: Position, b: Position): Position {
     exits: unionById<Fill>(a.exits, b.exits),
     notes: unionById<JournalNote>(a.notes, b.notes),
   };
+}
+
+/**
+ * A device entry has two writers: the device itself refreshes `lastSeenAt`, and
+ * any device may rename it. The newer entry wins, but the name comes from the
+ * newer deliberate rename (`nameUpdatedAt`), so a rename made elsewhere survives
+ * the device's own later refresh. Equal rename times fall back to the winner.
+ */
+function mergeDevice(a: SyncDevice, b: SyncDevice): SyncDevice {
+  const winner = newer(a, b);
+  const aName = a.nameUpdatedAt ?? "";
+  const bName = b.nameUpdatedAt ?? "";
+  const named = aName === bName ? winner : aName > bName ? a : b;
+  const merged = { ...winner, name: named.name };
+  if (named.nameUpdatedAt) merged.nameUpdatedAt = named.nameUpdatedAt;
+  else delete merged.nameUpdatedAt;
+  return merged;
 }
 
 /**
@@ -220,7 +238,7 @@ export function mergeBooks(rawA: SyncBook, rawB: SyncBook, now: number = Date.no
     fxWatchlistOrderUpdatedAt: laterOf(a.fxWatchlistOrderUpdatedAt, b.fxWatchlistOrderUpdatedAt),
     fxAlerts: mergeList(a.fxAlerts, b.fxAlerts, (x) => x.id, "fxalert", deletions),
     cashDeposits: sortByDate(mergeList(a.cashDeposits, b.cashDeposits, (d) => d.id, "deposit", deletions)),
-    devices: mergeList(a.devices, b.devices, (d) => d.id, "device", deletions).sort((x, y) =>
+    devices: mergeList(a.devices, b.devices, (d) => d.id, "device", deletions, mergeDevice).sort((x, y) =>
       x.addedAt === y.addedAt ? x.id.localeCompare(y.id) : x.addedAt.localeCompare(y.addedAt)
     ),
     deletions,
