@@ -78,9 +78,9 @@ not dozens of same-day trades).
     files still import), Reset to demo data, and Erase all data. Every option that
     replaces data sits behind its own confirmation dialog. Erasing stays erased
     across reloads; it won't silently reseed the demo dataset.
-  - *Devices & sync*: name this device, see every paired device and when it last
-    synced, pair another, sync now, change the sync code, turn off, delete the
-    synced copy, and install the app.
+  - *Devices & sync*: see every paired device and when it last synced, rename any
+    of them (the pencil on each row), pair another, sync now, change the sync code,
+    turn off, delete the synced copy, and install the app.
 - **Backup reminder**: your book lives on your own devices, and sync is not a
   backup (erasing on one paired device erases on all of them), so Settings shows
   when you last exported a JSON backup ("Last backup Nov 9 · 3 days ago"). After
@@ -96,8 +96,10 @@ not dozens of same-day trades).
   return to the app, on reconnect, every minute and on Refresh. Edits on two devices
   merge item by item (newer wins; fills and journal notes are combined), and deletions
   are remembered so they don't come back. Needs HTTPS (or localhost).
-  The device list lives inside the encrypted book. Removing a device only tidies
-  the list (it reappears if it syncs again); to lock out a lost device, change the
+  The device list lives inside the encrypted book. Any device can rename any
+  device on the list; the newest rename wins everywhere, and the renamed device
+  takes that name as its own. Removing a device only tidies the list (it
+  reappears if it syncs again); to lock out a lost device, change the
   sync code, which starts a new synced copy that every device must pair with again.
 - **Install as an app**: "Install app" in Settings → Devices & sync (Chrome, Edge, Android),
   or Share → Add to Home Screen on iPhone. It opens full-screen as "Stocks" with
@@ -211,7 +213,9 @@ Ticked items have shipped.
   across every position; shown as its own slice in the portfolio allocation chart.
 - **Sync bookkeeping** — positions, strategies, watchlist items and custom sectors
   carry `updatedAt`; starting cash and the watchlist order carry their own change
-  time; deletions are kept as dated tombstones (`deletions`, pruned after 90 days).
+  time; a device entry also carries `nameUpdatedAt`, so a rename beats the device's
+  own later check-in; deletions are kept as dated tombstones (`deletions`, pruned
+  after 90 days).
   `SyncBook` and `mergeBooks` live in `lib/sync/book.ts`; the engine in
   `lib/sync/engine.ts`, the encryption in `lib/sync/crypto.ts`, and the server side in
   `app/api/sync/[id]/route.ts` + `lib/server/syncStore.ts`. Theme, hide amounts and
