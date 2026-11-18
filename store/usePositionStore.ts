@@ -16,6 +16,7 @@ import {
   type SyncBook,
 } from "@/lib/sync/book";
 import { defaultPairsFor } from "@/lib/fx";
+import { MAX_DEVICE_NAME } from "@/lib/sync/device";
 import type { FxAlertTransition } from "@/lib/fxAlerts";
 import type {
   CashDeposit,
@@ -130,8 +131,12 @@ interface PositionState {
   setDisplayCurrency: (currency: DisplayCurrency) => void;
 
   /** Adds or refreshes this device in the synced device list. Does nothing when the
-   * entry is current, so a sync doesn't cause another sync. */
+   * entry is current, so a sync doesn't cause another sync. Never changes the name
+   * of an existing entry: a rename made on any device sticks (see renameDevice). */
   touchDevice: (device: Pick<SyncDevice, "id" | "name">) => void;
+  /** Renames any device in the list, this one or another. Stamps `nameUpdatedAt`,
+   * so the newest rename wins on every device. */
+  renameDevice: (id: string, name: string) => void;
   /** Takes a device off the list. It comes back if it syncs again. */
   removeDevice: (id: string) => void;
   /** Takes every device but `keepId` off the list (after a new sync code). */
@@ -544,14 +549,25 @@ export const usePositionStore = create<PositionState>()(
           const existing = state.devices.find((d) => d.id === id);
           if (existing) {
             const fresh = now - new Date(existing.lastSeenAt).getTime() < DEVICE_SEEN_REFRESH_MS;
-            if (existing.name === name && fresh) return state;
+            if (fresh) return state;
             return {
-              devices: state.devices.map((d) => (d.id === id ? { ...d, name, lastSeenAt: at, updatedAt: at } : d)),
+              devices: state.devices.map((d) => (d.id === id ? { ...d, lastSeenAt: at, updatedAt: at } : d)),
             };
           }
           return {
             devices: [...state.devices, { id, name, addedAt: at, lastSeenAt: at, updatedAt: at }],
             deletions: withoutTombstone(state.deletions, "device", id),
+          };
+        }),
+
+      renameDevice: (id, raw) =>
+        set((state) => {
+          const name = raw.trim().slice(0, MAX_DEVICE_NAME);
+          const existing = state.devices.find((d) => d.id === id);
+          if (!name || !existing || existing.name === name) return state;
+          const at = nowIso();
+          return {
+            devices: state.devices.map((d) => (d.id === id ? { ...d, name, nameUpdatedAt: at, updatedAt: at } : d)),
           };
         }),
 

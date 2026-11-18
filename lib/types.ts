@@ -151,6 +151,9 @@ export interface SyncDevice {
   lastSeenAt: string;
   /** Last change, for device sync (newer wins). */
   updatedAt: string;
+  /** When the name was last set by a deliberate rename, from any device. The newer
+   * rename wins in a merge, apart from the rest of the entry. Absent until renamed. */
+  nameUpdatedAt?: string;
 }
 
 /** Full snapshot of user data, for export/backup — matches the store's persisted shape. */

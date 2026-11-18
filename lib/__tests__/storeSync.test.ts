@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { migratePersistedBook, selectSyncBook, usePositionStore } from "@/store/usePositionStore";
+import { mergeBooks } from "@/lib/sync/book";
 
 // The store persists to localStorage, which Node lacks. Hoisted above the import
 // so the store finds this in-memory one when it is created.
@@ -178,8 +179,50 @@ describe("cash deposits and devices in the store", () => {
     store.getState().touchDevice({ id: "dev1", name: "Mac · Safari" });
     expect(store.getState().devices).toBe(first);
 
+    // A routine touch never renames: the name changes only through renameDevice.
     store.getState().touchDevice({ id: "dev1", name: "Work Mac" });
-    expect(store.getState().devices[0].name).toBe("Work Mac");
+    expect(store.getState().devices).toBe(first);
+  });
+
+  it("renames any device and stamps the rename so it merges", () => {
+    store.getState().touchDevice({ id: "me", name: "Mac" });
+    store.getState().touchDevice({ id: "phone", name: "iPhone · Safari" });
+    store.getState().renameDevice("phone", "  Top's iPhone  ");
+    const phone = store.getState().devices.find((d) => d.id === "phone")!;
+    expect(phone.name).toBe("Top's iPhone");
+    expect(phone.nameUpdatedAt).toBeDefined();
+    expect(phone.updatedAt).toBe(phone.nameUpdatedAt);
+
+    const before = store.getState().devices;
+    store.getState().renameDevice("phone", "   ");
+    store.getState().renameDevice("phone", "Top's iPhone");
+    store.getState().renameDevice("missing", "Ghost");
+    expect(store.getState().devices).toBe(before);
+  });
+
+  it("keeps a rename from another device through a sync round trip and the device's next touch", () => {
+    // This store is the phone. The Mac renamed it and synced.
+    const staleSeen = new Date(Date.now() - 24 * 60 * 60_000).toISOString();
+    store.setState({
+      devices: [{ id: "phone", name: "iPhone · Safari", addedAt: staleSeen, lastSeenAt: staleSeen, updatedAt: staleSeen }],
+    });
+    const renamedAt = new Date(Date.now() - 60_000).toISOString();
+    const fromMac = {
+      ...selectSyncBook(store.getState()),
+      devices: [{ id: "phone", name: "Top's iPhone", addedAt: staleSeen, lastSeenAt: staleSeen, updatedAt: renamedAt, nameUpdatedAt: renamedAt }],
+    };
+    store.getState().applySynced(mergeBooks(selectSyncBook(store.getState()), fromMac));
+    expect(store.getState().devices[0].name).toBe("Top's iPhone");
+
+    // The phone's next touch (with its old local name) refreshes lastSeenAt only.
+    store.getState().touchDevice({ id: "phone", name: "iPhone · Safari" });
+    const touched = store.getState().devices[0];
+    expect(touched.name).toBe("Top's iPhone");
+    expect(touched.lastSeenAt > staleSeen).toBe(true);
+
+    // Merging back with the Mac's copy keeps the rename on both sides.
+    expect(mergeBooks(selectSyncBook(store.getState()), fromMac).devices[0].name).toBe("Top's iPhone");
+    expect(mergeBooks(fromMac, selectSyncBook(store.getState())).devices[0].name).toBe("Top's iPhone");
   });
 
   it("forgets every other device after a code change", () => {
