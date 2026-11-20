@@ -64,7 +64,7 @@ function ShareBar({ share, color }: { share: number; color: string }) {
 // bar moves to its own line under each row instead.
 const ROW_COLUMNS = "grid-cols-[minmax(0,1fr)_5.75rem_5.75rem] @lg:grid-cols-[minmax(0,1fr)_8rem_7.5rem_7.5rem]";
 
-export function PortfolioPnlPanel() {
+export function PortfolioPnlPanel({ className }: { className?: string } = {}) {
   const positions = usePositionStore((s) => s.positions);
   const startingCash = usePositionStore((s) => s.startingCash);
   const cashDeposits = usePositionStore((s) => s.cashDeposits);
@@ -91,7 +91,7 @@ export function PortfolioPnlPanel() {
   const traded = summary.totalRealized !== 0 || summary.totalUnrealized !== 0;
 
   return (
-    <NsCard title="Profit & loss" meta="Realized vs. still open">
+    <NsCard title="Profit & loss" meta="Realized vs. still open" className={className}>
       <dl className="grid grid-cols-2 gap-3">
         <div className="rounded-ns-md bg-ns-sunken p-3">
           <dt className="ns-label text-ns-ink-muted">Realized</dt>

@@ -11,13 +11,15 @@ import { SummaryBanner } from "@/components/portfolio/SummaryBanner";
 import { AlertCallout } from "@/components/portfolio/AlertCallout";
 import { PortfolioPnlPanel } from "@/components/portfolio/PortfolioPnlPanel";
 import { AllocationChart } from "@/components/portfolio/AllocationChart";
+import { RunwayCard } from "@/components/portfolio/RunwayCard";
 
 /**
  * The cards under the header. On phones they rise out of the silk header (the
  * first card overlaps its bottom edge, so its corners are the curve). On the
  * web they sit 28px under the summary banner with 24px gaps, and from 1024px
- * the first row splits about 1.7 to 1: P&L on the left, the call-out and
- * allocation on the right.
+ * the first row splits about 1.7 to 1: P&L on the left, the call-out,
+ * allocation and runway on the right. That row is one height: both sides
+ * stretch to the taller one, and the Runway chart grows into any spare room.
  */
 function Cards({ children }: { children: React.ReactNode }) {
   return (
@@ -73,10 +75,11 @@ export default function DashboardPage() {
       {platform !== "phone" && <SummaryBanner className="hidden! md:grid!" />}
 
       <Cards>
-        <PortfolioPnlPanel />
-        <div className="flex min-w-0 flex-col gap-3 md:gap-6">
+        <PortfolioPnlPanel className="lg:self-stretch" />
+        <div className="flex min-w-0 flex-col gap-3 md:gap-6 lg:self-stretch">
           <AlertCallout />
           <AllocationChart />
+          <RunwayCard />
         </div>
 
         <NsCard title="Watchlist" meta="Tracked, not held" className="lg:col-span-2">

@@ -1,7 +1,7 @@
 "use client";
 
-import { useId, useState, type ReactNode } from "react";
-import { ChevronDown } from "lucide-react";
+import { useId, useState, type MouseEventHandler, type ReactNode } from "react";
+import { ChevronDown, Maximize2 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { glyph } from "@/lib/format";
 import { resolveSector } from "@/lib/sectors";
@@ -17,6 +17,8 @@ import { usePositionStore } from "@/store/usePositionStore";
 /**
  * A white card with a heading row. The dashboard's unit of content.
  * `collapsible` turns the heading into a toggle; `defaultOpen` sets where it starts.
+ * `onTitleClick` makes the title a button (with an expand mark) that opens a
+ * larger view; `titleHint` is its accessible name and tooltip.
  */
 export function NsCard({
   title,
@@ -26,6 +28,10 @@ export function NsCard({
   className,
   collapsible = false,
   defaultOpen = true,
+  onTitleClick,
+  titleHint,
+  onDoubleClick,
+  bodyClassName,
 }: {
   title: string;
   meta?: ReactNode;
@@ -34,6 +40,11 @@ export function NsCard({
   className?: string;
   collapsible?: boolean;
   defaultOpen?: boolean;
+  onTitleClick?: () => void;
+  titleHint?: string;
+  onDoubleClick?: MouseEventHandler<HTMLElement>;
+  /** Classes for the body under the heading row, e.g. to let it fill a stretched card. */
+  bodyClassName?: string;
 }) {
   const [open, setOpen] = useState(defaultOpen);
   const bodyId = useId();
@@ -41,14 +52,33 @@ export function NsCard({
 
   const heading = (
     <div className="min-w-0 flex-1 basis-48">
-      <h2 className="ns-heading text-ns-ink">{title}</h2>
+      <h2 className="ns-heading text-ns-ink">
+        {onTitleClick && !collapsible ? (
+          <button
+            type="button"
+            onClick={onTitleClick}
+            title={titleHint}
+            aria-label={titleHint ? `${title}: ${titleHint}` : undefined}
+            className="group -mx-1 inline-flex cursor-pointer items-center gap-1.5 rounded-ns-sm px-1 text-left hover:text-ns-primary"
+          >
+            {title}
+            <Maximize2
+              aria-hidden="true"
+              className="h-3.5 w-3.5 text-ns-ink-subtle transition-colors group-hover:text-ns-primary"
+              strokeWidth={2}
+            />
+          </button>
+        ) : (
+          title
+        )}
+      </h2>
       {meta ? <p className="ns-label mt-0.5 font-normal text-ns-ink-muted">{meta}</p> : null}
     </div>
   );
 
   return (
     // Web cards are airier (Navy Stream oc-card-web: 24px padding).
-    <section className={cn("oc-card min-w-0 md:p-6!", className)}>
+    <section className={cn("oc-card min-w-0 md:p-6!", className)} onDoubleClick={onDoubleClick}>
       {/* Wraps so a wide action drops under the heading on phones instead of squeezing it. */}
       <div className={cn("flex flex-wrap items-start justify-between gap-x-3 gap-y-2.5", shown && "mb-3")}>
         {collapsible ? (
@@ -73,7 +103,7 @@ export function NsCard({
         )}
         {shown && action}
       </div>
-      <div id={bodyId} hidden={!shown}>
+      <div id={bodyId} hidden={!shown} className={bodyClassName}>
         {children}
       </div>
     </section>

@@ -84,6 +84,8 @@ export interface DailyBar {
   date: string; // YYYY-MM-DD
   close: number;
   volume: number | null;
+  /** Shares after / before a split that took effect on this day (2 for a 2-for-1). Absent when 1. */
+  splitFactor?: number;
 }
 
 /** Fundamental data — a different category from live quotes/candles, so it comes
